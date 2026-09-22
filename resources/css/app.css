@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@utility prose-poem {
+    white-space: pre-wrap;
+    word-break: normal;
+    font-feature-settings:
+        "liga" 1,
+        "kern" 1;
+}
