@@ -19,6 +19,19 @@ class HandleInertiaRequests extends Middleware
     /**
      * Determine the current asset version.
      */
+    /**
+     * The admin host has its own page shell (its own styles and theme).
+     */
+    public function rootView(Request $request): string
+    {
+        return self::isAdmin($request) ? 'admin' : $this->rootView;
+    }
+
+    public static function isAdmin(Request $request): bool
+    {
+        return $request->getHost() === config('eyiwetemi.admin_domain');
+    }
+
     public function version(Request $request): ?string
     {
         return parent::version($request);
@@ -31,6 +44,16 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        if (self::isAdmin($request)) {
+            return [
+                ...parent::share($request),
+                'auth' => [
+                    'user' => fn (): ?array => $request->session()->get('admin.verified') ? $request->user()?->only(['name', 'email']) : null,
+                ],
+                'siteUrl' => rtrim((string) config('app.url'), '/').'/',
+            ];
+        }
+
         return [
             ...parent::share($request),
             'auth' => [

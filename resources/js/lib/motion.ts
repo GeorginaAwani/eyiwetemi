@@ -25,7 +25,7 @@ export const subscribeTheme = (listener: () => void): (() => void) => {
  * Bloom: the new theme opens as a soft circle from where you clicked, and the theme icon turns.
  * Reduced motion swaps it straight away.
  */
-export function setTheme(theme: Theme, x: number, y: number): void {
+export function setTheme(theme: Theme, x: number, y: number, storageKey = 'eyiTheme'): void {
     const reduce = prefersReducedMotion();
     const icon = document.querySelector('#tBtn svg');
 
@@ -39,7 +39,8 @@ export function setTheme(theme: Theme, x: number, y: number): void {
     const apply = () => {
         document.documentElement.dataset.theme = theme;
         try {
-            localStorage.setItem('eyiTheme', theme);
+            /* the admin keeps its own theme, stored as JSON like its prototype */
+            localStorage.setItem(storageKey, storageKey === 'eyiTheme' ? theme : JSON.stringify(theme));
         } catch {
             /* private mode: the theme lasts for this visit */
         }
@@ -64,9 +65,9 @@ export function setTheme(theme: Theme, x: number, y: number): void {
 }
 
 /** Set the theme from a button, blooming from its centre. */
-export function setThemeFrom(theme: Theme, el: HTMLElement): void {
+export function setThemeFrom(theme: Theme, el: HTMLElement, storageKey = 'eyiTheme'): void {
     const r = el.getBoundingClientRect();
-    setTheme(theme, r.left + r.width / 2, r.top + r.height / 2);
+    setTheme(theme, r.left + r.width / 2, r.top + r.height / 2, storageKey);
 }
 
 /**

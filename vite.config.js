@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react-oxc";
 export default defineConfig({
     plugins: [
         laravel({
-            input: "resources/js/app.tsx",
+            input: ["resources/js/app.tsx", "resources/js/admin.tsx"],
             refresh: true,
         }),
         react(),

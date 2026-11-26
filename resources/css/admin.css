@@ -1,0 +1,4 @@
+/* The admin's styles. A separate bundle from the reading site's (resources/css/app.css), so the two never collide. */
+@import "./admin/base.css";
+@import "./admin/scripts.css";
+@import "./admin/app.css";
