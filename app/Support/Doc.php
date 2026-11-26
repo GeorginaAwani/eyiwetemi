@@ -11,7 +11,7 @@ class Doc
      * A block's text as runs with their marks (italic, bold, link).
      *
      * @param  array<string, mixed>  $node
-     * @return list<array{text: string, em?: bool, strong?: bool, href?: string}>
+     * @return list<array{text: string, em?: bool, strong?: bool, href?: string, fn?: int, note?: string}>
      */
     public static function runs(array $node): array
     {
@@ -20,6 +20,13 @@ class Doc
         foreach ($node['content'] ?? [] as $child) {
             if (($child['type'] ?? '') === 'hardBreak') {
                 $runs[] = ['text' => "\n"];
+
+                continue;
+            }
+
+            /* a footnote: its number is given once the page's blocks are put together (numberFootnotes) */
+            if (($child['type'] ?? '') === 'footnote') {
+                $runs[] = ['text' => '', 'fn' => 0, 'note' => (string) ($child['attrs']['text'] ?? '')];
 
                 continue;
             }
@@ -64,5 +71,42 @@ class Doc
         }
 
         return $paragraphs;
+    }
+
+    /**
+     * Number a page's footnotes in reading order (1, 2, 3…); empty notes are left out.
+     *
+     * @param  list<array<string, mixed>>  $blocks
+     * @return list<array<string, mixed>>
+     */
+    public static function numberFootnotes(array $blocks): array
+    {
+        $n = 0;
+        $number = function (array $runs) use (&$n): array {
+            $out = [];
+            foreach ($runs as $run) {
+                if (array_key_exists('fn', $run)) {
+                    if (trim((string) $run['note']) === '') {
+                        continue;
+                    }
+                    $run['fn'] = ++$n;
+                }
+                $out[] = $run;
+            }
+
+            return $out;
+        };
+
+        foreach ($blocks as &$block) {
+            if (isset($block['runs'])) {
+                $block['runs'] = $number($block['runs']);
+            }
+            if (isset($block['items'])) {
+                $block['items'] = array_map($number, $block['items']);
+            }
+        }
+        unset($block);
+
+        return $blocks;
     }
 }

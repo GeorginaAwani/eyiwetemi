@@ -253,7 +253,7 @@ class ReaderPage
 
         $flush();
 
-        return $blocks;
+        return Doc::numberFootnotes($blocks);
     }
 
     /**
