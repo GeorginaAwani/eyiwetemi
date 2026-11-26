@@ -16,7 +16,7 @@ class NotesPageTest extends TestCase
 
     private function note(string $at, array $attributes = []): Note
     {
-        return Note::factory()->published()->create(['published_at' => Carbon::parse($at, 'Africa/Lagos'), ...$attributes]);
+        return Note::factory()->published()->create(['published_at' => Carbon::parse($at, 'Africa/Lagos')->utc(), ...$attributes]);
     }
 
     public function test_notes_are_grouped_by_month_newest_first(): void
