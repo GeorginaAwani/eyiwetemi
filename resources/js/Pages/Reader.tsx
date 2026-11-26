@@ -1,11 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
 import { CSSProperties, FormEvent, Fragment, ReactNode, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Bloom from '@/Components/site/Bloom';
+import Runs, { Run } from '@/Components/site/Runs';
 import SendButton from '@/Components/site/SendButton';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
 
-type Run = { text: string; em?: boolean; strong?: boolean; href?: string };
 type Block =
     | { type: 'p'; id: string | null; runs: Run[] }
     | { type: 'h'; runs: Run[] }
@@ -113,36 +113,6 @@ const I = {
         </svg>
     ),
 };
-
-/** Text runs with italics, bold and links. */
-function Runs({ runs }: { runs: Run[] }) {
-    return (
-        <>
-            {runs.map((r, i) => {
-                let node: ReactNode = r.text.split('\n').map((part, k) => (
-                    <Fragment key={k}>
-                        {k > 0 && <br />}
-                        {part}
-                    </Fragment>
-                ));
-                if (r.em) node = <em>{node}</em>;
-                if (r.strong) node = <strong>{node}</strong>;
-                if (r.href) {
-                    node = r.href.startsWith('/') ? (
-                        <Link className="link" href={r.href}>
-                            {node}
-                        </Link>
-                    ) : (
-                        <a className="link" href={r.href} target="_blank" rel="noopener">
-                            {node}
-                        </a>
-                    );
-                }
-                return <Fragment key={i}>{node}</Fragment>;
-            })}
-        </>
-    );
-}
 
 /** The text itself: paragraphs (first after a break unindented), headings, lists, pictures, stanzas. */
 function Body({ blocks, poem }: { blocks: Block[]; poem: boolean }) {

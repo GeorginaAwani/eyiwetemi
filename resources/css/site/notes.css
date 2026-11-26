@@ -1,0 +1,63 @@
+/* Notes (picked: Diary), ported from the prototype (notes.html). Scoped under .n2 so .as/.lk/.tag don't reach the Reader. */
+.n2{width:min(972px,calc(100% - 48px))}
+.n2 .ntop{display:flex;align-items:flex-end;justify-content:space-between;padding-top:48px;border-bottom:1px solid var(--line)}
+.n2 .ntop h1{font-family:var(--CD);font-weight:400;font-size:84px;line-height:88px;letter-spacing:-.01em;color:var(--ink);padding-bottom:18px}
+.n2 .n2m{padding-top:72px}
+.n2 .n2m+.n2m,.n2 .older .n2m{margin-top:40px;border-top:1px solid var(--line)}
+.n2 .n2m h2{font-family:var(--CD);font-weight:400;font-size:44px;line-height:50px;color:var(--ink)}
+.n2 .n2m h2 small{font-family:var(--A);font-size:14px;color:var(--muted);margin-left:8px}
+.n2 .dn{display:grid;grid-template-columns:minmax(0,640px) minmax(170px,260px);column-gap:clamp(36px,6vw,72px);margin-top:44px;scroll-margin-top:140px}
+.n2 .nb p{font-family:var(--NR);font-size:20px;line-height:34px;color:var(--text)}
+.n2 .nb p+p{margin-top:14px}
+.n2 .nph{width:100%;aspect-ratio:2/1;margin-top:26px;box-shadow:none;cursor:default}
+.n2 .nph img{width:100%;height:100%;object-fit:cover;display:block}
+.n2 .as{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding-top:9px}
+.n2 .as .dash{display:block;width:24px;height:1.5px;background:var(--accent);margin-bottom:4px}
+.n2 .as .d{font-family:var(--A);font-weight:600;font-size:13px;color:var(--muted);white-space:nowrap}
+.n2 .tag{font-family:var(--A);font-size:13px;color:var(--muted);white-space:nowrap}
+.n2 .tag a{font-weight:600;color:var(--ink);background:linear-gradient(currentColor,currentColor) 0 100%/100% 1.5px no-repeat;padding-bottom:2px;transition:color var(--d1),background-size var(--d2) var(--ease-dream)}
+.n2 .dn.cur .as .d{color:var(--ink)}
+.n2 .dn .tag a:hover{color:var(--accent)}
+.n2 .lk{padding:0;display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-family:var(--A);font-size:13px;color:var(--muted);transition:color var(--d2) var(--ease-soft)}
+.n2 .lk svg{width:16px;height:16px;transition:transform var(--d2) var(--ease-dream)}
+.n2 .lk:hover{color:var(--accent)}
+.n2 .lk:active svg{transform:scale(.85);transition-duration:120ms}
+.n2 .lk.on{color:var(--accent)}
+.n2 .lk.on svg{animation:nBloom var(--d3) var(--ease-dream)}
+.n2 .lk.on.was svg{animation:none}
+@keyframes nBloom{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:none}}
+.n2 .lk:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent);border-radius:4px}
+.n2 .lk.ph{display:none}
+.n2 .n2more{padding:56px 0 0;transition:opacity var(--d2)}
+.n2 .n2more.gone{opacity:0}
+/* settle in: column first, then the dash draws and the aside's words settle */
+.n2 .dn .dc,.n2 .dn .as>:not(.dash){opacity:0;transform:translateY(14px);filter:blur(6px);
+  transition:opacity var(--d4) var(--ease-dream),transform var(--d4) var(--ease-dream),filter var(--d4) var(--ease-dream),color var(--d3) var(--ease-soft)}
+.n2 .dn .as .dash{transform:scaleX(0);transform-origin:left;transition:transform var(--d3) var(--ease-dream) .15s}
+.n2 .dn.in .dc,.n2 .dn.in .as>*{opacity:1;transform:none;filter:none}
+.n2 .dn.in .as>:nth-child(2){transition-delay:.35s,.35s,.35s,0s}.n2 .dn.in .as>:nth-child(3){transition-delay:.42s,.42s,.42s,0s}.n2 .dn.in .as>:nth-child(4){transition-delay:.49s,.49s,.49s,0s}
+/* older months unfold */
+.n2 .older{animation:nUnfold var(--d4) var(--ease-dream)}
+@keyframes nUnfold{from{opacity:0;transform:translateY(-8px)}}
+/* arriving from a note link */
+.n2 .dn.hit .dc{border-radius:6px;animation:nHit 2.6s var(--ease-soft) .5s both}
+@keyframes nHit{0%,35%{background:var(--tint);box-shadow:0 0 0 18px var(--tint)}100%{background:transparent;box-shadow:0 0 0 18px transparent}}
+
+@media (max-width:900px){
+  .n2 .ntop{padding-top:24px}.n2 .ntop h1{font-size:48px;line-height:52px;padding-bottom:14px}
+  .n2 .n2m{padding-top:44px}.n2 .n2m h2{font-size:32px;line-height:38px}
+  .n2 .dn{grid-template-columns:1fr;margin-top:40px}
+  .n2 .dn .as{order:-1;flex-direction:row;align-items:center;gap:10px;padding:0 0 10px;overflow:hidden}
+  .n2 .dn .as .dash{margin:0;flex-shrink:0}
+  .n2 .dn .as .tag{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .n2 .dn .as .lk{display:none}
+  .n2 .dn .nb p{font-size:17px;line-height:29px}
+  .n2 .dn .dc{display:flex;flex-direction:column}
+  .n2 .dn .lk.ph{display:inline-flex;margin-top:14px;align-self:flex-start}
+}
+@media (prefers-reduced-motion:reduce){
+  .n2 .dn .dc,.n2 .dn .as>*{transform:none!important;filter:none!important;transition:opacity 300ms linear,color 300ms linear!important;transition-delay:0s!important}
+  .n2 .lk.on svg,.n2 .older{animation:none}.n2 .lk:active svg{transform:none}
+  .n2 .dn.hit .dc{animation:nHitFade 2.6s linear .3s both}
+  @keyframes nHitFade{0%,35%{background:var(--tint)}100%{background:transparent}}
+}
