@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import Cover, { CoverData } from '../../Components/admin/Cover';
-import { Broken, Dot, Heart, Pen, Pin } from '../../Components/admin/Icons';
+import { Broken, Dot, Heart, Pen, Pin, Plus } from '../../Components/admin/Icons';
+import { openNewWork } from '../../Components/admin/NewWork';
 import AdminLayout from '../../Layouts/AdminLayout';
 
 type Row = { href: string };
@@ -116,6 +117,10 @@ export default function Desk({ lead, comments, reviewers, week, scheduled, notes
                                 <Pen />
                                 <span>Continue writing</span>
                             </Link>
+                            <button className="k-l" type="button" onClick={openNewWork}>
+                                <Plus />
+                                <span>New work</span>
+                            </button>
                         </div>
                     </div>
                 </section>
