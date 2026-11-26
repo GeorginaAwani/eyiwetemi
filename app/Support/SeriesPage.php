@@ -46,6 +46,7 @@ class SeriesPage
             'series' => [
                 'id' => $this->series->id,
                 'name' => $this->series->name,
+                'blurb' => $this->series->description,
                 'statusLine' => 'A series · '.$count.' '.($count === 1 ? 'book' : 'books'),
                 'facts' => array_values(array_filter([
                     ['label' => 'Books', 'value' => (string) $count],

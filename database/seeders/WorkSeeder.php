@@ -87,6 +87,7 @@ class WorkSeeder extends Seeder
             'name' => 'The Harbour books',
             'name_key' => 'the harbour books',
             'slug' => 'the-harbour-books',
+            'description' => 'Three novels about one harbour town, and the families who never quite leave it.',
         ]);
 
         $genres = [];

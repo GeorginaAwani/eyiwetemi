@@ -1,0 +1,430 @@
+{
+ "source": "Admin prototype site pages as published (Brave, localStorage eyiAdmSite), 2026-11-26",
+ "about": {
+  "img": "site/about-portrait.jpg",
+  "hello": {
+   "h": "I’m Georgina.",
+   "ps": [
+    "But if you know me well enough, Eyiwetemi. I'm a quirky writer, reader, lover and hater, living in a city where it rains every other day. I also like lip gloss."
+   ]
+  },
+  "secs": [
+   {
+    "id": "s1",
+    "h": "How I got here",
+    "ps": [
+     {
+      "t": "It's funny in retrospect, but my literary journey started off because I was both a yapper and a liar. Yup. I started off lying for no apparent reason in primary school and  would make up stories and say they were from a movie only I have seen. And they believed me. Kids.",
+      "n": "Yapper + Liar = Genius"
+     },
+     {
+      "t": "I was still doing that in my junior secondary. But in JSS 1, I wrote songs with my friends that kinda rhymed, and extended essays for English Language class. JSS 2 was my introduction to reading novels. I discovered romance on a spectrum from Harlequin to Christian authors like Karen Kingsbury, Francine Rivers and Jennifer Erin Valent. Secondary school me was finishing a 350-page novel in a day and a half because I had 3 other girls waiting to borrow it too. By senior school, I was writing my own silly romance stories in exercise books and passing them round to my friends.",
+      "n": "The golden years of reading"
+     },
+     {
+      "t": "Due to uni workload, I stopped writing stories and ventured into poetry as a way to express how I felt — usually about a boy. Now I write anything. It usually starts with a character with a particular trait, and then I build a whole world around them.",
+      "n": "Then I overthink it."
+     }
+    ]
+   },
+   {
+    "id": "s2",
+    "h": "Me, otherwise",
+    "ps": [
+     {
+      "t": "I'm a Warri babe that loves good food and soft life. I speak English and French, hold fast to my Christian faith, and I'm a romantic anti-romantic.",
+      "n": ""
+     },
+     {
+      "t": "I can't dance, but I'm almost always listening to music. My favourite artistes are Lana Del Rey and Tanarelle. New places thrill me; the travelling it takes to reach them does not. I like when it rains and sweater weather.",
+      "n": "Heavy on cozy."
+     },
+     {
+      "t": "Suya is my weakness. So is chocolate cake, ice cream, buttered or caramel popcorn, hot bread, barbecue... I could pretty much sell my soul for a good burger or sandwich. I love sweet and savoury meals and creamy coffee.",
+      "n": "Foodie. Sigh."
+     },
+     {
+      "t": "I build software for a living, and I love and hate my job equally. Outside of work, I read fiction and poems, write —or at least try to — and spend hours laughing at memes on X and/or getting ragebaited (the latter more than the former). When I really want to relax, I watch people play horror video games or make cozy Minecraft builds on YouTube, or an Asian drama that either has me swooning or pulling the hair from my head — oftentimes both.",
+      "n": ""
+     },
+     {
+      "t": "On match days, I pray, hyperventilate, doubt then shout \"Hala Madrid!\". Proud Madrista."
+     }
+    ]
+   }
+  ],
+  "books": "The Dark Secrets series by A.M. Hudson, and Pierce Brown’s Red Rising.",
+  "home": {
+   "q": "I write about things I'd love to read.",
+   "l": "Novels and short stories about being human; poems and essays about being me."
+  }
+ },
+ "privacy": {
+  "upd": "2026-11-25",
+  "secs": [
+   {
+    "id": "me",
+    "h": "Who looks after it",
+    "html": "<p>Eyiwetemi is run by me, Georgina Awani, from Port Harcourt, Nigeria. I’m responsible for anything you share here, under the Nigeria Data Protection Act 2023.</p><p>Write to <a class=\"link\" href=\"mailto:privacy@eyiwetemi.com\">privacy@eyiwetemi.com</a> about anything on this page.</p>"
+   },
+   {
+    "id": "reading",
+    "h": "Reading",
+    "html": "<p>You can read everything here without an account, and I don’t ask who you are.</p><p>I count visits so I know what’s being read. I count views, finished chapters, which site sent you here, your country, and whether you’re on a phone or a computer. I don’t use cookies for this, I never store who you are, and nothing leaves this site.</p>"
+   },
+   {
+    "id": "account",
+    "h": "Your account",
+    "html": "<p>When you make an account I keep your name, username and email, and your password in an encrypted form I can’t read. If you sign in with Google, Google sends me your name, email and photo instead.</p><p>Your name shows beside your comments. Likes and follows are counted, but only you can see which ones are yours.</p>"
+   },
+   {
+    "id": "review",
+    "h": "Reviewing",
+    "html": "<p>If I invite you to review unpublished work, I use your email to send the invitation. You see only what I share with you, and your notes on it stay between us.</p>"
+   },
+   {
+    "id": "email",
+    "h": "Emails",
+    "html": "<p>New work by email is sent from this site, not through a mailing company. I keep your email and the kinds of work you picked. Every email has a link to stop them, and stopping removes your address.</p><p>Notification emails follow your <a class=\"link\" href=\"settings.html#notifications\">settings</a>, and you can turn them off there.</p>"
+   },
+   {
+    "id": "cookies",
+    "h": "Cookies",
+    "html": "<p>One cookie keeps you signed in. Your theme is remembered in your own browser. Nothing here follows you to other sites.</p>"
+   },
+   {
+    "id": "sharing",
+    "h": "Who else sees it",
+    "html": "<p>I don’t sell what you give me or share it with anyone. The services that keep the site running hold it for me, and only so they can do that.</p>"
+   },
+   {
+    "id": "leaving",
+    "h": "Leaving",
+    "html": "<p>Delete your account in <a class=\"link\" href=\"settings.html\">Settings</a> and it goes at once, with your likes and follows. Your comments are deleted too. If someone replied to one, their reply stays, under “Comment deleted”.</p>"
+   },
+   {
+    "id": "rights",
+    "h": "Asking",
+    "html": "<p>You can ask to see what I hold about you, to correct it, or to have it deleted. Write to <a class=\"link\" href=\"mailto:privacy@eyiwetemi.com\">privacy@eyiwetemi.com</a>. If you’re unhappy with my answer, you can complain to the Nigeria Data Protection Commission.</p>"
+   },
+   {
+    "id": "changes",
+    "h": "Changes",
+    "html": "<p>If this page changes in a way that matters, I’ll say so in a note.</p>"
+   }
+  ]
+ },
+ "print": {
+  "books": [
+   {
+    "slug": "salt-season",
+    "title": "Salt Season",
+    "kind": "A novel",
+    "cover": "#C24E77",
+    "formats": [
+     {
+      "format": "Paperback",
+      "stores": [
+       {
+        "store": "Roving Heights",
+        "price": "8,500",
+        "currency": "₦",
+        "url": "rovingheights.com/salt-season",
+        "ok": true
+       },
+       {
+        "store": "Amazon",
+        "price": "12.99",
+        "currency": "$",
+        "url": "amazon.com/dp/B0CSALT01",
+        "ok": true
+       },
+       {
+        "store": "Jumia",
+        "price": "9,000",
+        "currency": "₦",
+        "url": "jumia.com.ng/salt-season",
+        "ok": true
+       }
+      ]
+     },
+     {
+      "format": "Hardback",
+      "stores": [
+       {
+        "store": "Amazon",
+        "price": "24.99",
+        "currency": "$",
+        "url": "amazon.com/dp/B0CSALT02",
+        "ok": true
+       }
+      ]
+     },
+     {
+      "format": "Ebook",
+      "stores": [
+       {
+        "store": "Okada Books",
+        "price": "3,000",
+        "currency": "₦",
+        "url": "okadabooks.com/salt-season",
+        "ok": true
+       },
+       {
+        "store": "Kindle",
+        "price": "4.99",
+        "currency": "$",
+        "url": "amazon.com/dp/B0CSALTK1",
+        "ok": true
+       }
+      ]
+     },
+     {
+      "format": "Signed",
+      "stores": [
+       {
+        "store": "Roving Heights",
+        "price": "10,500",
+        "currency": "₦",
+        "url": "rovingheights.com/salt-season-signed",
+        "ok": true
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "slug": "rain-stories",
+    "title": "Rain Stories",
+    "kind": "Short stories",
+    "cover": "#7E3550",
+    "formats": [
+     {
+      "format": "Paperback",
+      "stores": [
+       {
+        "store": "Roving Heights",
+        "price": "7,000",
+        "currency": "₦",
+        "url": "rovingheights.com/rain-stories",
+        "ok": true
+       },
+       {
+        "store": "Amazon",
+        "price": "9.99",
+        "currency": "$",
+        "url": "amazon.com/dp/B0CRAIN01",
+        "ok": false
+       }
+      ]
+     },
+     {
+      "format": "Ebook",
+      "stores": [
+       {
+        "store": "Okada Books",
+        "price": "2,500",
+        "currency": "₦",
+        "url": "okadabooks.com/rain-stories",
+        "ok": true
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "coming": [
+   {
+    "slug": "paper-boats",
+    "title": "Paper Boats",
+    "kind": "A novel",
+    "cover": "#977AA0",
+    "when": "March 2027",
+    "mode": "pre",
+    "store": "Roving Heights",
+    "price": "8,000",
+    "currency": "₦",
+    "url": "rovingheights.com/paper-boats"
+   },
+   {
+    "slug": "midnight-poems",
+    "title": "Midnight Poems",
+    "kind": "Poems",
+    "cover": "#A24F68",
+    "when": "2027",
+    "mode": "follow",
+    "store": "",
+    "price": "",
+    "currency": "₦",
+    "url": ""
+   }
+  ],
+  "events": [
+   {
+    "id": "e1",
+    "date": "2026-12-06",
+    "time": "16:00",
+    "title": "Salt Season, read aloud",
+    "place": "Port Harcourt",
+    "online": false,
+    "url": "rovingheights.com/events",
+    "cancelled": false
+   },
+   {
+    "id": "e2",
+    "date": "2026-12-19",
+    "time": "19:00",
+    "title": "Midnight, live",
+    "place": "",
+    "online": true,
+    "url": "youtube.com/live/eyiwetemi",
+    "cancelled": false
+   },
+   {
+    "id": "e3",
+    "date": "2027-02-14",
+    "time": "11:00",
+    "title": "Ake Arts and Book Festival",
+    "place": "Abeokuta",
+    "online": false,
+    "url": "akefestival.org",
+    "cancelled": false
+   },
+   {
+    "id": "p1",
+    "date": "2026-11-16",
+    "time": "14:00",
+    "title": "Port Harcourt Book Festival",
+    "place": "Port Harcourt",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p2",
+    "date": "2026-09-21",
+    "time": "16:00",
+    "title": "Rain Stories launch",
+    "place": "Warri",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p3",
+    "date": "2026-05-03",
+    "time": "16:00",
+    "title": "Salt Season launch",
+    "place": "Port Harcourt",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p4",
+    "date": "2026-04-12",
+    "time": "19:00",
+    "title": "Poetry night at Bogobiri",
+    "place": "Lagos",
+    "online": false,
+    "url": null,
+    "cancelled": true
+   },
+   {
+    "id": "p5",
+    "date": "2025-12-13",
+    "time": "17:00",
+    "title": "Christmas readings, Roving Heights",
+    "place": "Port Harcourt",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p6",
+    "date": "2025-10-04",
+    "time": "15:00",
+    "title": "Warri Arts Day",
+    "place": "Warri",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p7",
+    "date": "2025-06-21",
+    "time": "12:00",
+    "title": "Library afternoon",
+    "place": "Port Harcourt",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p8",
+    "date": "2025-02-14",
+    "time": "18:00",
+    "title": "Love letters, read aloud",
+    "place": "",
+    "online": true,
+    "url": null,
+    "cancelled": false
+   },
+   {
+    "id": "p9",
+    "date": "2024-11-30",
+    "time": "16:00",
+    "title": "First reading",
+    "place": "Port Harcourt",
+    "online": false,
+    "url": null,
+    "cancelled": false
+   }
+  ]
+ },
+ "contact": {
+  "email": "hello@eyiwetemi.com",
+  "line": "I write about things I love and hate",
+  "links": [
+   [
+    "X",
+    "eyiwetemi"
+   ],
+   [
+    "Instagram",
+    "eyiwetemi.writes"
+   ],
+   [
+    "Goodreads",
+    "eyiwetemi"
+   ]
+  ]
+ },
+ "notice": null,
+ "pin": null,
+ "past": [
+  {
+   "when": "25 Nov–25 Nov",
+   "text": "One of my books is a New York Times bestseller!",
+   "x": 0
+  },
+  {
+   "when": "1–14 Nov",
+   "text": "Salt Season is now in print in the UK",
+   "x": 412
+  },
+  {
+   "when": "3–10 May",
+   "text": "Salt Season launch, Port Harcourt, 3 May",
+   "x": 188
+  }
+ ],
+ "share": {
+  "site": {
+   "own": 0,
+   "img": "site/share-card.jpg",
+   "line": "I write about things I love and hate"
+  },
+  "works": {}
+ }
+}

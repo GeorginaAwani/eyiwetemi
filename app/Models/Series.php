@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['name', 'name_key', 'slug'])]
+#[Fillable(['name', 'name_key', 'slug', 'description'])]
 class Series extends Model
 {
     /** @use HasFactory<SeriesFactory> */

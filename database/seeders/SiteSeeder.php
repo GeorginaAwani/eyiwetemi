@@ -4,86 +4,35 @@ namespace Database\Seeders;
 
 use App\Enums\SitePageKey;
 use App\Models\LinkCheck;
+use App\Models\Media;
 use App\Models\Notice;
 use App\Models\SitePage;
 use App\Models\SiteSetting;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
+/**
+ * Site pages and settings as she published them in the admin prototype (database/seeders/data/site.json):
+ * About, In print, Privacy, contact and footer, links elsewhere, sharing, notices.
+ */
 class SiteSeeder extends Seeder
 {
     private const WELCOME_LETTER = 'Thank you for being here. I write novels a chapter at a time, and the odd poem when it rains. Every Sunday I’ll send you whatever is new, and nothing when nothing is.';
 
-    /**
-     * In print: the books on sale, the books coming, and the reading events. Prices are the prototype's strings,
-     * stored as minor units by priceOf().
-     *
-     * @var array{books: list<array<string, mixed>>, coming: list<array<string, mixed>>, events: list<array<string, mixed>>}
-     */
-    private const PRINT = [
-        'books' => [
-            [
-                'slug' => 'salt-season', 'title' => 'Salt Season', 'kind' => 'A novel', 'cover' => '#C24E77',
-                'formats' => [
-                    ['format' => 'Paperback', 'stores' => [
-                        ['store' => 'Roving Heights', 'price' => '8,500', 'currency' => '₦', 'url' => 'rovingheights.com/salt-season', 'ok' => true],
-                        ['store' => 'Amazon', 'price' => '12.99', 'currency' => '$', 'url' => 'amazon.com/dp/B0CSALT01', 'ok' => true],
-                        ['store' => 'Jumia', 'price' => '9,000', 'currency' => '₦', 'url' => 'jumia.com.ng/salt-season', 'ok' => true],
-                    ]],
-                    ['format' => 'Hardback', 'stores' => [
-                        ['store' => 'Amazon', 'price' => '24.99', 'currency' => '$', 'url' => 'amazon.com/dp/B0CSALT02', 'ok' => true],
-                    ]],
-                    ['format' => 'Ebook', 'stores' => [
-                        ['store' => 'Okada Books', 'price' => '3,000', 'currency' => '₦', 'url' => 'okadabooks.com/salt-season', 'ok' => true],
-                        ['store' => 'Kindle', 'price' => '4.99', 'currency' => '$', 'url' => 'amazon.com/dp/B0CSALTK1', 'ok' => true],
-                    ]],
-                    ['format' => 'Signed', 'stores' => [
-                        ['store' => 'Roving Heights', 'price' => '10,500', 'currency' => '₦', 'url' => 'rovingheights.com/salt-season-signed', 'ok' => true],
-                    ]],
-                ],
-            ],
-            [
-                'slug' => 'rain-stories', 'title' => 'Rain Stories', 'kind' => 'Short stories', 'cover' => '#7E3550',
-                'formats' => [
-                    ['format' => 'Paperback', 'stores' => [
-                        ['store' => 'Roving Heights', 'price' => '7,000', 'currency' => '₦', 'url' => 'rovingheights.com/rain-stories', 'ok' => true],
-                        ['store' => 'Amazon', 'price' => '9.99', 'currency' => '$', 'url' => 'amazon.com/dp/B0CRAIN01', 'ok' => false],
-                    ]],
-                    ['format' => 'Ebook', 'stores' => [
-                        ['store' => 'Okada Books', 'price' => '2,500', 'currency' => '₦', 'url' => 'okadabooks.com/rain-stories', 'ok' => true],
-                    ]],
-                ],
-            ],
-        ],
-        'coming' => [
-            [
-                'slug' => 'paper-boats', 'title' => 'Paper Boats', 'kind' => 'A novel', 'cover' => '#977AA0',
-                'when' => 'March 2027', 'mode' => 'pre', 'store' => 'Roving Heights', 'price' => '8,000', 'currency' => '₦',
-                'url' => 'rovingheights.com/paper-boats',
-            ],
-            [
-                'slug' => 'midnight-poems', 'title' => 'Midnight Poems', 'kind' => 'Poems', 'cover' => '#A24F68',
-                'when' => '2027', 'mode' => 'follow', 'store' => null, 'price' => null, 'currency' => null, 'url' => null,
-            ],
-        ],
-        'events' => [
-            ['id' => 'e1', 'date' => '2026-12-06', 'time' => '16:00', 'title' => 'Salt Season, read aloud', 'online' => false, 'place' => 'Port Harcourt', 'url' => 'rovingheights.com/events', 'cancelled' => false],
-            ['id' => 'e2', 'date' => '2026-12-19', 'time' => '19:00', 'title' => 'Midnight, live', 'online' => true, 'place' => null, 'url' => 'youtube.com/live/eyiwetemi', 'cancelled' => false],
-            ['id' => 'e3', 'date' => '2027-02-14', 'time' => '11:00', 'title' => 'Ake Arts and Book Festival', 'online' => false, 'place' => 'Abeokuta', 'url' => 'akefestival.org', 'cancelled' => false],
-            ['id' => 'p1', 'date' => '2026-11-16', 'time' => '14:00', 'title' => 'Port Harcourt Book Festival', 'online' => false, 'place' => 'Port Harcourt', 'url' => null, 'cancelled' => false],
-            ['id' => 'p2', 'date' => '2026-09-21', 'time' => '16:00', 'title' => 'Rain Stories launch', 'online' => false, 'place' => 'Warri', 'url' => null, 'cancelled' => false],
-            ['id' => 'p3', 'date' => '2026-05-03', 'time' => '16:00', 'title' => 'Salt Season launch', 'online' => false, 'place' => 'Port Harcourt', 'url' => null, 'cancelled' => false],
-            ['id' => 'p4', 'date' => '2026-04-12', 'time' => '19:00', 'title' => 'Poetry night at Bogobiri', 'online' => false, 'place' => 'Lagos', 'url' => null, 'cancelled' => true],
-            ['id' => 'p5', 'date' => '2025-12-13', 'time' => '17:00', 'title' => 'Christmas readings, Roving Heights', 'online' => false, 'place' => 'Port Harcourt', 'url' => null, 'cancelled' => false],
-            ['id' => 'p6', 'date' => '2025-10-04', 'time' => '15:00', 'title' => 'Warri Arts Day', 'online' => false, 'place' => 'Warri', 'url' => null, 'cancelled' => false],
-            ['id' => 'p7', 'date' => '2025-06-21', 'time' => '12:00', 'title' => 'Library afternoon', 'online' => false, 'place' => 'Port Harcourt', 'url' => null, 'cancelled' => false],
-            ['id' => 'p8', 'date' => '2025-02-14', 'time' => '18:00', 'title' => 'Love letters, read aloud', 'online' => true, 'place' => null, 'url' => null, 'cancelled' => false],
-            ['id' => 'p9', 'date' => '2024-11-30', 'time' => '16:00', 'title' => 'First reading', 'online' => false, 'place' => 'Port Harcourt', 'url' => null, 'cancelled' => false],
-        ],
-    ];
+    /** @var array<string, string> */
+    private const CURRENCIES = ['₦' => 'NGN', '$' => 'USD', '£' => 'GBP', '€' => 'EUR'];
+
+    private const MONTHS = ['Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12];
+
+    /** @var array<string, mixed> */
+    private array $site = [];
 
     public function run(): void
     {
+        $this->site = json_decode((string) file_get_contents(database_path('seeders/data/site.json')), true);
+
         $this->pages();
         $this->settings();
         $this->notices();
@@ -92,20 +41,18 @@ class SiteSeeder extends Seeder
 
     private function pages(): void
     {
-        $about = $this->about();
-        $inPrint = $this->inPrint();
         $privacy = [
-            'updated_on' => SeedData::PRIVACY['upd'],
+            'updated_on' => $this->site['privacy']['upd'],
             'sections' => array_map(
                 fn (array $section): array => ['id' => $section['id'], 'heading' => $section['h'], 'html' => $section['html']],
-                SeedData::PRIVACY['secs'],
+                $this->site['privacy']['secs'],
             ),
         ];
 
         $pages = [
-            [SitePageKey::About, $about, now()->subDays(20)],
-            [SitePageKey::InPrint, $inPrint, now()->subDays(4)],
-            [SitePageKey::Privacy, $privacy, $this->wat('2026-11-23 09:00')],
+            [SitePageKey::About, $this->about(), now()->subDays(1)],
+            [SitePageKey::InPrint, $this->inPrint(), now()->subDays(4)],
+            [SitePageKey::Privacy, $privacy, $this->wat($this->site['privacy']['upd'].' 09:00')],
         ];
 
         foreach ($pages as [$key, $content, $publishedAt]) {
@@ -124,17 +71,17 @@ class SiteSeeder extends Seeder
      */
     private function about(): array
     {
-        $about = SeedData::ABOUT;
+        $about = $this->site['about'];
 
         return [
-            'image' => null,
+            'image' => $this->picture($about['img'] ?? null),
             'hello' => ['heading' => $about['hello']['h'], 'paragraphs' => $about['hello']['ps']],
             'sections' => array_map(fn (array $section): array => [
                 'id' => $section['id'],
                 'heading' => $section['h'],
                 'paragraphs' => array_map(fn (array $paragraph): array => [
                     'text' => $paragraph['t'],
-                    'margin_note' => $paragraph['n'] ?? null,
+                    'margin_note' => ($paragraph['n'] ?? '') !== '' ? $paragraph['n'] : null,
                     'pull_quote' => (bool) ($paragraph['q'] ?? false),
                 ], $section['ps']),
             ], $about['secs']),
@@ -148,6 +95,8 @@ class SiteSeeder extends Seeder
      */
     private function inPrint(): array
     {
+        $print = $this->site['print'];
+
         return [
             'books' => array_map(fn (array $book): array => [
                 'slug' => $book['slug'],
@@ -159,11 +108,11 @@ class SiteSeeder extends Seeder
                     'stores' => array_map(fn (array $store): array => [
                         'store' => $store['store'],
                         'price' => $this->priceOf($store['price'], $store['currency']),
-                        'url' => 'https://'.$store['url'],
+                        'url' => $this->url($store['url']),
                         'ok' => $store['ok'],
                     ], $format['stores']),
                 ], $book['formats']),
-            ], self::PRINT['books']),
+            ], $print['books']),
             'coming' => array_map(fn (array $book): array => [
                 'slug' => $book['slug'],
                 'title' => $book['title'],
@@ -173,8 +122,8 @@ class SiteSeeder extends Seeder
                 'mode' => $book['mode'],
                 'store' => $book['store'],
                 'price' => $book['price'] !== null ? $this->priceOf($book['price'], $book['currency']) : null,
-                'url' => $book['url'] !== null ? 'https://'.$book['url'] : null,
-            ], self::PRINT['coming']),
+                'url' => $this->url($book['url']),
+            ], $print['coming']),
             'events' => array_map(fn (array $event): array => [
                 'id' => $event['id'],
                 'title' => $event['title'],
@@ -182,9 +131,9 @@ class SiteSeeder extends Seeder
                     ->utc()->toIso8601String(),
                 'place' => $event['place'],
                 'online' => $event['online'],
-                'url' => $event['url'] !== null ? 'https://'.$event['url'] : null,
+                'url' => $this->url($event['url']),
                 'cancelled' => $event['cancelled'],
-            ], self::PRINT['events']),
+            ], $print['events']),
         ];
     }
 
@@ -197,21 +146,35 @@ class SiteSeeder extends Seeder
 
         return [
             'amount' => (int) round($major * 100),
-            'currency' => $symbol === '₦' ? 'NGN' : 'USD',
+            'currency' => self::CURRENCIES[$symbol] ?? 'USD',
         ];
+    }
+
+    private function url(?string $url): ?string
+    {
+        if ($url === null || $url === '') {
+            return null;
+        }
+
+        return preg_match('#^https?://#', $url) ? $url : 'https://'.$url;
     }
 
     private function settings(): void
     {
-        SiteSetting::put('contact', ['email' => SeedData::CONTACT['email']]);
-        SiteSetting::put('footer', ['line' => SeedData::CONTACT['line']]);
+        $contact = $this->site['contact'];
+        $share = $this->site['share']['site'];
+
+        SiteSetting::put('contact', ['email' => $contact['email']]);
+        SiteSetting::put('footer', ['line' => $contact['line']]);
         SiteSetting::put('links', array_map(
             fn (array $link): array => ['network' => $link[0], 'handle' => $link[1]],
-            SeedData::CONTACT['links'],
+            $contact['links'],
         ));
-        SiteSetting::put('home_pin', ['slug' => 'the-ember-gate', 'label' => 'Chapter 7 · 19 Nov', 'until' => null]);
+        SiteSetting::put('home_pin', $this->site['pin'] !== null
+            ? ['slug' => $this->site['pin']['slug'], 'until' => $this->site['pin']['until'] ?? null]
+            : null);
         SiteSetting::put('sharing', [
-            'site' => ['own' => false, 'line' => 'Novels, short stories, poems and essays, free to read.'],
+            'site' => ['own' => (bool) $share['own'], 'line' => $share['line'], 'image' => $this->picture($share['img'] ?? null)],
             'works' => [],
         ]);
         SiteSetting::put('newsletter', ['weekday' => 0, 'time' => '09:00']);
@@ -221,45 +184,86 @@ class SiteSeeder extends Seeder
         ]);
     }
 
+    /**
+     * The notice that is up (none, as she left it) and the earlier ones with how many readers closed them.
+     */
     private function notices(): void
     {
-        Notice::forceCreate([
-            'text' => 'Salt Season is now in print in the UK, with a new afterword.',
-            'link_target' => 'in_print',
-            'link_url' => null,
-            'starts_at' => $this->wat('2026-11-21 09:00'),
-            'ends_at' => null,
-            'taken_down_at' => null,
-            'closed_count' => 0,
-        ]);
+        $notice = $this->site['notice'];
 
-        $past = [
-            ['2026-11-01 00:00', '2026-11-14 23:59', 'Salt Season is now in print in the UK', 412],
-            ['2026-05-03 00:00', '2026-05-10 23:59', 'Salt Season launch, Port Harcourt, 3 May', 188],
-        ];
-
-        foreach ($past as [$startsAt, $endsAt, $text, $closed]) {
+        if ($notice !== null) {
             Notice::forceCreate([
-                'text' => $text,
+                'text' => $notice['text'],
                 'link_target' => null,
                 'link_url' => null,
-                'starts_at' => $this->wat($startsAt),
-                'ends_at' => $this->wat($endsAt),
-                'taken_down_at' => $this->wat($endsAt),
-                'closed_count' => $closed,
+                'starts_at' => now()->subDay(),
+                'ends_at' => null,
+                'taken_down_at' => null,
+                'closed_count' => 0,
+            ]);
+        }
+
+        foreach ($this->site['past'] as $past) {
+            [$startsAt, $endsAt] = $this->range($past['when']);
+
+            Notice::forceCreate([
+                'text' => $past['text'],
+                'link_target' => null,
+                'link_url' => null,
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+                'taken_down_at' => $endsAt,
+                'closed_count' => (int) $past['x'],
             ]);
         }
     }
 
     /**
-     * The last check of each store link, as the prototype's store lists record it.
+     * "1–14 Nov" or "25 Nov–25 Nov" as WAT days, this year.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function range(string $when): array
+    {
+        preg_match('/^(\d{1,2})(?: ([A-Za-z]{3}))?–(\d{1,2}) ([A-Za-z]{3})$/u', $when, $m);
+        $year = 2026;
+        $endMonth = self::MONTHS[$m[4]];
+        $startMonth = ($m[2] ?? '') !== '' ? self::MONTHS[$m[2]] : $endMonth;
+
+        return [
+            $this->wat(sprintf('%d-%02d-%02d 00:00', $year, $startMonth, $m[1])),
+            $this->wat(sprintf('%d-%02d-%02d 23:59', $year, $endMonth, $m[3])),
+        ];
+    }
+
+    /**
+     * A picture she uploaded, if it's on this machine (her own photos aren't kept in the public repo).
+     */
+    private function picture(?string $path): ?int
+    {
+        if ($path === null || ! Storage::disk(config('eyiwetemi.media_disk'))->exists($path)) {
+            return null;
+        }
+
+        return Media::forceCreate([
+            'disk' => config('eyiwetemi.media_disk'),
+            'path' => $path,
+            'original_name' => basename($path),
+            'mime' => 'image/jpeg',
+            'size' => Storage::disk(config('eyiwetemi.media_disk'))->size($path),
+            'uploaded_by' => User::query()->where('username', 'eyiwetemi')->value('id'),
+        ])->id;
+    }
+
+    /**
+     * The last check of each store link, as her store lists record it.
      */
     private function linkChecks(): void
     {
-        foreach (self::PRINT['books'] as $book) {
+        foreach ($this->site['print']['books'] as $book) {
             foreach ($book['formats'] as $format) {
                 foreach ($format['stores'] as $store) {
-                    $url = 'https://'.$store['url'];
+                    $url = $this->url($store['url']);
 
                     LinkCheck::forceCreate([
                         'url_hash' => hash('sha256', $url),
