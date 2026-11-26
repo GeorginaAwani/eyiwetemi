@@ -19,7 +19,7 @@
 .au-g{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;height:52px;border-radius:26px;border:1.5px solid var(--ink);font-family:var(--A);font-weight:600;font-size:16px;color:var(--ink);cursor:pointer;
   background:linear-gradient(var(--tint),var(--tint)) 0 0/0% 100% no-repeat;transition:background-size var(--d3) var(--ease-dream)}
 .au-g:hover{background-size:100% 100%}
-.au-g svg{background:#fff;border-radius:50%;padding:0;flex-shrink:0}
+.au-g .lbl svg{background:#fff;border-radius:50%;padding:0;flex-shrink:0}
 .au-g .lbl{display:inline-flex;align-items:center;gap:12px}
 .au-or{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);margin:2px 0}
 .au-or::before,.au-or::after{content:'';flex:1;height:1px;background:var(--line)}
