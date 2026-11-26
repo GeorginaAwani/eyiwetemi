@@ -353,6 +353,19 @@ export default function SignIn() {
         }
     }, []);
 
+    /* back from Google's account picker without signing in: the browser restores this page as it was, so the
+       Google button would stay mid-send; it settles back to ready */
+    useEffect(() => {
+        const onShow = (e: PageTransitionEvent) => {
+            if (e.persisted) {
+                setSending(null);
+            }
+        };
+        window.addEventListener('pageshow', onShow);
+
+        return () => window.removeEventListener('pageshow', onShow);
+    }, []);
+
     /* signed in (here, or back from Google): the Like, Follow or comment you tapped carries on once the card is gone */
     useEffect(() => {
         if (!signedIn) {
