@@ -118,3 +118,10 @@ span.wc-pt>span::before{content:'';position:absolute;right:calc(100% + 10px);top
 @media (max-width:600px){.wa-bar:has(>.f:only-child){display:none}}
 /* the + and its menu show only on an empty line; the page's settling-in must not show them */
 .w-page.settle>.w-plus,.w-page.settle>.w-plm{animation:none}
+.wa-op{display:flex;align-items:baseline;gap:14px;min-height:64px;padding:16px 0 10px;border-bottom:1px solid var(--line);text-decoration:none}
+.wa-op .fb{width:28px;flex-shrink:0;align-self:center;display:grid;place-items:center;color:var(--muted)}
+.wa-op .n{font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap}
+.wa-op .t{font-family:var(--NR);font-style:italic;font-size:19px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;transition:color var(--d1)}
+.wa-op:hover .t{color:var(--accent)}
+.wa-op .k-meta{margin-left:auto;white-space:nowrap;flex-shrink:0}
+@media (max-width:600px){.wa-op .k-meta{display:none}}

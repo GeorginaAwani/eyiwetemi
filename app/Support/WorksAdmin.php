@@ -326,7 +326,7 @@ class WorksAdmin
     /**
      * Printed pages: a chapter starts a new page, a part takes its own two, a poem runs thirty lines to a page.
      */
-    private static function pagesOf(Work $work, WorkItem $item): int
+    public static function pagesOf(Work $work, WorkItem $item): int
     {
         if ($item->type === WorkItemType::Part) {
             return self::PART_PAGES;
@@ -341,7 +341,7 @@ class WorksAdmin
         return max(1, (int) ceil(self::words($item) / self::WORDS_PER_PAGE));
     }
 
-    private static function words(WorkItem $item): int
+    public static function words(WorkItem $item): int
     {
         return (int) ($item->draft_text !== null ? $item->draft_words : $item->live_words);
     }

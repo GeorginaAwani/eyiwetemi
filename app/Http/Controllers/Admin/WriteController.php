@@ -11,9 +11,11 @@ use App\Models\Media;
 use App\Models\Work;
 use App\Models\WorkItem;
 use App\Models\WritingDay;
+use App\Support\ChaptersAdmin;
 use App\Support\ImageStore;
 use App\Support\Prose;
 use App\Support\WorkPresenter;
+use App\Support\WritePage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -79,6 +81,8 @@ class WriteController extends Controller
                 ? $work->characters()->orderBy('position')->get(['id', 'name'])->map(fn ($c): array => ['id' => $c->id, 'name' => $c->name])->all()
                 : [],
             'images' => self::images($item->draft_body ?? $item->live_body),
+            'publish' => WritePage::state($item),
+            'chapters' => $multi ? ChaptersAdmin::rows($work) : [],
         ]);
     }
 

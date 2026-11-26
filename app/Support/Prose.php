@@ -163,6 +163,38 @@ class Prose
     }
 
     /**
+     * Words added and cut going from one text to the next (a word-level longest common subsequence;
+     * very long texts fall back to the difference in length).
+     *
+     * @return array{added: int, cut: int}
+     */
+    public static function wordChange(string $from, string $to): array
+    {
+        $before = preg_split('/\s+/u', trim($from), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $after = preg_split('/\s+/u', trim($to), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $n = count($before);
+        $m = count($after);
+
+        if ($n === 0 || $m === 0 || $n * $m > 30_000_000) {
+            return $n === 0 || $m === 0 ? ['added' => $m, 'cut' => $n] : ['added' => max(0, $m - $n), 'cut' => max(0, $n - $m)];
+        }
+
+        $previous = array_fill(0, $m + 1, 0);
+
+        for ($i = 1; $i <= $n; $i++) {
+            $current = [0];
+
+            for ($j = 1; $j <= $m; $j++) {
+                $current[$j] = $before[$i - 1] === $after[$j - 1] ? $previous[$j - 1] + 1 : max($previous[$j], $current[$j - 1]);
+            }
+
+            $previous = $current;
+        }
+
+        return ['added' => $m - $previous[$m], 'cut' => $n - $previous[$m]];
+    }
+
+    /**
      * @param  array<string, mixed>  $node
      */
     private static function inline(array $node): string

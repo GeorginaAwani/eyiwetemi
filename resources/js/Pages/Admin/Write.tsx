@@ -6,6 +6,8 @@ import { Brand, ThemeMenu, ViewSite } from '../../Components/admin/AdminTop';
 import { KSelect, Unfold } from '../../Components/admin/Controls';
 import { BreakIcon, FootnoteIcon, FullIcon, ImageIcon, KeyboardDown, LinkIcon, ListIcon, MusicIcon, QuoteIcon } from '../../Components/admin/editor/icons';
 import { addFootnote, asPoem, bulletList, closeFootnote, editorPlugins, inQuote, insertImage, Kind, sceneBreak, setLink, toggleBold, toggleItalic, toggleQuote, topBlock } from '../../Components/admin/editor/plugins';
+import { ChapterRow } from '../../Components/admin/editor/chapters';
+import { BarPanels, Flash, PublishControls, PublishState, VersionRow, VersionView } from '../../Components/admin/editor/publish';
 import { fromStored, schema, toStored } from '../../Components/admin/editor/schema';
 import { Alert, BackSmall, Close, Plus, Saved as Tick } from '../../Components/admin/Icons';
 import { heading } from '../../lib/headings';
@@ -40,7 +42,7 @@ type Item = {
     soundtrack: Soundtrack;
     quote: Quote;
 };
-type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string> };
+type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string>; publish: PublishState; chapters: ChapterRow[] };
 type SaveState = 'saving' | 'saved' | 'bad';
 
 /** The reader's marks between scenes, as the prototype names them. */
@@ -72,13 +74,16 @@ function wordsIn(view: EditorView | null): number {
  * POV, soundtrack and heading quote), saving as she types. A selection bar formats on a computer, a button row
  * above the keyboard on a phone; Full screen hides everything but the page.
  */
-export default function Write({ work, item, characters, images }: Props) {
+export default function Write({ work, item, characters, images, publish, chapters }: Props) {
     const part = item.type === 'part';
     const kind = work.kind;
     const [save, setSave] = useState<SaveState>('saved');
     const [words, setWords] = useState(0);
     const [focus, setFocus] = useState(false);
     const [toast, setToast] = useState('');
+    const [pub, setPub] = useState<PublishState>(publish);
+    const [flashed, setFlashed] = useState<Flash>(null);
+    const [open, setOpen] = useState<{ version: VersionRow; body: Record<string, unknown> } | null>(null);
     const [pov, setPov] = useState<number | null>(item.pov);
     const [quote, setQuote] = useState<Quote>(item.quote);
     const [tick, setTick] = useState(0);
@@ -150,6 +155,54 @@ export default function Write({ work, item, characters, images }: Props) {
         },
         [flush],
     );
+
+    /** Save everything waiting, now (before publishing or restoring). */
+    const saveNow = useCallback(async () => {
+        while (flying.current) {
+            await new Promise((r) => window.setTimeout(r, 80));
+        }
+        await flush();
+    }, [flush]);
+
+    const flashTimer = useRef(0);
+    const flash = (f: Flash) => {
+        setFlashed(f);
+        window.clearTimeout(flashTimer.current);
+        flashTimer.current = window.setTimeout(() => setFlashed(null), 1800);
+    };
+
+    /* a version opens in place of the page */
+    async function openVersion(v: VersionRow) {
+        await saveNow();
+        const { status, data } = await json<{ body: Record<string, unknown> }>('GET', `${url}/versions/${v.id}`);
+        if (status === 200 && data.body) {
+            setOpen({ version: v, body: data.body });
+            window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+        }
+    }
+
+    async function restore() {
+        if (!open) {
+            return;
+        }
+        await saveNow();
+        const { status, data } = await json<PublishState & { body: Record<string, unknown> }>('POST', `${url}/versions/${open.version.id}/restore`);
+        if (status !== 200 || !data.body || !view.current) {
+            say('That didn’t restore. Try again.');
+
+            return;
+        }
+        let doc = fromStored(data.body as never, images);
+        if (kind === 'poem') {
+            doc = asPoem(doc);
+        }
+        const v = view.current;
+        v.updateState(EditorState.create({ doc, plugins: v.state.plugins }));
+        setWords(wordsIn(v));
+        setPub(data as PublishState);
+        setOpen(null);
+        say('Restored as your draft');
+    }
 
     /* leaving the page saves what's left, even as the page goes */
     useEffect(() => {
@@ -235,6 +288,8 @@ export default function Write({ work, item, characters, images }: Props) {
                     const next = v.state.apply(tr);
                     v.updateState(next);
                     if (tr.docChanged) {
+                        /* a published chapter with edits waiting: Update */
+                        setPub((p) => (p.state === 'pub' ? { ...p, state: 'chg' } : p));
                         bodyDirty.current = true;
                         queue(null);
                         setWords(wordsIn(v));
@@ -400,15 +455,26 @@ export default function Write({ work, item, characters, images }: Props) {
                         <span>{work.title}</span>
                     </Link>
                     <span className="wa-sp" />
-                    <SaveNote state={save} id="sv" />
+                    <SaveNote state={save} flash={flashed} id="sv" />
                     <ViewSite />
                     <button className="ad-ic fo" id="foB" type="button" aria-label="Full screen" aria-pressed={focus} onClick={() => setFocus(true)}>
                         <FullIcon />
                     </button>
                     <ThemeMenu />
+                    <PublishControls
+                        url={url}
+                        part={part}
+                        words={words}
+                        pub={pub}
+                        setPub={setPub}
+                        flush={saveNow}
+                        flash={flash}
+                        say={say}
+                        label={work.multi ? `${work.collection ? ({ poem: 'poem', essay: 'essay' } as Record<string, string>)[kind] ?? 'story' : 'chapter'} ${item.number}` : work.title}
+                    />
                 </header>
                 <div className="wa-body">
-                    <div className={`w-page k-${part ? 'part' : kind}`} id="pg" ref={page}>
+                    <div className={`w-page k-${part ? 'part' : kind}${open ? ' vmode' : ''}`} id="pg" ref={page}>
                         {part ? (
                             <PartOpener work={work} item={item} kick={kick} quote={quote} setQuote={setQuote} queue={queue} titleEl={titleEl} />
                         ) : (
@@ -457,18 +523,25 @@ export default function Write({ work, item, characters, images }: Props) {
                                     )}
                                 </div>
                                 {quote && <QuoteBlock quote={quote} onChange={(q) => queue({ quote: q })} onRemove={() => (setQuote(null), queue({ quote: null }, 0))} onDone={() => view.current?.focus()} />}
-                                <div ref={mount} />
+                                <div ref={mount} hidden={!!open} />
+                                {open && <VersionView version={open.version} body={open.body as never} current={view.current ? toStored(view.current.state.doc) : null} onBack={() => setOpen(null)} onRestore={restore} />}
                                 <PlusMenu view={v} kind={kind} onImage={() => file.current?.click()} run={run} />
                             </>
                         )}
                     </div>
                 </div>
             </main>
-            <nav className="wa-bar" id="bar" aria-label="Writing">
-                <span className="f" id="wc">
-                    {part ? 'Part page · 2 pages' : `${fmt(words)} ${words === 1 ? 'word' : 'words'}${words ? ` · ≈ ${Math.ceil(words / 280)} ${Math.ceil(words / 280) === 1 ? 'page' : 'pages'}` : ''}`}
-                </span>
-            </nav>
+            <BarPanels
+                work={work}
+                itemId={item.id}
+                part={part}
+                words={words}
+                rows={chapters}
+                pub={pub}
+                current={() => (view.current ? toStored(view.current.state.doc) : null)}
+                onOpenVersion={openVersion}
+                countLabel={part ? 'Part page · 2 pages' : `${fmt(words)} ${words === 1 ? 'word' : 'words'}${words ? ` · ≈ ${Math.ceil(words / 280)} ${Math.ceil(words / 280) === 1 ? 'page' : 'pages'}` : ''}`}
+            />
             {!part && <SelectionBar view={v} kind={kind} linking={linking} setLinking={setLinking} run={run} />}
             {!part && (
                 <div className="w-kbrow" id="kbrow" role="toolbar" aria-label="Format" ref={kbrow} onMouseDown={(e) => e.preventDefault()}>
@@ -526,7 +599,7 @@ export default function Write({ work, item, characters, images }: Props) {
                 </div>
             )}
             <div className="w-fx" id="fx">
-                <SaveNote state={save} id="sv2" />
+                <SaveNote state={save} flash={flashed} id="sv2" />
                 <button className="ad-ic" id="fxB" type="button" aria-label="Leave full screen" onClick={() => setFocus(false)}>
                     <FullIcon />
                 </button>
@@ -540,11 +613,15 @@ export default function Write({ work, item, characters, images }: Props) {
 }
 
 /* ---------------------------------------------------------------- pieces of the page */
-function SaveNote({ state, id }: { state: SaveState; id: string }) {
+const FLASH = { pub: 'Published', upd: 'Updated', sch: 'Scheduled', unpub: 'Unpublished' } as const;
+
+function SaveNote({ state, flash, id }: { state: SaveState; flash: Flash; id: string }) {
+    const shown = flash && state !== 'bad' ? FLASH[flash] : null;
+
     return (
-        <span className="k-saved" id={id} aria-live="polite" data-s={state === 'bad' ? 'bad' : state}>
-            <span className="i">{state === 'saving' ? <span className="w-rg" /> : state === 'bad' ? <Alert /> : <Tick />}</span>
-            <span className="t">{state === 'saving' ? 'Saving…' : state === 'bad' ? 'Not saved' : 'Saved'}</span>
+        <span className="k-saved" id={id} aria-live="polite" data-s={shown ? 'saved' : state}>
+            <span className="i">{shown ? <Tick /> : state === 'saving' ? <span className="w-rg" /> : state === 'bad' ? <Alert /> : <Tick />}</span>
+            <span className="t">{shown ?? (state === 'saving' ? 'Saving…' : state === 'bad' ? 'Not saved' : 'Saved')}</span>
         </span>
     );
 }
