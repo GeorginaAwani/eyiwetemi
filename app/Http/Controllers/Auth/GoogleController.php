@@ -38,7 +38,10 @@ class GoogleController extends Controller
     {
         try {
             $google = Socialite::driver('google')->user();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            /* the reader sees a short line; the log keeps why (wrong keys, an old state, a cancelled picker) */
+            report($e);
+
             return $this->back($request, ['view' => 'main', 'error' => 'Google didn’t sign you in. Try again.']);
         }
 
