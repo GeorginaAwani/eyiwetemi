@@ -3,11 +3,10 @@ import "../css/app.css";
 import { createInertiaApp } from "@inertiajs/react";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createRoot } from "react-dom/client";
-
-const appName = import.meta.env.VITE_APP_NAME || "Eyiwetemi";
+import { wirePageChange } from "./lib/motion";
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => (title ? `${title} · eyiwetemi` : "eyiwetemi"),
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.tsx`,
@@ -18,7 +17,8 @@ createInertiaApp({
 
         root.render(<App {...props} />);
     },
-    progress: {
-        color: "#4B5563",
-    },
+    /* no bar loader: the page change is the old page going faint and the wordmark's dots bobbing */
+    progress: false,
 });
+
+wirePageChange();

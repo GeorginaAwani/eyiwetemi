@@ -117,6 +117,25 @@ class WorkFactory extends Factory
     }
 
     /**
+     * Indicate that the work has been published.
+     */
+    public function published(): static
+    {
+        return $this->state(fn (): array => [
+            'first_published_at' => now()->subMonth(),
+            'last_published_at' => now()->subDay(),
+        ]);
+    }
+
+    /**
+     * Indicate that the work is announced as coming soon and has nothing out yet.
+     */
+    public function comingSoon(): static
+    {
+        return $this->state(['status' => WorkStatus::ComingSoon, 'first_published_at' => null, 'last_published_at' => null]);
+    }
+
+    /**
      * Normalise a title the way title_key is stored: lowercase with collapsed whitespace.
      */
     public static function titleKey(string $title): string

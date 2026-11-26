@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+<style>.t{fill:#F5F0E6}.s1,.b2{fill:#A24F68}.s2{fill:#1E1C1D}.b1{fill:#DD6F94}
+@media (prefers-color-scheme:dark){.t{fill:#151314}.s1,.b2{fill:#D495A8}.s2{fill:#EEEBEA}}</style>
+<rect class="t" width="16" height="16" rx="3"/>
+<rect class="b1" x="2" y="3" width="5" height="2"/><rect class="s1" x="4" y="6" width="3" height="7"/>
+<rect class="b2" x="9" y="3" width="5" height="2"/><rect class="s2" x="9" y="6" width="3" height="7"/>
+</svg>
