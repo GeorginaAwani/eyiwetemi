@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\PublishController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SeriesController;
 use App\Http\Controllers\Admin\SignInController;
+use App\Http\Controllers\Admin\SweepController;
 use App\Http\Controllers\Admin\WorkController;
 use App\Http\Controllers\Admin\WorkCoverController;
 use App\Http\Controllers\Admin\WorkReviewerController;
@@ -85,6 +86,10 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::post('/works/{work:slug}/write/{item}/unpublish', [PublishController::class, 'unpublish'])->whereNumber('item')->name('works.unpublish');
     Route::get('/works/{work:slug}/write/{item}/versions/{version}', [PublishController::class, 'version'])->whereNumber(['item', 'version'])->name('works.version');
     Route::post('/works/{work:slug}/write/{item}/versions/{version}/restore', [PublishController::class, 'restore'])->whereNumber(['item', 'version'])->name('works.version.restore');
+    Route::post('/works/{work:slug}/sweep/names', [SweepController::class, 'store'])->name('sweep.names.store');
+    Route::delete('/works/{work:slug}/sweep/names/{name}', [SweepController::class, 'destroy'])->whereNumber('name')->name('sweep.names.destroy');
+    Route::patch('/works/{work:slug}/sweep/mark', [SweepController::class, 'mark'])->name('sweep.mark');
+    Route::get('/works/{work:slug}/sweep/pages', [SweepController::class, 'pages'])->name('sweep.pages');
     Route::get('/works/{work:slug}/opening', [ChapterController::class, 'opening'])->name('works.opening');
     Route::patch('/works/{work:slug}/opening', [ChapterController::class, 'saveOpening'])->name('works.opening.save');
     Route::post('/works/{work:slug}/items', [ChapterController::class, 'store'])->name('works.items.store');
