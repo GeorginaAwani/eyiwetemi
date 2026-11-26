@@ -13,7 +13,9 @@ use App\Models\WorkItem;
 use App\Models\WritingDay;
 use App\Support\ChaptersAdmin;
 use App\Support\ImageStore;
+use App\Support\PlanPage;
 use App\Support\Prose;
+use App\Support\SweepNames;
 use App\Support\WorkPresenter;
 use App\Support\WritePage;
 use Illuminate\Http\JsonResponse;
@@ -83,6 +85,8 @@ class WriteController extends Controller
             'images' => self::images($item->draft_body ?? $item->live_body),
             'publish' => WritePage::state($item),
             'chapters' => $multi ? ChaptersAdmin::rows($work) : [],
+            'plan' => $work->kind === WorkKind::Poem ? null : PlanPage::props($work),
+            'sweep' => ['names' => SweepNames::list($work), 'mark' => $work->mark_names],
         ]);
     }
 

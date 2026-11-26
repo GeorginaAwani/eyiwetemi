@@ -7,12 +7,17 @@ import { KSelect, Unfold } from '../../Components/admin/Controls';
 import { BreakIcon, FootnoteIcon, FullIcon, ImageIcon, KeyboardDown, LinkIcon, ListIcon, MusicIcon, QuoteIcon } from '../../Components/admin/editor/icons';
 import { addFootnote, asPoem, bulletList, closeFootnote, editorPlugins, inQuote, insertImage, Kind, sceneBreak, setLink, toggleBold, toggleItalic, toggleQuote, topBlock } from '../../Components/admin/editor/plugins';
 import { ChapterRow } from '../../Components/admin/editor/chapters';
-import { BarPanels, Flash, PublishControls, PublishState, VersionRow, VersionView } from '../../Components/admin/editor/publish';
+import { BarPanels, Flash, Panel, PublishControls, PublishState, VersionRow, VersionView } from '../../Components/admin/editor/publish';
+import PlanPanel, { CardBody } from '../../Components/admin/editor/PlanPanel';
 import { fromStored, schema, toStored } from '../../Components/admin/editor/schema';
+import { hitsInView, markNames, SweepName, termsOf, wordRx } from '../../Components/admin/editor/sweep';
+import SweepPanel from '../../Components/admin/editor/SweepPanel';
+import type { Plan } from '../../Components/admin/PlanTab';
 import { Alert, BackSmall, Close, Plus, Saved as Tick } from '../../Components/admin/Icons';
 import { heading } from '../../lib/headings';
 import { json } from '../../lib/http';
 import { prefersReducedMotion } from '../../lib/motion';
+import { tone } from '../../lib/tone';
 
 type Work = {
     slug: string;
@@ -42,7 +47,7 @@ type Item = {
     soundtrack: Soundtrack;
     quote: Quote;
 };
-type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string>; publish: PublishState; chapters: ChapterRow[] };
+type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string>; publish: PublishState; chapters: ChapterRow[]; plan: Plan | null; sweep: { names: SweepName[]; mark: boolean } };
 type SaveState = 'saving' | 'saved' | 'bad';
 
 /** The reader's marks between scenes, as the prototype names them. */
@@ -74,7 +79,7 @@ function wordsIn(view: EditorView | null): number {
  * POV, soundtrack and heading quote), saving as she types. A selection bar formats on a computer, a button row
  * above the keyboard on a phone; Full screen hides everything but the page.
  */
-export default function Write({ work, item, characters, images, publish, chapters }: Props) {
+export default function Write({ work, item, characters: chars0, images, publish, chapters, plan: plan0, sweep }: Props) {
     const part = item.type === 'part';
     const kind = work.kind;
     const [save, setSave] = useState<SaveState>('saved');
@@ -85,6 +90,14 @@ export default function Write({ work, item, characters, images, publish, chapter
     const [flashed, setFlashed] = useState<Flash>(null);
     const [open, setOpen] = useState<{ version: VersionRow; body: Record<string, unknown> } | null>(null);
     const [pov, setPov] = useState<number | null>(item.pov);
+    const [plan, setPlan] = useState<Plan | null>(plan0);
+    const [names, setNames] = useState<SweepName[]>(sweep.names);
+    const [mark, setMark] = useState(sweep.mark);
+    const [panel, setPanel] = useState<Panel>('');
+    const [sweepNames, setSweepNames] = useState(false);
+    const [addingName, setAddingName] = useState(false);
+    const [card, setCard] = useState<{ id: number; rect: DOMRect } | null>(null);
+    const characters = plan ? plan.chars.map((c) => ({ id: c.id, name: c.name })) : chars0;
     const [quote, setQuote] = useState<Quote>(item.quote);
     const [tick, setTick] = useState(0);
     const view = useRef<EditorView | null>(null);
@@ -443,6 +456,59 @@ export default function Write({ work, item, characters, images, publish, chapter
     const privateTitle = kind === 'novel' && !part && !work.showChapterTitles;
     const v = view.current;
     void tick;
+    const unswept = v && !part ? hitsInView(v, item.id, termsOf(names, [])).length : 0;
+
+    /* plain names faintly marked while writing */
+    useEffect(() => markNames(view.current, names, mark));
+
+    /* tap a marked name: their card */
+    useEffect(() => {
+        const ed = view.current?.dom;
+        if (!ed || !plan) {
+            return;
+        }
+        const click = (e: MouseEvent) => {
+            if (!mark || getSelection()?.toString()) {
+                return;
+            }
+            const doc = document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null; caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null };
+            let node: Node | null = null;
+            let off = 0;
+            if (doc.caretPositionFromPoint) {
+                const c = doc.caretPositionFromPoint(e.clientX, e.clientY);
+                node = c?.offsetNode ?? null;
+                off = c?.offset ?? 0;
+            } else if (doc.caretRangeFromPoint) {
+                const r = doc.caretRangeFromPoint(e.clientX, e.clientY);
+                node = r?.startContainer ?? null;
+                off = r?.startOffset ?? 0;
+            }
+            if (!node || node.nodeType !== 3) {
+                setCard(null);
+
+                return;
+            }
+            const t = (node as Text).data;
+            for (const c of plan.chars) {
+                for (const n of [c.name, c.typedAs, ...c.aliases].filter(Boolean)) {
+                    for (const m of t.matchAll(wordRx(n))) {
+                        if (off >= m.index! && off <= m.index! + m[0].length) {
+                            const r = document.createRange();
+                            r.setStart(node, m.index!);
+                            r.setEnd(node, m.index! + m[0].length);
+                            setCard({ id: c.id, rect: r.getBoundingClientRect() });
+
+                            return;
+                        }
+                    }
+                }
+            }
+            setCard(null);
+        };
+        ed.addEventListener('click', click);
+
+        return () => ed.removeEventListener('click', click);
+    }, [plan, mark, tick]);
 
     return (
         <>
@@ -469,6 +535,8 @@ export default function Write({ work, item, characters, images, publish, chapter
                         setPub={setPub}
                         flush={saveNow}
                         flash={flash}
+                        unswept={unswept}
+                        openSweep={() => setPanel('sweep')}
                         say={say}
                         label={work.multi ? `${work.collection ? ({ poem: 'poem', essay: 'essay' } as Record<string, string>)[kind] ?? 'story' : 'chapter'} ${item.number}` : work.title}
                     />
@@ -505,12 +573,33 @@ export default function Write({ work, item, characters, images, publish, chapter
                                             listClassName="w-lb2"
                                             label="POV"
                                             value={pov ? String(pov) : ''}
-                                            options={[...characters.map((c) => ({ value: String(c.id), label: c.name })), { value: '', label: 'No POV' }]}
+                                            options={[...characters.map((c) => ({ value: String(c.id), label: c.name })), { value: '', label: 'No POV' }, ...(plan ? [{ value: '__add', label: 'Add a name', add: true }] : [])]}
                                             display={<span className={`v${pov ? '' : ' w-phx'}`}>{characters.find((c) => c.id === pov)?.name ?? 'POV'}</span>}
                                             onPick={(val) => {
+                                                if (val === '__add') {
+                                                    setAddingName(true);
+
+                                                    return;
+                                                }
                                                 const id = val ? Number(val) : null;
                                                 setPov(id);
                                                 queue({ pov: id }, 0);
+                                            }}
+                                        />
+                                    )}
+                                    {kind === 'novel' && plan && (
+                                        <NewPov
+                                            show={addingName}
+                                            onCancel={() => setAddingName(false)}
+                                            onCreate={async (name) => {
+                                                const { data } = await json<{ plan: Plan }>('POST', `/works/${work.slug}/plan/characters`, { name });
+                                                const made = data.plan?.chars.find((c) => c.name === name) ?? data.plan?.chars[data.plan.chars.length - 1];
+                                                if (data.plan && made) {
+                                                    setPlan(data.plan);
+                                                    setPov(made.id);
+                                                    queue({ pov: made.id }, 0);
+                                                }
+                                                setAddingName(false);
                                             }}
                                         />
                                     )}
@@ -540,6 +629,39 @@ export default function Write({ work, item, characters, images, publish, chapter
                 pub={pub}
                 current={() => (view.current ? toStored(view.current.state.doc) : null)}
                 onOpenVersion={openVersion}
+                panel={panel}
+                setPanel={(p) => {
+                    setSweepNames(false);
+                    setPanel(p);
+                }}
+                planNode={plan ? <PlanPanel plan={plan} setPlan={setPlan} slug={work.slug} itemId={item.id} isPart={part} text={v ? v.state.doc.textContent : ''} pov={pov} /> : null}
+                sweepNode={
+                    part ? null : (
+                        <SweepPanel
+                            view={v}
+                            slug={work.slug}
+                            itemId={item.id}
+                            multi={work.multi}
+                            novel={kind === 'novel'}
+                            unit={work.collection ? (({ poem: 'poem', essay: 'essay' } as Record<string, string>)[kind] ?? 'story') : 'chapter'}
+                            names={names}
+                            setNames={setNames}
+                            mark={mark}
+                            setMark={(on) => {
+                                setMark(on);
+                                json('PATCH', `/works/${work.slug}/sweep/mark`, { on });
+                            }}
+                            say={say}
+                            startOnNames={sweepNames}
+                            kick={(id) => {
+                                const r = chapters.find((c) => c.id === id);
+
+                                return r ? (work.collection ? `${r.number}` : heading(r.number, 'Chapter', work.headingStyle)) : '';
+                            }}
+                        />
+                    )
+                }
+                sweepCount={unswept}
                 countLabel={part ? 'Part page · 2 pages' : `${fmt(words)} ${words === 1 ? 'word' : 'words'}${words ? ` · ≈ ${Math.ceil(words / 280)} ${Math.ceil(words / 280) === 1 ? 'page' : 'pages'}` : ''}`}
             />
             {!part && <SelectionBar view={v} kind={kind} linking={linking} setLinking={setLinking} run={run} />}
@@ -604,6 +726,22 @@ export default function Write({ work, item, characters, images, publish, chapter
                     <FullIcon />
                 </button>
             </div>
+            {card && plan && plan.chars.find((c) => c.id === card.id) && (
+                <div
+                    className="pl-card fl"
+                    role="dialog"
+                    aria-label={plan.chars.find((c) => c.id === card.id)!.name}
+                    style={{ width: Math.min(320, window.innerWidth - 32), left: Math.max(16, Math.min(card.rect.left + window.scrollX - 30, window.innerWidth - Math.min(320, window.innerWidth - 32) - 16)), top: card.rect.bottom + window.scrollY + 10 }}
+                >
+                    <div className="hd">
+                        <b>{plan.chars.find((c) => c.id === card.id)!.name}</b>
+                        <button className="ad-ic" type="button" aria-label="Close" onClick={() => setCard(null)}>
+                            <Close size={16} />
+                        </button>
+                    </div>
+                    <CardBody c={plan.chars.find((c) => c.id === card.id)!} plan={plan} slug={work.slug} full={false} />
+                </div>
+            )}
             <div className={`w-toast${toast ? ' on' : ''}`} id="toast" role="status" aria-live="polite">
                 {toast}
             </div>
@@ -1104,5 +1242,57 @@ function LinkField({ onDone }: { onDone: (href: string | null) => void }) {
                 <Close size={14} width={2} />
             </button>
         </>
+    );
+}
+
+/** Add a name for the POV: it joins the Plan's characters. */
+function NewPov({ show, onCreate, onCancel }: { show: boolean; onCreate: (name: string) => void; onCancel: () => void }) {
+    const [name, setName] = useState('');
+    const input = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (show) {
+            setName('');
+            window.setTimeout(() => input.current?.focus(), prefersReducedMotion() ? 0 : 120);
+        }
+    }, [show]);
+
+    return (
+        <div className="wc-sndw">
+        <div className={`w-sndp w-povp${show ? ' open' : ''}`} role="dialog" aria-label="Add a name">
+            <div className="k-f">
+                <label className="k-fl" htmlFor="povN">
+                    Name
+                </label>
+                <span className="k-in">
+                    <input
+                        ref={input}
+                        id="povN"
+                        placeholder="e.g. Xu2 Wei1"
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={name}
+                        onChange={(e) => setName(/[A-Za-zÜüVv][1-5]/.test(e.target.value) ? tone(e.target.value) : e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && name.trim()) {
+                                e.preventDefault();
+                                onCreate(name.trim());
+                            }
+                            if (e.key === 'Escape') {
+                                onCancel();
+                            }
+                        }}
+                    />
+                </span>
+            </div>
+            <div className="acts">
+                <button className="w-act" type="button" onClick={onCancel}>
+                    Cancel
+                </button>
+                <button className="k-btn line sm" type="button" disabled={!name.trim()} onClick={() => onCreate(name.trim())}>
+                    <span>Add</span>
+                </button>
+            </div>
+        </div>
+        </div>
     );
 }

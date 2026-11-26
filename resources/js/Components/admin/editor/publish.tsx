@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { inertWhen } from '../../../lib/dom';
 import { heading } from '../../../lib/headings';
 import { json } from '../../../lib/http';
@@ -7,11 +7,12 @@ import { prefersReducedMotion } from '../../../lib/motion';
 import { KSelect, loading, Unfold } from '../Controls';
 import { Globe, Plus, Ring } from '../Icons';
 import { ChapterRow, StateFact, watDay, watTime, watWhen } from './chapters';
-import { ChaptersIcon, Clock15, Clock18, VersionsIcon } from './icons';
+import { ChaptersIcon, Clock15, Clock18, PlanIcon, SweepIcon, VersionsIcon } from './icons';
 
 export type VersionRow = { id: number; label: string; at: string; words: number; added: number; cut: number };
 export type PublishState = { state: 'draft' | 'sch' | 'pub' | 'chg' | 'unpub'; scheduledAt: string | null; liveAt: string | null; audience: string; versions: VersionRow[] };
 export type Flash = 'pub' | 'upd' | 'sch' | 'unpub' | null;
+export type Panel = '' | 'chap' | 'plan' | 'sweep' | 'ver';
 type Json = { type: string; attrs?: Record<string, unknown>; content?: Json[]; text?: string };
 
 /* ---------------------------------------------------------------- changes between two pages, word by word (as the prototype) */
@@ -162,6 +163,8 @@ export function PublishControls({
     flash,
     say,
     label,
+    unswept = 0,
+    openSweep,
 }: {
     url: string;
     part: boolean;
@@ -172,8 +175,10 @@ export function PublishControls({
     flash: (f: Flash) => void;
     say: (t: string) => void;
     label: string;
+    unswept?: number;
+    openSweep?: () => void;
 }) {
-    const [kind, setKind] = useState<'' | 'pub' | 'sch'>('');
+    const [kind, setKind] = useState<'' | 'pub' | 'sch' | 'chk'>('');
     const [busy, setBusy] = useState('');
     const [unpubAsk, setUnpubAsk] = useState(false);
     const [day, setDay] = useState('');
@@ -277,13 +282,43 @@ export function PublishControls({
                 aria-expanded={kind === 'pub'}
                 aria-busy={busy === 'pub'}
                 disabled={!part && (s === 'draft' || s === 'unpub') && !words}
-                onClick={() => (s === 'pub' && !part ? setKind(kind === 'pub' ? '' : 'pub') : publish())}
+                onClick={() => (s === 'pub' && !part ? setKind(kind === 'pub' ? '' : 'pub') : !part && unswept > 0 && kind !== 'chk' ? setKind('chk') : kind === 'chk' ? setKind('') : publish())}
             >
                 <span>{pubLabel}</span>
                 <Ring />
             </button>
             <div className={`w-scrim clear${kind ? ' on' : ''}`} />
             <div ref={pop} className={`w-pan wa-pop${kind ? ' open' : ''}`} id="pop" role="dialog" tabIndex={-1} aria-label={kind === 'sch' ? 'Schedule' : 'Published'} {...inertWhen(!kind)}>
+                {kind === 'chk' && (
+                    <>
+                        <div className="w-ph" style={{ margin: 0 }}>
+                            <h2>{s === 'chg' ? 'Update' : s === 'sch' ? 'Publish now' : 'Publish'}</h2>
+                        </div>
+                        <div className="w-chk">
+                            <SweepIcon />
+                            <span>
+                                {unswept} {unswept === 1 ? 'name' : 'names'} not swept
+                            </span>
+                            <button
+                                className="w-act"
+                                type="button"
+                                onClick={() => {
+                                    setKind('');
+                                    openSweep?.();
+                                }}
+                            >
+                                Sweep first
+                            </button>
+                        </div>
+                        <div className="w-pf">
+                            <span />
+                            <button className={`k-btn sm${busy === 'pub' ? ' busy' : ''}`} type="button" onClick={publish}>
+                                <span>{s === 'chg' ? 'Update' : s === 'sch' ? 'Publish now' : 'Publish'} anyway</span>
+                                <Ring />
+                            </button>
+                        </div>
+                    </>
+                )}
                 {kind === 'sch' && (
                     <>
                         <div className="w-ph">
@@ -402,6 +437,11 @@ export function BarPanels({
     current,
     onOpenVersion,
     countLabel,
+    panel,
+    setPanel,
+    planNode,
+    sweepNode,
+    sweepCount,
 }: {
     work: Look;
     itemId: number;
@@ -412,8 +452,12 @@ export function BarPanels({
     current: () => Json | null;
     onOpenVersion: (v: VersionRow, index: number) => void;
     countLabel: string;
+    panel: Panel;
+    setPanel: (p: Panel) => void;
+    planNode: ReactNode | null;
+    sweepNode: ReactNode | null;
+    sweepCount: number;
 }) {
-    const [panel, setPanel] = useState<'' | 'chap' | 'ver'>('');
     const [draftDiff, setDraftDiff] = useState<{ add: number; del: number } | null>(null);
     const pan = useRef<HTMLDivElement>(null);
     const unitWord = work.collection ? ({ poem: 'poem', essay: 'essay' } as Record<string, string>)[work.kind] ?? 'story' : 'chapter';
@@ -452,9 +496,11 @@ export function BarPanels({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [panel, pub.versions]);
 
-    const buttons: ['chap' | 'ver', JSX.Element, string][] = [
-        ...(work.multi ? [['chap', <ChaptersIcon />, Units] as ['chap', JSX.Element, string]] : []),
-        ...(part ? [] : [['ver', <VersionsIcon />, 'Versions'] as ['ver', JSX.Element, string]]),
+    const buttons: [Panel, JSX.Element, string, number][] = [
+        ...(work.multi ? [['chap', <ChaptersIcon />, Units, 0] as [Panel, JSX.Element, string, number]] : []),
+        ...(planNode ? [['plan', <PlanIcon />, 'Plan', 0] as [Panel, JSX.Element, string, number]] : []),
+        ...(sweepNode ? [['sweep', <SweepIcon size={19} />, 'Sweep', sweepCount] as [Panel, JSX.Element, string, number]] : []),
+        ...(part ? [] : [['ver', <VersionsIcon />, 'Versions', 0] as [Panel, JSX.Element, string, number]]),
     ];
 
     const newItem = (type: 'chapter' | 'part') => {
@@ -465,10 +511,11 @@ export function BarPanels({
     return (
         <>
             <nav className="wa-bar" id="bar" aria-label="Writing">
-                {buttons.map(([k, icon, text]) => (
+                {buttons.map(([k, icon, text, n]) => (
                     <button key={k} type="button" data-p={k} aria-label={text} aria-expanded={panel === k} className={panel === k ? 'on' : ''} onClick={() => setPanel(panel === k ? '' : k)}>
                         {icon}
                         <span className="l">{text}</span>
+                        {n > 0 && <small className="w-n">{n}</small>}
                     </button>
                 ))}
                 <span className="f" id="wc">
@@ -515,6 +562,8 @@ export function BarPanels({
                         </div>
                     </>
                 )}
+                {panel === 'plan' && planNode}
+                {panel === 'sweep' && sweepNode}
                 {panel === 'ver' && (
                     <>
                         <div className="w-ph">
