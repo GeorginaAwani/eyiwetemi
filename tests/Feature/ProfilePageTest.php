@@ -135,6 +135,23 @@ class ProfilePageTest extends TestCase
             ->where('comments.rows.0.reply.text', 'she really does.'));
     }
 
+    public function test_reviewers_see_what_is_shared_with_them_and_their_open_marks(): void
+    {
+        $reviewer = User::factory()->reviewer()->create();
+        $draft = Work::factory()->novel()->reviewers()->create(['title' => 'The Glass Orchard']);
+        $draft->reviewers()->attach($reviewer, ['created_at' => now()->subDays(3), 'updated_at' => now()]);
+        Comment::factory()->review()->for($reviewer)->count(2)->create(['work_id' => $draft->id]);
+        Comment::factory()->review()->for($reviewer)->create(['work_id' => $draft->id, 'resolved_at' => now()]);
+
+        $this->actingAs($reviewer)->get('/profile')->assertInertia(fn (Assert $page) => $page
+            ->where('shared.0.title', 'The Glass Orchard')
+            ->where('shared.0.private', true)
+            ->where('shared.0.shared', 'Shared '.now()->subDays(3)->setTimezone('Africa/Lagos')->format('j M'))
+            ->where('shared.0.open', 2));
+
+        $this->actingAs(User::factory()->create())->get('/profile')->assertInertia(fn (Assert $page) => $page->where('shared', []));
+    }
+
     public function test_settings_shows_your_account_and_choices(): void
     {
         $user = User::factory()->googleOnly()->create(['username' => 'kemi', 'username_changed_at' => now()->subDays(3), 'preferences' => ['reading' => ['font' => 'sans']]]);

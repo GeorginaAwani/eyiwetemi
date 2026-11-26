@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\CommentAudience;
+use App\Enums\Visibility;
 use App\Enums\WorkKind;
 use App\Enums\WorkStatus;
 use App\Models\Comment;
@@ -45,6 +46,7 @@ class ProfilePage
 
         return [
             'me' => $this->me(),
+            'shared' => $this->shared(),
             'place' => $this->place(),
             'following' => ['count' => $this->followCount(), 'rows' => $following],
             'likes' => ['count' => $this->likeCount(), 'groups' => $this->group($likes)],
@@ -146,6 +148,41 @@ class ProfilePage
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * Shared with me (reviewers): works the author shared with you, newest first, with your marks still open.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function shared(): array
+    {
+        $works = $this->user->reviewableWorks()
+            ->with(WorkPresenter::with())
+            ->orderByPivot('created_at', 'desc')
+            ->get();
+
+        if ($works->isEmpty()) {
+            return [];
+        }
+
+        $open = Comment::query()
+            ->where('user_id', $this->user->id)
+            ->where('audience', CommentAudience::Review)
+            ->whereNull('parent_id')
+            ->whereNull('resolved_at')
+            ->whereIn('work_id', $works->pluck('id'))
+            ->selectRaw('work_id, count(*) as open')
+            ->groupBy('work_id')
+            ->pluck('open', 'work_id');
+
+        return $works->map(fn (Work $work): array => [
+            'id' => $work->id,
+            ...$this->picture($work),
+            'private' => $work->visibility !== Visibility::Public,
+            'shared' => 'Shared '.Reading::day($work->pivot->created_at),
+            'open' => (int) ($open[$work->id] ?? 0),
+        ])->values()->all();
     }
 
     /**

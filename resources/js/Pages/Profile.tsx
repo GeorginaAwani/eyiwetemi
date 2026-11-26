@@ -9,6 +9,7 @@ import { paths } from '@/lib/paths';
 
 type Props = {
     me: { name: string; username: string; seed: string; joined: string };
+    shared: { id: number; title: string; href: string; picture: Picture; private: boolean; shared: string; open: number }[];
     place: {
         work: { title: string; href: string; cover: { src: string | null; color: string; dark: boolean }; kindLabel: string; kind: WorkCard['kind']; isCollection: boolean };
         label: string;
@@ -22,6 +23,13 @@ type Props = {
     likes: { count: number; groups: LikeGroup[] };
     comments: { count: number; rows: CommentRowT[] };
 };
+
+const LOCK = (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <rect x="4" y="11" width="16" height="10" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+);
 
 /** The heading above a section, with "All N" when there's more. */
 function Head({ title, count, href }: { title: string; count: number; href: string }) {
@@ -53,7 +61,7 @@ function Empty({ title, text, link }: { title: string; text: string; link: strin
 }
 
 /** P3 · Newest leads: your place first, then what you follow, then your likes and comments side by side. */
-export default function Profile({ me, place, following, likes, comments }: Props) {
+export default function Profile({ me, shared, place, following, likes, comments }: Props) {
     return (
         <SiteLayout title="Profile">
             <div className="wrap pf3">
@@ -118,6 +126,42 @@ export default function Profile({ me, place, following, likes, comments }: Props
                         <Link className="btn solid" href={paths.library()}>
                             Browse the Library
                         </Link>
+                    </section>
+                )}
+
+                {shared.length > 0 && (
+                    <section className="pf3-sec">
+                        <div className="pf3-sh">
+                            <h2 className="pf-h2b">
+                                Shared with me<small>{shared.length}</small>
+                            </h2>
+                        </div>
+                        <div className="pf-flist">
+                            {shared.map((w, n) => (
+                                <div className="pf-frow" key={w.id} style={{ ['--i' as string]: n }}>
+                                    <Link className="pf-thl" href={w.href}>
+                                        <Th picture={w.picture} title={w.title} w={56} h={84} font={9} />
+                                    </Link>
+                                    <div className="pf-fm">
+                                        <Link className="tl pf-ftl" href={w.href}>
+                                            {w.title}
+                                        </Link>
+                                        <div className="pf-st">
+                                            {w.private && LOCK}
+                                            {w.private ? `Private · ${w.shared}` : w.shared}
+                                        </div>
+                                        {w.open > 0 && (
+                                            <div className="pf-fx2">
+                                                {w.open} open<span className="pf-mk">{w.open === 1 ? 'mark' : 'marks'}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <Link className="btn line pf-open" href={w.href}>
+                                        Open
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
                     </section>
                 )}
 
