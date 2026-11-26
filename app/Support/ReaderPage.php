@@ -279,7 +279,7 @@ class ReaderPage
             ->oldest('id')
             ->get();
 
-        $authorPhoto = $this->authorPhoto();
+        $authorPhoto = self::authorPhoto();
         $replies = $all->whereNotNull('parent_id')->whereNull('deleted_at')->groupBy('parent_id');
         $list = [];
 
@@ -330,7 +330,7 @@ class ReaderPage
     /**
      * Her photo for her own comments: the About portrait.
      */
-    private function authorPhoto(): ?string
+    public static function authorPhoto(): ?string
     {
         $id = SitePage::query()->firstWhere('key', SitePageKey::About)?->live['image'] ?? null;
         $media = $id ? Media::query()->find($id) : null;
