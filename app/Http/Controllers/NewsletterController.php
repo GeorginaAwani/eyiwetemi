@@ -3,16 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SubscribeRequest;
+use App\Mail\ConfirmSubscription;
 use App\Models\Subscriber;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class NewsletterController extends Controller
 {
     /**
      * Sign an email up for new work. The address waits unconfirmed until its owner opens the
-     * confirmation link, and an address already on the list is left as it is, so the reply never
-     * tells anyone whether an email is subscribed.
+     * confirmation link (sent to it now, and again if it signs up again), and an address already on
+     * the list is left as it is, so the reply never tells anyone whether an email is subscribed.
      */
     public function store(SubscribeRequest $request): RedirectResponse
     {
@@ -22,11 +24,15 @@ class NewsletterController extends Controller
         $subscriber = Subscriber::query()->firstWhere('email', $email);
 
         if ($subscriber === null || $subscriber->confirmed_at === null) {
+            $token = Str::random(48);
+
             Subscriber::query()->updateOrCreate(['email' => $email], [
                 'kinds' => $kinds,
                 'manage_token' => $subscriber->manage_token ?? Str::random(48),
-                'confirm_token_hash' => hash('sha256', Str::random(48)),
+                'confirm_token_hash' => hash('sha256', $token),
             ]);
+
+            Mail::to($email)->send(new ConfirmSubscription(route('emails.confirm', $token)));
         }
 
         return back();

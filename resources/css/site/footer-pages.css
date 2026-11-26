@@ -238,3 +238,20 @@
 .fp-none{font-family:var(--A);font-size:15px;color:var(--muted);padding:18px 0}
 /* a format she adds beyond the four gets its own column */
 @media (min-width:961px){.fpc .fpc-row.wide,.fpc .fpc-head.wide{grid-template-columns:44px minmax(0,1fr) repeat(var(--cols),120px)}.fpc .wide .fpc-span{grid-column:3/calc(3 + var(--cols))}}
+/* New work by email: what you get, or off the list */
+.pm{max-width:560px}
+.pm-em{font-family:var(--A);font-size:16px;color:var(--muted);margin-top:10px}
+.pm .checks{margin-top:34px;display:flex;flex-wrap:wrap;gap:14px 26px}
+.pm-go{display:flex;align-items:center;flex-wrap:wrap;gap:18px 28px;margin-top:38px}
+.pm-b{position:relative;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 28px;border-radius:24px;background:var(--ink);color:var(--bg);font-family:var(--A);font-weight:600;font-size:16px;border:0;cursor:pointer;transition:background-color var(--d1,200ms),color var(--d1,200ms),box-shadow var(--d1,200ms),opacity var(--d1,200ms)}
+.pm-b:hover:not(:disabled){background:var(--accent)}
+.pm-b:disabled{opacity:.4;cursor:default}
+.pm-l{font-family:var(--A);font-size:15px;color:var(--ink);background:none;border:0;padding:4px 0;cursor:pointer;transition:color var(--d1,200ms)}
+.pm-l:hover{color:var(--accent)}
+.pm-p{font-family:var(--A);font-size:17px;line-height:27px;color:var(--text);margin-top:14px}
+.pm-p .flink{font-family:var(--A);font-size:17px}
+.pm-v>*{animation:pmIn 480ms cubic-bezier(.22,.8,.2,1) backwards}
+.pm-v>:nth-child(2){animation-delay:70ms}.pm-v>:nth-child(3){animation-delay:140ms}.pm-v>:nth-child(4){animation-delay:210ms}
+@keyframes pmIn{from{opacity:0;filter:blur(4px);transform:translateY(6px)}}
+@media (prefers-reduced-motion:reduce){.pm-v>*{animation:pmFade 200ms linear backwards!important}@keyframes pmFade{from{opacity:0}}}
+footer.no-nl .fgrid>div:nth-child(2){display:none}
