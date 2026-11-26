@@ -32,6 +32,7 @@ export default function SendButton({ state, children, sentLabel, retryLabel, cla
 
     const stateClass = state === 'sending' ? 'is-sending' : state === 'sent' ? 'is-sent' : state === 'failed' ? 'is-failed' : '';
 
+    /* a bare tick or arrow sits in an inline box, so it centres in the button like the words did */
     let content: ReactNode = children;
     if (state === 'sent') {
         content = sentLabel ? (
@@ -40,7 +41,9 @@ export default function SendButton({ state, children, sentLabel, retryLabel, cla
                 {sentLabel}
             </span>
         ) : (
-            <SentTick />
+            <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
+                <SentTick />
+            </span>
         );
     } else if (state === 'failed') {
         content = retryLabel ? (
@@ -49,7 +52,9 @@ export default function SendButton({ state, children, sentLabel, retryLabel, cla
                 {retryLabel}
             </span>
         ) : (
-            <RetryIcon />
+            <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
+                <RetryIcon />
+            </span>
         );
     }
 
