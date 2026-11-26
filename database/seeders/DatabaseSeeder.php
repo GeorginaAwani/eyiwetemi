@@ -2,24 +2,33 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed a local development database with the static prototype's sample content.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (app()->isProduction()) {
+            throw new RuntimeException('Refusing to seed: this is a production environment.');
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            UserSeeder::class,
+            WorkSeeder::class,
+            PlanningSeeder::class,
+            ReviewerSeeder::class,
+            ReaderSeeder::class,
+            NoteSeeder::class,
+            NewsletterSeeder::class,
+            SiteSeeder::class,
+            StatsSeeder::class,
         ]);
     }
 }

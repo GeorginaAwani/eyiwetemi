@@ -1,0 +1,114 @@
+name: security-scan
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - staging
+      - dev
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composer-audit:
+    name: Composer audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Audit composer.lock
+        if: hashFiles('composer.lock') != ''
+        run: |
+          set -o pipefail
+          # composer audit exits non-zero whenever advisories exist; the blocking decision is made below.
+          composer audit --locked --format=json --no-interaction > composer-audit.json || true
+
+          echo "Advisories (severity, advisory, CVE, package, title):"
+          jq -r '.advisories // {} | to_entries[] | .key as $p | .value[]
+                 | [(.severity // "unknown"), .advisoryId, (.cve // "-"), $p, .title] | @tsv' composer-audit.json
+
+          # high and critical fail the build. Advisories with no severity data also fail, so they are not silently passed.
+          blocking=$(jq '[.advisories // {} | .[][]
+                          | select((.severity // "unknown") | ascii_downcase | IN("high", "critical", "unknown"))] | length' composer-audit.json)
+          if [ "$blocking" -gt 0 ]; then
+            echo "::error::$blocking composer advisory(ies) at high or critical severity (or with unknown severity)"
+            exit 1
+          fi
+          echo "No blocking composer advisories."
+
+  yarn-audit:
+    name: Yarn audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Audit yarn.lock (high and critical fail the build)
+        if: hashFiles('yarn.lock') != ''
+        run: |
+          # yarn 1 exits with a severity bitmask that includes moderate even with --level high,
+          # so the blocking decision is made from the summary counts instead.
+          yarn audit --json > yarn-audit.json || true
+          blocking=$(jq -s '[.[] | select(.type == "auditSummary") | .data.vulnerabilities | (.high // 0) + (.critical // 0)] | add // 0' yarn-audit.json)
+          if [ "$blocking" -gt 0 ]; then
+            echo "::error::$blocking yarn advisory(ies) at high or critical severity"
+            yarn audit --level high || true
+            exit 1
+          fi
+          echo "No blocking yarn advisories."
+
+      - name: Report medium and low yarn advisories
+        if: hashFiles('yarn.lock') != ''
+        run: yarn audit || true
+
+  trivy:
+    name: Trivy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Trivy fs scan (HIGH, CRITICAL fail the build)
+        if: hashFiles('composer.lock', 'yarn.lock') != ''
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+
+      - name: Trivy fs scan (MEDIUM, LOW report only)
+        if: hashFiles('composer.lock', 'yarn.lock') != ''
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: MEDIUM,LOW
+          exit-code: '0'
+          format: table
+
+      - name: Trivy config scan (Dockerfiles)
+        if: hashFiles('**/Dockerfile*') != ''
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
