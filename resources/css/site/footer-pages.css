@@ -232,4 +232,9 @@
 .fpc-pane.out{transform:none}
 .fpc-x,.fpc-btn .fp-ch,.fpvb-pht{transition:none}
 .fpc-row a[aria-hidden]:hover .fp-cv{transform:none}
-}
+}/* readings: cancelled, none coming */
+.fp-ev.cancel .fp-et{text-decoration:line-through;text-decoration-thickness:1px;color:var(--muted)}
+.fp-cx{font-family:var(--A);font-size:12px;font-weight:600;color:var(--accent);margin-left:8px;display:inline-block;text-decoration:none}
+.fp-none{font-family:var(--A);font-size:15px;color:var(--muted);padding:18px 0}
+/* a format she adds beyond the four gets its own column */
+@media (min-width:961px){.fpc .fpc-row.wide,.fpc .fpc-head.wide{grid-template-columns:44px minmax(0,1fr) repeat(var(--cols),120px)}.fpc .wide .fpc-span{grid-column:3/calc(3 + var(--cols))}}
