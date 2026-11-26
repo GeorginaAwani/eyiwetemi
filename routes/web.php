@@ -17,6 +17,7 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\WorkController;
@@ -35,6 +36,7 @@ Route::get('/privacy', PrivacyController::class)->name('privacy');
 Route::get('/rss', [FeedController::class, 'index'])->name('rss');
 Route::get('/feed/{kind?}', [FeedController::class, 'show'])->whereIn('kind', ['novels', 'stories', 'poetry', 'essays', 'notes'])->name('feed');
 Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.show');
+Route::get('/search', SearchController::class)->middleware('throttle:60,1')->name('search');
 
 /* yours: private pages, and likes and follows */
 Route::middleware('auth')->group(function () {

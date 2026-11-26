@@ -368,3 +368,30 @@ html .follow:focus-visible,html .fpill:focus-visible{outline:none;box-shadow:0 0
 .tellme .tm-b svg{color:var(--accent);flex:none}
 .tellme:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent);border-radius:4px}
 @media (prefers-reduced-motion:reduce){.tellme>span{transform:none!important;transition:opacity var(--d2) linear,color var(--d1) linear}}
+
+/* search: results as they come, keys move through them, phones get the full width */
+.search .esc{font-size:10px;flex:none}
+.search input::-webkit-search-cancel-button{display:none}
+.search .panel{max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain}
+.search .panel.none{opacity:0!important;visibility:hidden;transition:opacity var(--d2),visibility 0s var(--d2)}
+.search .sl{padding:12px 16px 4px;font-size:10px}
+.search .sgroup:first-child .sl{padding-top:4px}
+.search .res{gap:24px;animation:srIn var(--d2) var(--ease-soft) both}
+.search .res b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search .res span{flex:none;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.search .res.on{background:var(--surf)}
+.search .res:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
+.search .sempty{margin:0;padding:10px 16px;font-family:var(--A);font-size:14px;color:var(--muted)}
+#sClose svg{width:20px;height:20px}
+@keyframes srIn{from{opacity:0}to{opacity:1}}
+@media (max-width:600px){
+  .search .bar{gap:10px;height:76px}
+  .search .bar .wm,.search .esc{display:none}
+  .search .field{height:46px;padding:0 14px}
+  .search .panel{margin-left:0;width:100%;padding:8px;max-height:calc(100dvh - 92px)}
+  .search .res{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;height:auto;min-height:56px;padding:10px 12px}
+  .search .res b{font-size:19px;max-width:100%}
+  .search .res span{max-width:100%}
+  .search .sl{padding-left:12px}
+}
+@media (prefers-reduced-motion:reduce){.search .res{animation:srIn var(--d1) linear both}}
