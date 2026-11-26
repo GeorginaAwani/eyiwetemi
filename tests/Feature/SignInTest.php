@@ -80,6 +80,7 @@ class SignInTest extends TestCase
                 'email' => $user->email,
                 'avatar_seed' => $user->avatar_seed,
                 'reading' => ['size' => 2, 'font' => 'serif', 'width' => 'narrow', 'lines' => 'airy', 'theme' => 'white'],
+                'unread' => 0,
             ]));
     }
 
