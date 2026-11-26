@@ -13,6 +13,7 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('/library', [LibraryController::class, 'index'])->name('library');
 Route::get('/library-rows', [LibraryController::class, 'rows'])->name('library.rows');
 Route::get('/library/{slug}', [WorkController::class, 'show'])->name('works.show');
+Route::get('/library/{slug}/{number}', [WorkController::class, 'chapter'])->whereNumber('number')->name('works.chapter');
 Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.show');
 
 Route::post('/newsletter', [NewsletterController::class, 'store'])

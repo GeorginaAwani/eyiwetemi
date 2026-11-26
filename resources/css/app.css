@@ -4,6 +4,7 @@
 @import "./site/home.css";
 @import "./site/library.css";
 @import "./site/work.css";
+@import "./site/reader.css";
 @plugin "@tailwindcss/typography";
 
 @utility prose-poem {
