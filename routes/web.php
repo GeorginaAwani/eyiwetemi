@@ -24,6 +24,9 @@ use App\Http\Controllers\TermsController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
 
+/* the admin first, on its own host, so the reading site's paths never answer there */
+Route::domain(config('eyiwetemi.admin_domain'))->name('admin.')->group(base_path('routes/admin.php'));
+
 Route::get('/', HomeController::class)->name('home');
 Route::get('/about', AboutController::class)->name('about');
 Route::get('/library', [LibraryController::class, 'index'])->name('library');
