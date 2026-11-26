@@ -77,9 +77,9 @@
 }
 @media (prefers-reduced-motion:reduce){.wl.swap{filter:none}.wr::before,.wr::after{transition:opacity 200ms linear}}
 .panels{display:grid}
-.panel{grid-area:1/1;opacity:0;filter:blur(6px);visibility:hidden;transition:opacity var(--d2) var(--ease-soft),filter var(--d2) var(--ease-soft),visibility 0s linear var(--d2)}
-.panel.on{opacity:1;filter:none;visibility:visible;transition-delay:0s,0s,0s}
-.panel:not(.on){height:0;overflow:hidden}
+.panels>.panel{grid-area:1/1;opacity:0;filter:blur(6px);visibility:hidden;transition:opacity var(--d2) var(--ease-soft),filter var(--d2) var(--ease-soft),visibility 0s linear var(--d2)}
+.panels>.panel.on{opacity:1;filter:none;visibility:visible;transition-delay:0s,0s,0s}
+.panels>.panel:not(.on){height:0;overflow:hidden}
 .mg.ser h2{color:var(--ink)}
 .mg.ser h2 small{line-height:18px}
 .gh{display:flex;align-items:baseline;gap:12px;padding:30px 0 14px;border-top:1px solid var(--line)}

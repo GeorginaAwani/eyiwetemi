@@ -3,6 +3,7 @@ import { ReactNode, useEffect } from "react";
 import Footer from "@/Components/site/Footer";
 import Header from "@/Components/site/Header";
 import NoticeLine from "@/Components/site/NoticeLine";
+import Search from "@/Components/site/Search";
 import SignIn from "@/Components/site/SignIn";
 import { watchReveals } from "@/lib/motion";
 import { FooterPage, Section } from "@/types/site";
@@ -47,6 +48,7 @@ export default function SiteLayout({
                 {children}
             </main>
             <Footer key={`f-${url}`} current={footer} newsletter={newsletter} />
+            <Search />
             <SignIn />
         </>
     );
