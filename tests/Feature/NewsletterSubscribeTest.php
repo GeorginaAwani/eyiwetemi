@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ConfirmSubscription;
 use App\Models\Subscriber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class NewsletterSubscribeTest extends TestCase
@@ -12,6 +14,8 @@ class NewsletterSubscribeTest extends TestCase
 
     public function test_a_new_email_waits_unconfirmed_with_the_kinds_it_picked(): void
     {
+        Mail::fake();
+
         $this->from('/')->post('/newsletter', ['email' => ' Ada@Example.com ', 'kinds' => ['notes', 'novels']])
             ->assertRedirect('/');
 
@@ -21,10 +25,16 @@ class NewsletterSubscribeTest extends TestCase
         $this->assertNull($subscriber->confirmed_at);
         $this->assertNotNull($subscriber->confirm_token_hash);
         $this->assertNotEmpty($subscriber->manage_token);
+        Mail::assertQueued(ConfirmSubscription::class, function (ConfirmSubscription $mail) use ($subscriber): bool {
+            $token = basename($mail->confirmUrl);
+
+            return $mail->hasTo('ada@example.com') && hash('sha256', $token) === $subscriber->confirm_token_hash;
+        });
     }
 
     public function test_an_address_already_on_the_list_is_left_as_it_is(): void
     {
+        Mail::fake();
         $subscriber = Subscriber::factory()->confirmed()->create(['email' => 'ada@example.com', 'kinds' => ['poems']]);
 
         $this->from('/')->post('/newsletter', ['email' => 'ada@example.com', 'kinds' => ['novels']])
@@ -32,6 +42,7 @@ class NewsletterSubscribeTest extends TestCase
 
         $this->assertSame(['poems'], $subscriber->fresh()->kinds);
         $this->assertSame(1, Subscriber::query()->count());
+        Mail::assertNothingQueued();
     }
 
     public function test_it_needs_a_real_email_and_at_least_one_known_kind(): void

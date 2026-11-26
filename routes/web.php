@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\EmailsController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InPrintController;
@@ -31,6 +32,14 @@ Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.sh
 Route::post('/newsletter', [NewsletterController::class, 'store'])
     ->middleware('throttle:6,1')
     ->name('newsletter.subscribe');
+
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/emails/off', [EmailsController::class, 'off'])->name('emails.off');
+    Route::get('/emails/confirm/{token}', [EmailsController::class, 'confirm'])->where('token', '[A-Za-z0-9]{32,64}')->name('emails.confirm');
+    Route::get('/emails/{token}', [EmailsController::class, 'show'])->where('token', '[A-Za-z0-9]{32,64}')->name('emails.show');
+    Route::put('/emails/{token}', [EmailsController::class, 'update'])->where('token', '[A-Za-z0-9]{32,64}')->name('emails.update');
+    Route::delete('/emails/{token}', [EmailsController::class, 'destroy'])->where('token', '[A-Za-z0-9]{32,64}')->name('emails.destroy');
+});
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
