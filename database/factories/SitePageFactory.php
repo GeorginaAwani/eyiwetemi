@@ -54,6 +54,14 @@ class SitePageFactory extends Factory
     }
 
     /**
+     * Indicate that the page is the Terms.
+     */
+    public function terms(): static
+    {
+        return $this->state(['key' => SitePageKey::Terms]);
+    }
+
+    /**
      * Indicate that the draft has been published, with no unpublished changes.
      */
     public function published(): static

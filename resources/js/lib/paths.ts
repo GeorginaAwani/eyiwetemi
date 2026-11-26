@@ -7,6 +7,7 @@ export const paths = {
     inPrint: '/in-print',
     rss: '/rss',
     privacy: '/privacy',
+    terms: '/terms',
 } as const;
 
 export type LibraryTab = 'novel' | 'story' | 'poem' | 'essay';

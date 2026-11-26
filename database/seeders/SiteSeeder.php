@@ -41,18 +41,14 @@ class SiteSeeder extends Seeder
 
     private function pages(): void
     {
-        $privacy = [
-            'updated_on' => $this->site['privacy']['upd'],
-            'sections' => array_map(
-                fn (array $section): array => ['id' => $section['id'], 'heading' => $section['h'], 'html' => str_replace('settings.html', '/settings', $section['html'])],
-                $this->site['privacy']['secs'],
-            ),
-        ];
+        $privacy = $this->contentsPage('privacy');
+        $terms = $this->contentsPage('terms');
 
         $pages = [
             [SitePageKey::About, $this->about(), now()->subDays(1)],
             [SitePageKey::InPrint, $this->inPrint(), now()->subDays(4)],
             [SitePageKey::Privacy, $privacy, $this->wat($this->site['privacy']['upd'].' 09:00')],
+            [SitePageKey::Terms, $terms, $this->wat($this->site['terms']['upd'].' 09:00')],
         ];
 
         foreach ($pages as [$key, $content, $publishedAt]) {
@@ -64,6 +60,26 @@ class SiteSeeder extends Seeder
                 'published_at' => $publishedAt,
             ]);
         }
+    }
+
+    /**
+     * Privacy or Terms: her sections, with prototype page links turned into site addresses.
+     *
+     * @return array{updated_on: string, sections: list<array{id: string, heading: string, html: string}>}
+     */
+    private function contentsPage(string $key): array
+    {
+        return [
+            'updated_on' => $this->site[$key]['upd'],
+            'sections' => array_map(
+                fn (array $section): array => [
+                    'id' => $section['id'],
+                    'heading' => $section['h'],
+                    'html' => str_replace(['settings.html', 'privacy.html', 'terms.html'], ['/settings', '/privacy', '/terms'], $section['html']),
+                ],
+                $this->site[$key]['secs'],
+            ),
+        ];
     }
 
     /**

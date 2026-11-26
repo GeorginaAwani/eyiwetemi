@@ -20,6 +20,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TermsController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,7 @@ Route::get('/notes', [NoteController::class, 'index'])->name('notes');
 Route::get('/notes-older', [NoteController::class, 'older'])->name('notes.older');
 Route::get('/in-print', InPrintController::class)->name('in-print');
 Route::get('/privacy', PrivacyController::class)->name('privacy');
+Route::get('/terms', TermsController::class)->name('terms');
 Route::get('/rss', [FeedController::class, 'index'])->name('rss');
 Route::get('/feed/{kind?}', [FeedController::class, 'show'])->whereIn('kind', ['novels', 'stories', 'poetry', 'essays', 'notes'])->name('feed');
 Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.show');
