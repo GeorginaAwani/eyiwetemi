@@ -76,6 +76,9 @@ class WorkSeeder extends Seeder
     /** @var array<string, Media> */
     private array $mediaByPath = [];
 
+    /** @var array<string, array<string, mixed>> The public prototype's works by slug. */
+    private array $proto = [];
+
     public function run(): void
     {
         $author = User::query()->where('username', 'eyiwetemi')->firstOrFail();
@@ -92,15 +95,70 @@ class WorkSeeder extends Seeder
             $genres[$name] = Genre::forceCreate(['name' => $name, 'position' => $index + 1]);
         }
 
+        $rows = $this->rows();
         $works = [];
 
-        foreach (SeedData::WORKS as $row) {
+        foreach ($rows as $row) {
             $works[$row['slug']] = $this->createWork($row, $series, $genres, $author);
         }
 
-        foreach (SeedData::WORKS as $row) {
+        foreach ($rows as $row) {
             $this->createItems($row, $works[$row['slug']], $works, $author);
         }
+
+        /* singles that also sit in a collection point at it (a piece belongs to one collection) */
+        foreach ($this->proto['midnight-poems']['chapters'] as $chapter) {
+            if ($chapter['piece_slug'] !== null) {
+                $works[$chapter['piece_slug']]->forceFill(['collection_id' => $works['midnight-poems']->id])->save();
+            }
+        }
+    }
+
+    /**
+     * Every work readers see comes from the public prototype (database/seeders/data/prototype.json);
+     * the admin's private drafts are kept from the admin data so the admin pages still have them.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function rows(): array
+    {
+        $data = json_decode((string) file_get_contents(database_path('seeders/data/prototype.json')), true);
+        $admin = collect(SeedData::WORKS)->keyBy('slug');
+        $rows = [];
+
+        foreach ($data['works'] as $work) {
+            $this->proto[$work['slug']] = $work;
+            $extra = $admin[$work['slug']] ?? [];
+            $isCollection = $work['kind'] === 'collection';
+            $adminColor = ($extra['cov'][0] ?? null) === 'col' ? $extra['cov'][1] : null;
+            $color = $work['cover_color'] ?? $adminColor ?? '#F2D7DF';
+
+            $rows[] = [
+                'slug' => $work['slug'],
+                't' => $work['title'],
+                'k' => $isCollection ? $work['collection_kind'] : $work['kind'],
+                'sub' => $isCollection ? 'Collection' : ucfirst($work['kind']),
+                'st' => ['in_progress' => 'prog', 'finished' => 'fin', 'coming_soon' => 'soon'][$work['status']],
+                'vis' => 'pub',
+                'cov' => $work['cover_image'] !== null ? ['img', $work['cover_image']] : ['col', $color],
+                'desc' => $work['blurb'] ?? ($extra['desc'] ?? null),
+                'excerpt' => $work['excerpt'],
+                'genres' => $work['genres'] !== [] && $work['genres'] !== null ? $work['genres'] : ($extra['genres'] ?? []),
+                'series' => $work['series'] !== null ? 'harbour' : null,
+                'book' => $work['series']['position'] ?? null,
+                'notes' => $extra['notes'] ?? '',
+                'likes' => $work['likes'] ?? 0,
+                'comments' => $work['comments'] ?? 0,
+            ];
+        }
+
+        foreach (SeedData::WORKS as $row) {
+            if ($row['vis'] === 'pri' && ! isset($this->proto[$row['slug']])) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -144,8 +202,8 @@ class WorkSeeder extends Seeder
             'content_notes' => ($row['notes'] ?? '') !== '' ? $row['notes'] : null,
             'free_chapters' => $row['slug'] === 'the-second-rain' ? 1 : null,
             'mark_names' => false,
-            'likes_count' => 0,
-            'comments_count' => 0,
+            'likes_count' => $row['likes'] ?? 0,
+            'comments_count' => $row['comments'] ?? 0,
         ]);
 
         $work->genres()->attach(
@@ -171,15 +229,11 @@ class WorkSeeder extends Seeder
             'the-second-rain' => $this->secondRainSpecs(),
             'midnight-poems' => $this->midnightSpecs($works),
             'rain-stories' => $this->rainStoriesSpecs(),
-            default => $this->singlePieceSpecs($row),
+            default => isset($this->proto[$row['slug']]) ? $this->protoPieceSpecs($row) : $this->singlePieceSpecs($row),
         };
 
         foreach ($specs as $index => $spec) {
             $this->createItem($work, $spec, $index + 1, $author);
-        }
-
-        if ($row['slug'] === 'midnight-poems') {
-            $works['small-hours']->forceFill(['collection_id' => $work->id])->save();
         }
 
         $work->forceFill([
@@ -257,16 +311,21 @@ class WorkSeeder extends Seeder
     }
 
     /**
+     * The Ember Gate: the prototype's seven chapters, a week apart up to 19 Nov, then the admin's draft of chapter 8.
+     *
      * @return list<array<string, mixed>>
      */
     private function emberSpecs(): array
     {
-        $titles = [1 => 'The gate in the mud', 3 => 'Ember', 7 => 'Low water'];
+        $chapters = $this->proto['the-ember-gate']['chapters'];
+        $dates = $this->spread('2026-10-01 18:00', '2026-11-19 18:00', count($chapters));
         $specs = [];
 
-        for ($n = 1; $n <= 7; $n++) {
-            $blocks = $n === 3 ? $this->emberChapterThree() : $this->filler('novel', $n);
-            $spec = $this->publishedChapter($titles[$n] ?? null, $blocks, sprintf('2026-10-%02d 18:00', $n * 3));
+        foreach ($chapters as $i => $chapter) {
+            $n = $chapter['n'];
+            $blocks = $this->sized($n === 3 ? $this->emberChapterThree() : $this->filler('novel', $n), $chapter['minutes'], 'novel');
+            $spec = $this->publishedChapter($chapter['title'], $blocks, $dates[$i]);
+            $spec['soundtrack'] = ['https://youtu.be/cE6wxDqdOV0', 'Video Games · Lana Del Rey'];
 
             if ($n === 3) {
                 $spec['epigraph'] = SeedData::QSEED['the-ember-gate']['c3'];
@@ -284,14 +343,19 @@ class WorkSeeder extends Seeder
     }
 
     /**
+     * Starlings: chapter 1 is out (2 Nov); chapter 2 is the admin's draft.
+     *
      * @return list<array<string, mixed>>
      */
     private function starlingsSpecs(): array
     {
+        $first = $this->proto['starlings-go-south-in-september']['chapters'][0];
+
         return [
-            $this->publishedChapter('The last warm day', [
+            $this->publishedChapter($first['title'], $this->sized([
                 ['p', 'The summer of the ferry was the last warm one, though none of them knew it yet.'],
-            ], '2026-11-02 18:00'),
+                ...$this->filler('novel', 1),
+            ], $first['minutes'], 'novel'), '2026-11-02 18:00'),
             array_merge(
                 $this->draftChapter(SeedData::ST_TITLE, $this->seedParagraphs(SeedData::ST)),
                 ['soundtrack' => ['https://youtu.be/o_1aF54DO60', 'Young and Beautiful · Lana Del Rey']],
@@ -300,10 +364,15 @@ class WorkSeeder extends Seeder
     }
 
     /**
+     * Paper Boats: thirty-five chapters out (March 2025 to 12 Nov 2026) in three parts; chapter 36, the last,
+     * is scheduled.
+     *
      * @return list<array<string, mixed>>
      */
     private function paperBoatsSpecs(): array
     {
+        $chapters = collect($this->proto['paper-boats']['chapters'])->keyBy('n');
+        $dates = $this->spread('2025-03-06 18:00', '2026-11-12 18:00', $chapters->count());
         $specs = [];
 
         foreach (SeedData::PB_PARTS as $index => [$numberWord, $title, $description, $numbers]) {
@@ -321,59 +390,266 @@ class WorkSeeder extends Seeder
             $specs[] = $part;
 
             foreach ($numbers as $n) {
-                $specs[] = $this->paperBoatsChapter($n);
+                $specs[] = $this->paperBoatsChapter($n, $chapters[$n], $dates[$n - 1]);
             }
+        }
+
+        $specs[] = [
+            'type' => 'chapter',
+            'title' => null,
+            'status' => PublishStatus::Scheduled,
+            'draft' => $this->filler('novel', 36),
+            'scheduled_at' => $this->wat('2026-11-28 18:00'),
+        ];
+
+        return $specs;
+    }
+
+    /**
+     * @param  array<string, mixed>  $chapter
+     * @return array<string, mixed>
+     */
+    private function paperBoatsChapter(int $n, array $chapter, string $publishedAt): array
+    {
+        $blocks = $this->sized(match ($n) {
+            31 => $this->seedBlocksFromStrings(self::V31_UPD),
+            33 => $this->paperBoatsChapterThirtyThree(),
+            34 => [['p', 'The first drops came at dawn, fat and slow, and nobody in Ogbe believed them.']],
+            default => $this->filler('novel', $n),
+        }, $chapter['minutes'], 'novel');
+
+        $spec = $this->publishedChapter($chapter['title'], $blocks, $publishedAt);
+
+        if ($n === 31) {
+            /* chapter 31 was updated after it went out: its history keeps both versions */
+            $updated = $spec['published_at']->copy()->addDays(6);
+            $spec['draft'] = $this->sized($this->seedBlocksFromStrings(self::V31_NOW), $chapter['minutes'], 'novel');
+            $spec['live_updated_at'] = $updated;
+            $spec['versions'] = [
+                ['published', $spec['published_at'], $this->sized($this->seedBlocksFromStrings(self::V31_OLD), $chapter['minutes'], 'novel')],
+                ['updated', $updated, $blocks],
+            ];
+        }
+
+        return $spec;
+    }
+
+    /**
+     * Salt Season: twelve chapters, January 2025 to 29 Aug 2026.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function saltSeasonSpecs(): array
+    {
+        return $this->chapterSpecs('salt-season', '2025-01-10 18:00', '2026-08-29 18:00', 'novel');
+    }
+
+    /**
+     * The Second Rain: in print, twenty-four chapters with only the first free to read here. Chapter 18 was
+     * pulled back, so it sits as unpublished.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function secondRainSpecs(): array
+    {
+        $minutes = $this->proto['the-second-rain']['chapters'][0]['minutes'];
+        $dates = $this->spread('2025-04-10 18:00', '2026-03-15 18:00', 24);
+        $specs = [];
+
+        foreach ($dates as $i => $date) {
+            $n = $i + 1;
+            $blocks = $this->sized($this->filler('novel', $n), $minutes, 'novel');
+
+            if ($n !== 18) {
+                $specs[] = $this->publishedChapter(null, $blocks, $date);
+
+                continue;
+            }
+
+            $publishedAt = $this->wat($date);
+            $unpublishedAt = $this->wat('2026-11-20 10:00');
+            $specs[] = [
+                'type' => 'chapter',
+                'title' => null,
+                'status' => PublishStatus::Unpublished,
+                'draft' => $blocks,
+                'published_at' => $publishedAt,
+                'live_updated_at' => $unpublishedAt,
+                'versions' => [
+                    ['published', $publishedAt, $blocks],
+                    ['unpublished', $unpublishedAt, $blocks],
+                ],
+            ];
         }
 
         return $specs;
     }
 
     /**
-     * @return array<string, mixed>
+     * Midnight Poems: the prototype's twelve poems; six of them are also single poems, which the collection
+     * points at. One more is scheduled (admin).
+     *
+     * @param  array<string, Work>  $works
+     * @return list<array<string, mixed>>
      */
-    private function paperBoatsChapter(int $n): array
+    private function midnightSpecs(array $works): array
     {
-        $title = SeedData::PB_T[$n - 1];
+        $chapters = $this->proto['midnight-poems']['chapters'];
+        $dates = $this->spread('2024-02-02 22:00', '2026-11-02 22:00', count($chapters));
+        $specs = [];
 
-        if ($n <= 30) {
-            return $this->publishedChapter($title, $this->filler('novel', $n), sprintf(
-                '2026-%02d-%02d 18:00', 6 + intdiv($n, 6), ($n * 3) % 27 + 1,
-            ));
+        foreach ($chapters as $i => $chapter) {
+            if ($chapter['piece_slug'] !== null) {
+                $piece = $works[$chapter['piece_slug']];
+                $specs[] = [
+                    'type' => 'piece',
+                    'title' => $chapter['title'],
+                    'status' => PublishStatus::Published,
+                    'piece_work' => $piece,
+                    'published_at' => $this->wat($dates[$i]),
+                    'live_updated_at' => $this->wat($dates[$i]),
+                ];
+
+                continue;
+            }
+
+            $specs[] = $this->publishedChapter(
+                $chapter['title'],
+                $this->sized($this->poemLines(SeedData::POEM_L), $chapter['minutes'], 'poem'),
+                $dates[$i],
+                'piece',
+            );
         }
 
-        return match ($n) {
-            31 => [
-                'type' => 'chapter',
-                'title' => $title,
-                'status' => PublishStatus::Published,
-                'draft' => $this->seedBlocksFromStrings(self::V31_NOW),
-                'live' => $this->seedBlocksFromStrings(self::V31_UPD),
-                'published_at' => $this->wat('2026-11-12 18:00'),
-                'live_updated_at' => $this->wat('2026-11-18 09:12'),
-                'versions' => [
-                    ['published', $this->wat('2026-11-12 18:00'), $this->seedBlocksFromStrings(self::V31_OLD)],
-                    ['updated', $this->wat('2026-11-18 09:12'), $this->seedBlocksFromStrings(self::V31_UPD)],
-                ],
-            ],
-            32 => [
-                'type' => 'chapter',
-                'title' => $title,
-                'status' => PublishStatus::Scheduled,
-                'draft' => $this->filler('novel', 32),
-                'scheduled_at' => $this->wat('2026-11-28 18:00'),
-            ],
-            33 => [
-                'type' => 'chapter',
-                'title' => $title,
-                'status' => PublishStatus::Draft,
-                'draft' => $this->paperBoatsChapterThirtyThree(),
-                'soundtrack' => ['https://youtu.be/cE6wxDqdOV0', 'Video Games · Lana Del Rey'],
-            ],
-            34 => $this->draftChapter($title, [
-                ['p', 'The first drops came at dawn, fat and slow, and nobody in Ogbe believed them.'],
-            ]),
-            default => $this->draftChapter($title, null),
+        $specs[] = [
+            'type' => 'piece',
+            'title' => 'After the light goes',
+            'status' => PublishStatus::Scheduled,
+            'draft' => $this->poemLines(['The last bulb in the street', '  gives up without a sound.']),
+            'scheduled_at' => $this->wat('2026-12-01 00:00'),
+        ];
+
+        return $specs;
+    }
+
+    /**
+     * Rain Stories: the prototype's eight stories, 2023 to 3 Oct 2026.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function rainStoriesSpecs(): array
+    {
+        return $this->chapterSpecs('rain-stories', '2023-06-10 18:00', '2026-10-03 18:00', 'story', 'piece');
+    }
+
+    /**
+     * Published chapters (or pieces) with the prototype's titles and reading times, spread between two dates.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function chapterSpecs(string $slug, string $from, string $to, string $kind, string $type = 'chapter'): array
+    {
+        $chapters = $this->proto[$slug]['chapters'];
+        $dates = $this->spread($from, $to, count($chapters));
+
+        return array_map(
+            fn (array $chapter, string $date): array => $this->publishedChapter(
+                $chapter['title'],
+                $this->sized($this->filler($kind, $chapter['n']), $chapter['minutes'], $kind),
+                $date,
+                $type,
+            ),
+            $chapters,
+            $dates,
+        );
+    }
+
+    /**
+     * A single story, poem or essay from the prototype: its own opening (the excerpt or first line readers see),
+     * sized to its reading time, out on its date.
+     *
+     * @param  array<string, mixed>  $row
+     * @return list<array<string, mixed>>
+     */
+    private function protoPieceSpecs(array $row): array
+    {
+        $work = $this->proto[$row['slug']];
+        $kind = $work['kind'];
+        $opening = $work['excerpt'] ?? $work['title'];
+
+        $blocks = match ($row['slug']) {
+            'harmattan' => $this->poemLines(explode("\n", SeedData::POEM_LINES)),
+            'small-hours' => $this->poemLines(explode("\n", SeedData::MIDPOEM)),
+            'night-bus' => $this->seedBlocksFromStrings(SeedData::NIGHT_BODY),
+            'on-leaving-home-twice' => $this->essayBlocks(SeedData::ESSAY_BODY),
+            default => $kind === 'poem'
+                ? $this->poemLines([$opening, ...array_slice(self::PLACEHOLDER_POEMS[abs(crc32($row['slug'])) % 3], 1)])
+                : [['p', $opening], ...$this->filler($kind, abs(crc32($row['slug'])) % 3)],
         };
+
+        $spec = $this->publishedChapter(null, $this->sized($blocks, $work['minutes'] ?? 1, $kind), $work['date'].' 18:00', 'piece');
+
+        if ($row['slug'] === 'on-leaving-home-twice') {
+            $spec['soundtrack'] = ['https://open.spotify.com/track/2bG6BG8GbX7d3bW3k3BzJb', 'Spotify'];
+        }
+
+        if ($row['slug'] === 'harmattan') {
+            $spec['soundtrack'] = ['https://youtu.be/cE6wxDqdOV0', 'Video Games · Lana Del Rey'];
+        }
+
+        return [$spec];
+    }
+
+    /**
+     * Pad a stand-in body with more of the same until it takes the prototype's reading time
+     * (the site counts 230 words a minute).
+     *
+     * @param  list<array<int, mixed>>  $blocks
+     * @return list<array<int, mixed>>
+     */
+    private function sized(array $blocks, ?int $minutes, string $kind): array
+    {
+        $minutes = max(1, (int) $minutes);
+        $floor = ($minutes - 1) * 230;
+        $words = fn (array $list): int => ProseBody::words(implode(' ', array_map(
+            fn (array $block): string => isset($block[1]) && is_string($block[1]) ? $block[1] : '',
+            $list,
+        )));
+
+        $more = $kind === 'poem'
+            ? array_merge(...array_map(fn (array $poem): array => [['line', '', 0], ...$this->poemLines($poem)], self::PLACEHOLDER_POEMS))
+            : SeedData::FILL[$kind === 'collection' ? 'story' : $kind] ?? SeedData::FILL['novel'];
+        $more = $kind === 'poem' ? $more : array_map(fn (string $text): array => ['p', $text], $more);
+
+        $i = 0;
+        while ($words($blocks) <= $floor) {
+            $blocks[] = $more[$i % count($more)];
+            $i++;
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * `$count` evenly spaced local times from `$from` to `$to` (WAT), oldest first.
+     *
+     * @return list<string>
+     */
+    private function spread(string $from, string $to, int $count): array
+    {
+        $start = Carbon::createFromFormat('Y-m-d H:i', $from, 'Africa/Lagos');
+        $end = Carbon::createFromFormat('Y-m-d H:i', $to, 'Africa/Lagos');
+
+        if ($count <= 1) {
+            return [$end->format('Y-m-d H:i')];
+        }
+
+        $step = ($end->getTimestamp() - $start->getTimestamp()) / ($count - 1);
+
+        return array_map(
+            fn (int $i): string => $start->copy()->addSeconds((int) round($step * $i))->format('Y-m-d H:i'),
+            range(0, $count - 1),
+        );
     }
 
     /**
@@ -434,110 +710,6 @@ class WorkSeeder extends Seeder
 
         foreach (self::HARBOUR_SONG_TITLES as $index => $title) {
             $specs[] = $this->draftChapter($title, $this->filler('novel', $index + 1));
-        }
-
-        return $specs;
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private function saltSeasonSpecs(): array
-    {
-        $specs = [];
-
-        foreach (self::SALT_SEASON_TITLES as $index => $title) {
-            $n = $index + 1;
-            $specs[] = $this->publishedChapter($title, $this->filler('novel', $n), sprintf(
-                '2025-%02d-%02d 18:00', 1 + $n % 9, 10 + $n % 9,
-            ));
-        }
-
-        return $specs;
-    }
-
-    /**
-     * Eighteen chapters; chapter 18 has been pulled back, so it sits as unpublished.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function secondRainSpecs(): array
-    {
-        $specs = [];
-
-        for ($n = 1; $n <= 17; $n++) {
-            $specs[] = $this->publishedChapter(null, $this->filler('novel', $n), sprintf(
-                '2025-%02d-%02d 18:00', 1 + $n % 9, 10 + $n % 9,
-            ));
-        }
-
-        $publishedAt = $this->wat('2025-01-18 18:00');
-        $unpublishedAt = $this->wat('2026-11-20 10:00');
-        $blocks = $this->filler('novel', 18);
-
-        $specs[] = [
-            'type' => 'chapter',
-            'title' => null,
-            'status' => PublishStatus::Unpublished,
-            'draft' => $blocks,
-            'published_at' => $publishedAt,
-            'live_updated_at' => $unpublishedAt,
-            'versions' => [
-                ['published', $publishedAt, $blocks],
-                ['unpublished', $unpublishedAt, $blocks],
-            ],
-        ];
-
-        return $specs;
-    }
-
-    /**
-     * @param  array<string, Work>  $works
-     * @return list<array<string, mixed>>
-     */
-    private function midnightSpecs(array $works): array
-    {
-        $specs = [];
-
-        $specs[] = [
-            'type' => 'piece',
-            'title' => self::MIDNIGHT_TITLES[0],
-            'status' => PublishStatus::Published,
-            'piece_work' => $works['small-hours'],
-            'published_at' => $this->wat('2026-02-02 22:00'),
-            'live_updated_at' => $this->wat('2026-02-02 22:00'),
-        ];
-
-        for ($n = 2; $n <= 12; $n++) {
-            $specs[] = $this->publishedChapter(
-                self::MIDNIGHT_TITLES[$n - 1],
-                $this->poemLines(SeedData::POEM_L),
-                sprintf('2026-%02d-%02d 22:00', 1 + $n % 9, 1 + $n % 8),
-                'piece',
-            );
-        }
-
-        $specs[] = [
-            'type' => 'piece',
-            'title' => 'After the light goes',
-            'status' => PublishStatus::Scheduled,
-            'draft' => $this->poemLines(['The last bulb in the street', '  gives up without a sound.']),
-            'scheduled_at' => $this->wat('2026-12-01 00:00'),
-        ];
-
-        return $specs;
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private function rainStoriesSpecs(): array
-    {
-        $specs = [];
-
-        foreach (self::RAIN_STORY_TITLES as $index => $title) {
-            $n = $index + 1;
-            $specs[] = $this->publishedChapter($title, $this->filler('story', $n), sprintf('2026-%02d-12 18:00', 1 + $n), 'piece');
         }
 
         return $specs;

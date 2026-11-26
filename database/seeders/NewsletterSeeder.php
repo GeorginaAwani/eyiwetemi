@@ -156,10 +156,10 @@ class NewsletterSeeder extends Seeder
             'stopped_count' => 0,
         ]);
 
-        $chapterThirtyTwo = $this->chapter(Work::query()->where('slug', 'paper-boats')->firstOrFail(), 32);
+        $scheduledChapter = $this->chapter(Work::query()->where('slug', 'paper-boats')->firstOrFail(), 36);
         $scheduledNote = Note::query()->where('status', 'scheduled')->firstOrFail();
 
-        $this->attachItems($send, [$chapterThirtyTwo, $scheduledNote]);
+        $this->attachItems($send, [$scheduledChapter, $scheduledNote]);
     }
 
     /**

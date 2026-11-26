@@ -1,0 +1,1342 @@
+{
+ "source": "Public prototype (Documents/eyiwetemi-design/prototypes/home), extracted 2026-11-26",
+ "works": [
+  {
+   "slug": "the-ember-gate",
+   "title": "The Ember Gate",
+   "kind": "novel",
+   "collection_kind": null,
+   "status": "in_progress",
+   "cover_image": "ember.webp",
+   "cover_color": null,
+   "blurb": "When the tide goes out further than anyone remembers, a gate appears in the harbour mud. Nobody in town will say who built it.",
+   "excerpt": null,
+   "date": "2026-11-19",
+   "started": "May 2026",
+   "series": {
+    "name": "The Harbour books",
+    "position": 2
+   },
+   "genres": [
+    "Fantasy"
+   ],
+   "likes": 688,
+   "comments": 154,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": "The gate in the mud",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 2,
+     "title": null,
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 3,
+     "title": "Ember",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 4,
+     "title": null,
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 5,
+     "title": null,
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 6,
+     "title": null,
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 7,
+     "title": "Low water",
+     "minutes": 14,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "salt-season",
+   "title": "Salt Season",
+   "kind": "novel",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C24E77",
+   "blurb": "A family of salt sellers, a harbour that keeps changing its mind, and the summer everything was weighed.",
+   "excerpt": null,
+   "date": "2026-08-29",
+   "started": "January 2025",
+   "series": {
+    "name": "The Harbour books",
+    "position": 1
+   },
+   "genres": [
+    "Literary fiction"
+   ],
+   "likes": 1208,
+   "comments": 310,
+   "in_print": true,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": "Weighing",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 2,
+     "title": "The harbour master",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 3,
+     "title": "Brine",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 4,
+     "title": "Aunt Tari",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 5,
+     "title": "Low tide",
+     "minutes": 16,
+     "piece_slug": null
+    },
+    {
+     "n": 6,
+     "title": "The scales",
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 7,
+     "title": "A boat from Bonny",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 8,
+     "title": "Salt in the wound",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 9,
+     "title": "Storm season",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 10,
+     "title": "What we sold",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 11,
+     "title": "The last sack",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 12,
+     "title": "After",
+     "minutes": 18,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "harbour-songs",
+   "title": "Harbour Songs",
+   "kind": "novel",
+   "collection_kind": null,
+   "status": "coming_soon",
+   "cover_image": null,
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": null,
+   "date": null,
+   "started": null,
+   "series": {
+    "name": "The Harbour books",
+    "position": 3
+   },
+   "genres": [],
+   "likes": null,
+   "comments": null,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": []
+  },
+  {
+   "slug": "paper-boats",
+   "title": "Paper Boats",
+   "kind": "novel",
+   "collection_kind": null,
+   "status": "in_progress",
+   "cover_image": null,
+   "cover_color": "#977AA0",
+   "blurb": "Every rainy season, Ebi folds a paper boat for the brother the river took. This year, one comes back.",
+   "excerpt": null,
+   "date": "2026-11-12",
+   "started": "March 2025",
+   "series": null,
+   "genres": [
+    "Literary fiction",
+    "Coming of age"
+   ],
+   "likes": 412,
+   "comments": 96,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": "The first rain",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 2,
+     "title": "Folding",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 3,
+     "title": "Ebi",
+     "minutes": 9,
+     "piece_slug": null
+    },
+    {
+     "n": 4,
+     "title": "Gutters",
+     "minutes": 16,
+     "piece_slug": null
+    },
+    {
+     "n": 5,
+     "title": "What the river took",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 6,
+     "title": "Mama’s silence",
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 7,
+     "title": "Market day",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 8,
+     "title": "The fold that holds",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 9,
+     "title": "School again",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 10,
+     "title": "Tide tables",
+     "minutes": 10,
+     "piece_slug": null
+    },
+    {
+     "n": 11,
+     "title": "A letter, unsent",
+     "minutes": 8,
+     "piece_slug": null
+    },
+    {
+     "n": 12,
+     "title": "Harmattan",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 13,
+     "title": "The new boy",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 14,
+     "title": "Flood warning",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 15,
+     "title": "Small boats",
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 16,
+     "title": "Church on the hill",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 17,
+     "title": "Counting",
+     "minutes": 9,
+     "piece_slug": null
+    },
+    {
+     "n": 18,
+     "title": "The ferry strike",
+     "minutes": 16,
+     "piece_slug": null
+    },
+    {
+     "n": 19,
+     "title": "Wet season",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 20,
+     "title": "Ink",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 21,
+     "title": "The second boat",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 22,
+     "title": "What Ebi knew",
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 23,
+     "title": "A name in the water",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 24,
+     "title": "Night swim",
+     "minutes": 10,
+     "piece_slug": null
+    },
+    {
+     "n": 25,
+     "title": "The bridge",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 26,
+     "title": "Rope",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 27,
+     "title": "Lagoon light",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 28,
+     "title": "Ebb",
+     "minutes": 9,
+     "piece_slug": null
+    },
+    {
+     "n": 29,
+     "title": "Before the storm",
+     "minutes": 15,
+     "piece_slug": null
+    },
+    {
+     "n": 30,
+     "title": "The long night the whole street came out to watch the river take the market",
+     "minutes": 17,
+     "piece_slug": null
+    },
+    {
+     "n": 31,
+     "title": "Lanterns",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 32,
+     "title": "Morning, after",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 33,
+     "title": "The boy at the jetty who would not give his name",
+     "minutes": 13,
+     "piece_slug": null
+    },
+    {
+     "n": 34,
+     "title": "Fold again",
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 35,
+     "title": "One comes back",
+     "minutes": 16,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "starlings-go-south-in-september",
+   "title": "Starlings Go South In September",
+   "kind": "novel",
+   "collection_kind": null,
+   "status": "in_progress",
+   "cover_image": null,
+   "cover_color": "#DD6F94",
+   "blurb": "Every September the starlings leave for somewhere warmer. Every September, Ada swears she’ll follow them.",
+   "excerpt": null,
+   "date": "2026-11-02",
+   "started": "November 2026",
+   "series": null,
+   "genres": [
+    "Historical fiction",
+    "Romance"
+   ],
+   "likes": 96,
+   "comments": 12,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": "The last warm day",
+     "minutes": 11,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "the-second-rain",
+   "title": "The Second Rain",
+   "kind": "novel",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#7E3550",
+   "blurb": null,
+   "excerpt": null,
+   "date": "2026-03-15",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 67,
+   "comments": 6,
+   "in_print": true,
+   "free_chapters": 1,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": null,
+     "minutes": 12,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "rain-stories",
+   "title": "Rain Stories",
+   "kind": "collection",
+   "collection_kind": "story",
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#7E3550",
+   "blurb": "Eight stories that all begin with the same storm.",
+   "excerpt": null,
+   "date": "2026-10-03",
+   "started": "2023–2026",
+   "series": null,
+   "genres": [],
+   "likes": 530,
+   "comments": 88,
+   "in_print": true,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": "What the Rain Kept",
+     "minutes": 25,
+     "piece_slug": null
+    },
+    {
+     "n": 2,
+     "title": "The Tin Roof Year",
+     "minutes": 9,
+     "piece_slug": null
+    },
+    {
+     "n": 3,
+     "title": "The Dry Season Wedding",
+     "minutes": 31,
+     "piece_slug": null
+    },
+    {
+     "n": 4,
+     "title": "Notes on Rain",
+     "minutes": 12,
+     "piece_slug": null
+    },
+    {
+     "n": 5,
+     "title": "Flood Year",
+     "minutes": 18,
+     "piece_slug": null
+    },
+    {
+     "n": 6,
+     "title": "The Umbrella Seller",
+     "minutes": 14,
+     "piece_slug": null
+    },
+    {
+     "n": 7,
+     "title": "When the Light Came Back",
+     "minutes": 11,
+     "piece_slug": null
+    },
+    {
+     "n": 8,
+     "title": "Last Rain of October",
+     "minutes": 20,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "midnight-poems",
+   "title": "Midnight Poems",
+   "kind": "collection",
+   "collection_kind": "poem",
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C46F8A",
+   "blurb": "Twelve poems written after midnight, when the house finally stops talking.",
+   "excerpt": null,
+   "date": "2026-11-02",
+   "started": "2024–2026",
+   "series": null,
+   "genres": [],
+   "likes": 286,
+   "comments": 41,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": null,
+   "chapters": [
+    {
+     "n": 1,
+     "title": "Small hours",
+     "minutes": 1,
+     "piece_slug": "small-hours"
+    },
+    {
+     "n": 2,
+     "title": "Generator hymn",
+     "minutes": 2,
+     "piece_slug": "generator-hymn"
+    },
+    {
+     "n": 3,
+     "title": "Midnight, again",
+     "minutes": 1,
+     "piece_slug": "midnight-again"
+    },
+    {
+     "n": 4,
+     "title": "Overthinking",
+     "minutes": 1,
+     "piece_slug": "overthinking"
+    },
+    {
+     "n": 5,
+     "title": "The page is the only light I leave on",
+     "minutes": 2,
+     "piece_slug": null
+    },
+    {
+     "n": 6,
+     "title": "Rain on the zinc at two",
+     "minutes": 2,
+     "piece_slug": null
+    },
+    {
+     "n": 7,
+     "title": "Insomnia, a love letter",
+     "minutes": 3,
+     "piece_slug": null
+    },
+    {
+     "n": 8,
+     "title": "Lana on the radio",
+     "minutes": 1,
+     "piece_slug": "lana-on-the-radio"
+    },
+    {
+     "n": 9,
+     "title": "Bread at 3 a.m.",
+     "minutes": 1,
+     "piece_slug": null
+    },
+    {
+     "n": 10,
+     "title": "Sweater weather",
+     "minutes": 1,
+     "piece_slug": "sweater-weather"
+    },
+    {
+     "n": 11,
+     "title": "What the dark keeps",
+     "minutes": 2,
+     "piece_slug": null
+    },
+    {
+     "n": 12,
+     "title": "Morning, finally",
+     "minutes": 1,
+     "piece_slug": null
+    }
+   ]
+  },
+  {
+   "slug": "night-bus",
+   "title": "Night bus",
+   "kind": "story",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": "nightbus.webp",
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": "The last bus out of the city never runs on time, and nobody on it minds.",
+   "date": "2026-10-22",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 143,
+   "comments": 31,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 22,
+   "chapters": []
+  },
+  {
+   "slug": "okada-at-dawn",
+   "title": "Okada at Dawn",
+   "kind": "story",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#DD6F94",
+   "blurb": null,
+   "excerpt": "The first okada of the morning knows every pothole by name.",
+   "date": "2026-08-15",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 90,
+   "comments": 4,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 12,
+   "chapters": []
+  },
+  {
+   "slug": "small-change",
+   "title": "Small Change",
+   "kind": "story",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#A24F68",
+   "blurb": null,
+   "excerpt": "Mama Nkechi counted change like it was scripture.",
+   "date": "2026-07-20",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 97,
+   "comments": 5,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 15,
+   "chapters": []
+  },
+  {
+   "slug": "the-ferryman",
+   "title": "The Ferryman",
+   "kind": "story",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C46F8A",
+   "blurb": null,
+   "excerpt": "He carried the whole town across, one by one, and nobody ever asked his name.",
+   "date": "2026-10-09",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 83,
+   "comments": 3,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 18,
+   "chapters": []
+  },
+  {
+   "slug": "a-short-history-of-my-mothers-kitchen",
+   "title": "A short history of my mother’s kitchen",
+   "kind": "essay",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#977AA0",
+   "blurb": null,
+   "excerpt": "Every recipe in that room came with a rule nobody wrote down.",
+   "date": "2026-09-29",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 62,
+   "comments": 9,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 12,
+   "chapters": []
+  },
+  {
+   "slug": "on-leaving-home-twice",
+   "title": "On leaving home twice",
+   "kind": "essay",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C46F8A",
+   "blurb": null,
+   "excerpt": "The first time, I packed for a year. The second time, I packed for good, and still forgot the most important thing.",
+   "date": "2026-10-28",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 88,
+   "comments": 12,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 9,
+   "chapters": []
+  },
+  {
+   "slug": "notes-on-overthinking",
+   "title": "Notes on overthinking",
+   "kind": "essay",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C46F8A",
+   "blurb": null,
+   "excerpt": "I have thought about this essay for longer than it takes to read.",
+   "date": "2026-07-02",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 76,
+   "comments": 11,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 8,
+   "chapters": []
+  },
+  {
+   "slug": "the-case-for-rereading",
+   "title": "The case for rereading",
+   "kind": "essay",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#7E3550",
+   "blurb": null,
+   "excerpt": "The second time through, a book finally starts talking back.",
+   "date": "2026-08-12",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 69,
+   "comments": 10,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 6,
+   "chapters": []
+  },
+  {
+   "slug": "why-i-write-in-two-languages",
+   "title": "Why I write in two languages",
+   "kind": "essay",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#A24F68",
+   "blurb": null,
+   "excerpt": "One for the market, one for the page, and the long argument between them.",
+   "date": "2026-10-14",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 55,
+   "comments": 8,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 7,
+   "chapters": []
+  },
+  {
+   "slug": "bread",
+   "title": "Bread",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#DD6F94",
+   "blurb": null,
+   "excerpt": "My grandmother tore it like it owed her money",
+   "date": "2026-05-03",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 160,
+   "comments": 5,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 1,
+   "chapters": []
+  },
+  {
+   "slug": "first-rain",
+   "title": "First rain",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C24E77",
+   "blurb": null,
+   "excerpt": "The ground opens its mouth before the sky does",
+   "date": "2026-08-27",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 188,
+   "comments": 9,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 2,
+   "chapters": []
+  },
+  {
+   "slug": "generator-hymn",
+   "title": "Generator hymn",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#F2D7DF",
+   "blurb": null,
+   "excerpt": "At nine the whole street begins to hum in one key",
+   "date": "2026-08-19",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 48,
+   "comments": 7,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 2,
+   "chapters": []
+  },
+  {
+   "slug": "harmattan",
+   "title": "Harmattan",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": "harmattan.webp",
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": "The wind comes down from the north",
+   "date": "2026-11-14",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 61,
+   "comments": 8,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 2,
+   "chapters": []
+  },
+  {
+   "slug": "inventory-after-the-flood",
+   "title": "Inventory After the Flood",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#F2D7DF",
+   "blurb": null,
+   "excerpt": "One radio, still singing. Two slippers, never a pair.",
+   "date": "2026-09-20",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 34,
+   "comments": 5,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 3,
+   "chapters": []
+  },
+  {
+   "slug": "lana-on-the-radio",
+   "title": "Lana on the radio",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#C24E77",
+   "blurb": null,
+   "excerpt": "Somebody is always driving away in her songs",
+   "date": "2026-11-02",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 181,
+   "comments": 8,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 1,
+   "chapters": []
+  },
+  {
+   "slug": "letters-i-did-not-send",
+   "title": "Letters I did not send",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": "Dear you, the weather here is fine. I am not.",
+   "date": "2026-06-01",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 195,
+   "comments": 10,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 3,
+   "chapters": []
+  },
+  {
+   "slug": "midnight-again",
+   "title": "Midnight, again",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#F2D7DF",
+   "blurb": null,
+   "excerpt": "The page is the only light I leave on",
+   "date": "2026-07-30",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 146,
+   "comments": 3,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 1,
+   "chapters": []
+  },
+  {
+   "slug": "overthinking",
+   "title": "Overthinking",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": "I rehearse the conversation until it is over",
+   "date": "2026-04-09",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 167,
+   "comments": 6,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 1,
+   "chapters": []
+  },
+  {
+   "slug": "salt",
+   "title": "Salt",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": "Everything we kept, we kept in salt",
+   "date": "2025-12-18",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 174,
+   "comments": 7,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 2,
+   "chapters": []
+  },
+  {
+   "slug": "small-hours",
+   "title": "Small hours",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#F2D7DF",
+   "blurb": null,
+   "excerpt": "Nobody tells you the house keeps talking after midnight",
+   "date": "2026-11-02",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 20,
+   "comments": 3,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 1,
+   "chapters": []
+  },
+  {
+   "slug": "sweater-weather",
+   "title": "Sweater weather",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#E3A3B6",
+   "blurb": null,
+   "excerpt": "I wait all year for a cold that never stays",
+   "date": "2026-09-04",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 41,
+   "comments": 6,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 1,
+   "chapters": []
+  },
+  {
+   "slug": "tin-roof",
+   "title": "Tin Roof",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": "#E3A3B6",
+   "blurb": null,
+   "excerpt": "All night the rain practised one word on the zinc",
+   "date": "2026-10-17",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 27,
+   "comments": 4,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 2,
+   "chapters": []
+  },
+  {
+   "slug": "warri-from-the-bridge",
+   "title": "Warri, from the bridge",
+   "kind": "poem",
+   "collection_kind": null,
+   "status": "finished",
+   "cover_image": null,
+   "cover_color": null,
+   "blurb": null,
+   "excerpt": "The river remembers every name I left it",
+   "date": "2026-06-12",
+   "started": null,
+   "series": null,
+   "genres": [],
+   "likes": 153,
+   "comments": 4,
+   "in_print": false,
+   "free_chapters": null,
+   "minutes": 2,
+   "chapters": []
+  }
+ ],
+ "notes": [
+  {
+   "date": "2026-11-21",
+   "paragraphs": [
+    "Salt Season is in print in the UK. It took two years and one very patient editor. This edition has a new afterword about the house the book was written in.",
+    "If you read it here first, thank you. You made it a book."
+   ],
+   "work_slug": "salt-season",
+   "photo": "harmattan.webp",
+   "likes": 41
+  },
+  {
+   "date": "2026-11-20",
+   "paragraphs": [
+    "Chapter 8 will be a week late. I’m rewriting the ending, and it’s better for it."
+   ],
+   "work_slug": "the-ember-gate",
+   "photo": null,
+   "likes": 58
+  },
+  {
+   "date": "2026-11-17",
+   "paragraphs": [
+    "No light since Friday. I’m writing by lamp and charging my laptop at a café that pretends not to notice."
+   ],
+   "work_slug": null,
+   "photo": null,
+   "likes": 36
+  },
+  {
+   "date": "2026-11-14",
+   "paragraphs": [
+    "Harmattan is up. It’s short, and it’s about the wind that comes for my lips every December."
+   ],
+   "work_slug": "harmattan",
+   "photo": null,
+   "likes": 22
+  },
+  {
+   "date": "2026-11-10",
+   "paragraphs": [
+    "One chapter left. Chapter 36 is the last one. I’m taking my time with it. I know where Ebi ends up; I just don’t know how to let her get there yet."
+   ],
+   "work_slug": "paper-boats",
+   "photo": null,
+   "likes": 75
+  },
+  {
+   "date": "2026-11-09",
+   "paragraphs": [
+    "I’ll read two poems and the first chapter of The Ember Gate on Saturday the 16th, at 4 pm, in the small hall. Come and say hello."
+   ],
+   "work_slug": null,
+   "photo": null,
+   "likes": 19
+  },
+  {
+   "date": "2026-11-02",
+   "paragraphs": [
+    "A new novel, slowly. Starlings Go South In September has its first chapter up. It began as one line in my phone three years ago, and it has been waiting for me ever since.",
+    "Chapters will come when they’re ready. I’d rather that than rush it."
+   ],
+   "work_slug": "starlings-go-south-in-september",
+   "photo": null,
+   "likes": 88
+  },
+  {
+   "date": "2026-10-30",
+   "paragraphs": [
+    "Thank you for the comments on chapter 7. Some of you guessed. I’m not saying which of you."
+   ],
+   "work_slug": "the-ember-gate",
+   "photo": null,
+   "likes": 47
+  },
+  {
+   "date": "2026-10-24",
+   "paragraphs": [
+    "Rain all week. Wrote nothing, read everything. Some weeks are like that."
+   ],
+   "work_slug": null,
+   "photo": null,
+   "likes": 33
+  },
+  {
+   "date": "2026-10-18",
+   "paragraphs": [
+    "I threw away the first four chapters of The Ember Gate twice before anyone saw them. The third version is the one you’re reading, and even that one has been taken apart and put back together more times than I’d like to admit.",
+    "The problem was never the plot. It was Adaeze. I knew what she did, but not why she kept doing it, and readers can always tell when a writer is guessing. So I stopped writing scenes and wrote her letters instead. Forty pages of them, none of which will ever be in the book.",
+    "By the end I knew her well enough to argue with her. That’s when the chapters started to come."
+   ],
+   "work_slug": "the-ember-gate",
+   "photo": null,
+   "likes": 102
+  },
+  {
+   "date": "2026-10-10",
+   "paragraphs": [
+    "The eighth story is up. That’s Rain Stories, all of it."
+   ],
+   "work_slug": "rain-stories",
+   "photo": null,
+   "likes": 29
+  },
+  {
+   "date": "2026-10-03",
+   "paragraphs": [
+    "Rain Stories is a book. The collection is in print in Nigeria, paperback and ebook. The links are on its page."
+   ],
+   "work_slug": "rain-stories",
+   "photo": null,
+   "likes": 64
+  },
+  {
+   "date": "2026-09-28",
+   "paragraphs": [
+    "Midnight again. Coffee again. Chapter 6 is done."
+   ],
+   "work_slug": "the-ember-gate",
+   "photo": null,
+   "likes": 40
+  },
+  {
+   "date": "2026-09-20",
+   "paragraphs": [
+    "Took a week off to watch people build castles in Minecraft. I regret nothing."
+   ],
+   "work_slug": null,
+   "photo": null,
+   "likes": 51
+  },
+  {
+   "date": "2026-09-12",
+   "paragraphs": [
+    "Harbour Songs has a name. The third Harbour book finally has a title. It’s coming, but not soon. I’ll tell you when."
+   ],
+   "work_slug": "harbour-songs",
+   "photo": null,
+   "likes": 66
+  },
+  {
+   "date": "2026-09-05",
+   "paragraphs": [
+    "Cold enough for a sweater this morning. In Port Harcourt. I’m writing all day."
+   ],
+   "work_slug": null,
+   "photo": null,
+   "likes": 27
+  },
+  {
+   "date": "2026-08-29",
+   "paragraphs": [
+    "Salt Season is finished. Twelve chapters, two years. I cried a little, then made breakfast."
+   ],
+   "work_slug": "salt-season",
+   "photo": null,
+   "likes": 120
+  },
+  {
+   "date": "2026-08-21",
+   "paragraphs": [
+    "Chapter 11 of Salt Season is up. One more."
+   ],
+   "work_slug": "salt-season",
+   "photo": null,
+   "likes": 38
+  },
+  {
+   "date": "2026-08-08",
+   "paragraphs": [
+    "I write better on sad days. I don’t love what that says about me."
+   ],
+   "work_slug": null,
+   "photo": null,
+   "likes": 45
+  },
+  {
+   "date": "2026-07-30",
+   "paragraphs": [
+    "Midnight, again is up. Three short stanzas about the only light I leave on."
+   ],
+   "work_slug": "midnight-again",
+   "photo": null,
+   "likes": 21
+  },
+  {
+   "date": "2026-07-19",
+   "paragraphs": [
+    "Paper Boats passes thirty chapters this week. Ebi is braver than I am."
+   ],
+   "work_slug": "paper-boats",
+   "photo": null,
+   "likes": 57
+  },
+  {
+   "date": "2026-07-02",
+   "paragraphs": [
+    "A reader in Accra sent me a photo of a paper boat she folded after chapter 12. It’s on my desk now."
+   ],
+   "work_slug": "paper-boats",
+   "photo": null,
+   "likes": 81
+  }
+ ]
+}
