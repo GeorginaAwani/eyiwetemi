@@ -16,6 +16,7 @@
         <link rel="icon" href="/img/mark/favicon-32.png" sizes="32x32">
         <link rel="apple-touch-icon" href="/img/mark/apple-touch-icon.png">
         <link rel="manifest" href="/manifest.webmanifest">
+        <link rel="alternate" type="application/rss+xml" title="eyiwetemi" href="/feed">
 
         <script>(function(){try{var q=/[?&]splash=1/.test(location.search),sa=matchMedia('(display-mode: standalone)').matches;
 if(!(q||(sa&&!sessionStorage.getItem('eyiOpened'))))return;sessionStorage.setItem('eyiOpened','1');

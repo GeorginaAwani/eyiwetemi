@@ -44,7 +44,7 @@ class SiteSeeder extends Seeder
         $privacy = [
             'updated_on' => $this->site['privacy']['upd'],
             'sections' => array_map(
-                fn (array $section): array => ['id' => $section['id'], 'heading' => $section['h'], 'html' => $section['html']],
+                fn (array $section): array => ['id' => $section['id'], 'heading' => $section['h'], 'html' => str_replace('settings.html', '/settings', $section['html'])],
                 $this->site['privacy']['secs'],
             ),
         ];
