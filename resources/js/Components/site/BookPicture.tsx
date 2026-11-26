@@ -15,6 +15,10 @@ type Props = {
     reveal?: number;
     style?: CSSProperties;
     className?: string;
+    /** Inside a row that is already a link, the picture doesn't navigate by itself. */
+    linked?: boolean;
+    /** Class for a collection's fanned sheets: `coll` on Home, `collt` in Library rows. */
+    collClass?: string;
 };
 
 const frontKind = (label: string) => (label === 'A short story' ? 'A story' : label);
@@ -23,12 +27,12 @@ const frontKind = (label: string) => (label === 'A short story' ? 'A story' : la
  * A work's picture. Only novels get book-like hovers (the cover turns on its spine; a small front opens a crack).
  * Every other picture shares one quick glint. Clicking the picture opens the work, like its title.
  */
-export default function BookPicture({ work, width, height, landscape = false, type, firstLine, reveal, style, className = '' }: Props) {
+export default function BookPicture({ work, width, height, landscape = false, type, firstLine, reveal, style, className = '', linked = false, collClass = 'coll' }: Props) {
     const isNovel = work.kind === 'novel';
     const hasImage = work.cover.src !== null;
     const opens = isNovel && !hasImage && firstLine !== undefined;
     const hover = isNovel ? 'turn' : 'mat';
-    const classes = ['book', hasImage ? '' : 'front', opens ? 'open' : hover, work.isCollection ? 'coll' : '', className].filter(Boolean).join(' ');
+    const classes = ['book', hasImage ? '' : 'front', opens ? 'open' : hover, work.isCollection ? collClass : '', className].filter(Boolean).join(' ');
     const size: CSSProperties = { ...(width ? { width } : {}), ...(height ? { height } : {}), ...(landscape && !height ? { aspectRatio: '3/2' } : {}) };
     const ink = work.cover.dark ? '#3A2229' : undefined;
     const reveals = reveal !== undefined ? { 'data-reveal': '', style: { ...size, ['--i' as string]: reveal, ...style } } : { style: { ...size, ...style } };
@@ -51,7 +55,7 @@ export default function BookPicture({ work, width, height, landscape = false, ty
         </>
     );
 
-    const open = () => router.visit(work.href);
+    const open = linked ? undefined : () => router.visit(work.href);
 
     if (hasImage) {
         return (

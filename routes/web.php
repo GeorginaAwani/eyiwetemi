@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('/library', [LibraryController::class, 'index'])->name('library');
+Route::get('/library-rows', [LibraryController::class, 'rows'])->name('library.rows');
 
 Route::post('/newsletter', [NewsletterController::class, 'store'])
     ->middleware('throttle:6,1')
