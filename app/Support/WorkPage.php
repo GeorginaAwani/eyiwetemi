@@ -71,7 +71,7 @@ class WorkPage
                 'comments' => number_format((int) $work->comments_count),
                 'note' => $note && Reading::firstSentence($note->live_text) ? [
                     'label' => 'Note · '.Reading::day($note->published_at),
-                    'text' => $this->noteLine($note->live_text),
+                    'text' => Reading::noteOpening($note->live_text),
                     'href' => '/notes#n-'.$note->id,
                 ] : null,
                 'printOnly' => $printOnly,
@@ -151,18 +151,6 @@ class WorkPage
                 'from' => count($stores) > 1 && $naira ? InPrint::money((int) $naira['price']['amount'], (string) $naira['price']['currency']) : null,
             ];
         })->values()->all();
-    }
-
-    /**
-     * The note's opening line(s), as on the work page: up to its second sentence.
-     */
-    private function noteLine(?string $text): string
-    {
-        $first = (string) Reading::firstSentence($text);
-        $rest = trim(mb_substr(trim((string) $text), mb_strlen($first)));
-        $second = Reading::firstSentence($rest);
-
-        return $second && mb_strlen($first.' '.$second) <= 90 ? $first.' '.$second : $first;
     }
 
     private function longMonth(CarbonInterface $at): string

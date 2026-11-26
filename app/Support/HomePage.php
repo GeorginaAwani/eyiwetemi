@@ -134,7 +134,7 @@ class HomePage
                     'title' => $work->title,
                     'href' => $card['href'],
                     'color' => $card['cover']['color'],
-                    'dark' => $card['cover']['dark'],
+                    'dark' => WorkPresenter::isLight($card['cover']['color']),
                     'sub' => $hasUnits ? ucfirst($kindWord).' · '.WorkPresenter::units($work, WorkPresenter::numbered($work)->count()) : null,
                     'meta' => $hasUnits
                         ? ($work->status === WorkStatus::Finished ? 'finished in '.Reading::month($updated) : Reading::day($updated))
@@ -206,7 +206,7 @@ class HomePage
                 'newest' => ['label' => 'Newest: chapter '.$newest['number'], 'href' => WorkPresenter::itemHref($lead, $newest['number'])],
                 'note' => $note && Reading::firstSentence($note->live_text) ? [
                     'label' => 'Note · '.Reading::day($note->published_at),
-                    'text' => Reading::firstSentence($note->live_text),
+                    'text' => Reading::noteOpening($note->live_text),
                     'href' => '/notes#n-'.$note->id,
                 ] : null,
             ],

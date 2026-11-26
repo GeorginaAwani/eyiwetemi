@@ -102,6 +102,18 @@ class Reading
     }
 
     /**
+     * A note's opening as shown beside a work: its first sentence, and the second too when both fit (90 characters).
+     */
+    public static function noteOpening(?string $text): string
+    {
+        $first = (string) self::firstSentence($text);
+        $rest = trim(mb_substr(trim((string) $text), mb_strlen($first)));
+        $second = self::firstSentence($rest);
+
+        return $second && mb_strlen($first.' '.$second) <= 90 ? $first.' '.$second : $first;
+    }
+
+    /**
      * A poem's first stanza: its lines up to the first empty line, with their indents.
      *
      * @param  array<string, mixed>|null  $body

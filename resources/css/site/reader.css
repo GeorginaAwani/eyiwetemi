@@ -438,8 +438,8 @@ html.reader .cin input::placeholder{color:var(--muted);opacity:1}
 html.reader .cnew.rform{margin:16px 0 4px}
 html.reader .cnew.rform .cin{height:42px}
 html.reader .pool{display:none}
-html.reader .settle{animation:settle var(--d3) var(--ease-dream) backwards}
-@keyframes settle{from{opacity:0;transform:translateY(8px);filter:blur(4px)}}
+html.reader .settle{animation:rsettle var(--d3) var(--ease-dream) backwards}
+@keyframes rsettle{from{opacity:0;transform:translateY(8px);filter:blur(4px)}}
 html.reader .lk svg path{transition:fill var(--d2) var(--ease-soft)}
 html.reader .lk.on svg path{fill:currentColor}
 html.reader .lk.pop svg{animation:bloom var(--d3) var(--ease-dream)}

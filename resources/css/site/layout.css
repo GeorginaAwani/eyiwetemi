@@ -348,8 +348,8 @@ html .follow:focus-visible,html .fpill:focus-visible{outline:none;box-shadow:0 0
 #eyiOpen .i{position:relative}
 #eyiOpen .i::before{content:'';position:absolute;left:50%;top:.13em;width:.34em;height:.13em;background:#DD6F94;transform:translateX(calc(-50% - .03em));animation:wmBob 1000ms cubic-bezier(.45,0,.55,1) infinite}
 @keyframes wmBob{0%,100%{translate:0 0}50%{translate:0 -.16em}}
-@keyframes wmPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
-@media (prefers-reduced-motion:reduce){#eyiOpen .i::before{animation:wmPulse 1000ms ease-in-out infinite}#eyiOpen{transition:opacity 200ms linear}}
+@keyframes wmGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+@media (prefers-reduced-motion:reduce){#eyiOpen .i::before{animation:wmGlow 1000ms ease-in-out infinite}#eyiOpen{transition:opacity 200ms linear}}
 
 /* where you are: the current nav item and footer link stay put (no hover) */
 .nav>a.on,.navbtn.on{color:var(--ink);font-weight:600;cursor:default}

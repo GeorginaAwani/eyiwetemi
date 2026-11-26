@@ -129,7 +129,7 @@ class HomePageTest extends TestCase
             ->where('novels.lead.chapters.2.label', 'Chapter 2')
             ->where('novels.lead.chapters.2.isNew', false)
             ->count('novels.lead.chapters', 3)
-            ->where('novels.lead.note.text', 'Chapter 5 will be late.')
+            ->where('novels.lead.note.text', "Chapter 5 will be late. I'm rewriting it.")
             ->where('noteLine.text', 'Chapter 5 will be late.')
         );
     }

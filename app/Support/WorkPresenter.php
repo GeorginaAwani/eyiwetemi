@@ -126,7 +126,7 @@ class WorkPresenter
         return [
             'src' => $work->cover ? self::mediaUrl($work->cover->disk, $work->cover->path) : null,
             'color' => $color,
-            'dark' => self::isLight($color),
+            'dark' => self::isLight($color, 0.6),
         ];
     }
 
@@ -276,9 +276,10 @@ class WorkPresenter
     }
 
     /**
-     * Light fronts (blush, rose 300, pink) take dark lettering, as in the prototype.
+     * Light colours take dark lettering, as in the prototype: fronts only when very pale
+     * (blush, rose 300); the pile's narrower spines from pink up.
      */
-    private static function isLight(string $hex): bool
+    public static function isLight(string $hex, float $threshold = 0.525): bool
     {
         $hex = ltrim($hex, '#');
 
@@ -288,6 +289,6 @@ class WorkPresenter
 
         [$r, $g, $b] = array_map(fn (string $c): float => hexdec($c) / 255, str_split($hex, 2));
 
-        return (0.2126 * $r + 0.7152 * $g + 0.0722 * $b) > 0.525;
+        return (0.2126 * $r + 0.7152 * $g + 0.0722 * $b) > $threshold;
     }
 }
