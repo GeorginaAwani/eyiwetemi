@@ -5,6 +5,7 @@ import FollowButton from '@/Components/site/FollowButton';
 import StatusIcon from '@/Components/site/StatusIcon';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { Action, WorkCard } from '@/types/works';
+import { askSignIn } from '@/lib/signin';
 
 type Book = WorkCard & { position: number; soon: boolean; statusText: string; href: string };
 type Props = {
@@ -137,7 +138,7 @@ export default function Series({ series, actions, books }: Props) {
                                                     type="button"
                                                     className="link"
                                                     style={{ fontSize: 14 }}
-                                                    onClick={() => window.dispatchEvent(new CustomEvent('eyi:signin', { detail: { follow: b.id, why: `Sign in to hear when ${b.title} is out` } }))}
+                                                    onClick={() => askSignIn({ follow: b.id, why: `Sign in to hear when ${b.title} is out` })}
                                                 >
                                                     Tell me when it’s out
                                                 </button>

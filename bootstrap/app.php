@@ -19,7 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        /* private pages: Home with the sign-in card; signing in carries on to the page they asked for */
+        $middleware->redirectGuestsTo(function (Request $request): string {
+            $request->session()->flash('signin', [
+                'view' => 'main',
+                'why' => $request->is('notifications*') ? 'Sign in to see your notifications' : 'Sign in to see your profile',
+            ]);
+
+            return route('home');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

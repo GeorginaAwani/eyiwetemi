@@ -5,6 +5,7 @@ import { currentTheme, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion
 import { paths } from '@/lib/paths';
 import { CloseIcon } from './Icons';
 import Wordmark from './Wordmark';
+import { askSignIn } from '@/lib/signin';
 
 const k = (n: number) => ({ '--k': n }) as CSSProperties;
 
@@ -62,7 +63,7 @@ export default function PhoneMenu({ open, onClose }: { open: boolean; onClose: (
                             onClick={(e) => {
                                 e.preventDefault();
                                 onClose();
-                                window.dispatchEvent(new CustomEvent('eyi:signin'));
+                                askSignIn();
                             }}
                         >
                             Sign in

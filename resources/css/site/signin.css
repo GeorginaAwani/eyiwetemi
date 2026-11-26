@@ -1,0 +1,108 @@
+/* Sign in / Create account (A · Tabs), ported from the prototype (proto_account + auth_r1). au- prefix; keyframes au*. */
+.au-card{position:relative;width:440px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:30px 32px 28px;font-family:var(--A);color:var(--ink);
+  box-shadow:0 40px 90px -30px var(--shadow),0 1px 3px rgba(0,0,0,.04);text-align:left;overflow:hidden}
+.au-x{position:absolute;right:16px;top:16px;z-index:2;width:36px;height:36px;border-radius:18px;display:grid;place-items:center;color:var(--muted);cursor:pointer;transition:background-color var(--d1),color var(--d1)}
+.au-x:hover{background:var(--surf);color:var(--ink)}
+.au-h{font-family:var(--A);font-weight:700;font-size:22px;line-height:28px;color:var(--ink);margin:2px 48px 22px 0}
+.au-why{display:flex;align-items:center;gap:12px;margin:0 48px 22px 0;transition:opacity var(--d2)}
+.au-why .au-wth{width:28px;height:42px;border-radius:2px;flex-shrink:0;display:block;object-fit:cover}
+.au-why span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.au-why b{font-weight:600;font-size:15px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.au-why small{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.au-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin:0 0 24px}
+.au-tab{position:relative;padding:4px 0 14px;font-family:var(--A);font-weight:500;font-size:16px;color:var(--muted);white-space:nowrap;cursor:pointer;transition:color var(--d2) var(--ease-soft)}
+.au-tab:hover{color:var(--ink)}
+.au-tab.on{color:var(--ink);font-weight:600}
+.au-tab::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform var(--d2) var(--ease-dream)}
+.au-tab.on::after{transform:none}
+.au-body{display:flex;flex-direction:column;gap:16px}
+.au-g{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;height:52px;border-radius:26px;border:1.5px solid var(--ink);font-family:var(--A);font-weight:600;font-size:16px;color:var(--ink);cursor:pointer;
+  background:linear-gradient(var(--tint),var(--tint)) 0 0/0% 100% no-repeat;transition:background-size var(--d3) var(--ease-dream)}
+.au-g:hover{background-size:100% 100%}
+.au-g svg{background:#fff;border-radius:50%;padding:0;flex-shrink:0}
+.au-g .lbl{display:inline-flex;align-items:center;gap:12px}
+.au-or{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);margin:2px 0}
+.au-or::before,.au-or::after{content:'';flex:1;height:1px;background:var(--line)}
+.au-f{display:flex;flex-direction:column}
+.au-l{font-weight:600;font-size:13px;color:var(--muted);margin:0 0 8px 2px}
+.au-in{display:flex;align-items:center;gap:2px;height:52px;padding:0 18px;border:1.5px solid var(--line);border-radius:26px;font-size:16px;line-height:24px;color:var(--ink);background:var(--bg);cursor:text;
+  transition:border-color var(--d2) var(--ease-soft),box-shadow var(--d2) var(--ease-soft)}
+.au-in.check{border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+.au-in.bad{border-color:var(--accent)}
+.au-in:focus-within,.au-in.ok:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+.au-in input{flex:1;min-width:0;height:100%;border:0;background:none;outline:none;font:inherit;color:inherit;padding:0;box-shadow:none}
+.au-in input:focus{box-shadow:none;outline:none}
+.au-in input::placeholder{color:var(--muted)}
+.au-at{color:var(--muted)}
+.au-in .au-stt{display:grid;place-items:center;width:20px;color:var(--accent);flex-shrink:0}
+.au-in .au-stt>*{animation:auPop var(--d2) var(--ease-dream)}
+@keyframes auPop{from{opacity:0;transform:scale(.6)}}
+.au-arc{margin-right:-4px;animation:auSpin 900ms linear infinite!important}
+.au-arc circle{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-dasharray:28 72;transform-origin:center;transform:rotate(40deg)}
+@keyframes auSpin{to{transform:rotate(360deg)}}
+.au-eye{display:grid;place-items:center;width:32px;height:32px;margin-right:-8px;border-radius:16px;color:var(--muted);cursor:pointer;position:relative;transition:color var(--d1),background-color var(--d1)}
+.au-eye:hover{color:var(--ink);background:var(--surf)}
+.au-eye span{grid-area:1/1;display:grid;transition:opacity var(--d2) var(--ease-soft),transform var(--d2) var(--ease-dream)}
+.au-eye .e2,.au-eye.on .e1{opacity:0;transform:scale(.7)}
+.au-eye.on .e2{opacity:1;transform:none}
+.au-help{font-size:13px;line-height:19px;color:var(--muted);margin:8px 0 0 2px;transition:opacity 120ms var(--ease-soft),color var(--d2)}
+.au-help.bad{color:var(--ink)}
+.au-help.swap{opacity:0}
+.au-help:empty{display:none}
+.au-bi{display:inline-grid;vertical-align:-3px;margin-right:6px;color:var(--accent)}
+.au-help a,.au-foot a,.au-fine a,.au-p a{color:var(--accent);font-weight:600;cursor:pointer;transition:opacity var(--d1)}
+.au-foot a:hover,.au-help a:hover,.au-fine a:hover{opacity:.7}
+.au-s{color:var(--accent);font-weight:600;margin-right:6px;white-space:nowrap;cursor:pointer;transition:opacity var(--d1)}
+.au-s:hover{opacity:.7}
+.au-go{position:relative;height:52px;border-radius:26px;background:var(--ink);color:var(--bg);font-family:var(--A);font-weight:700;font-size:16px;margin-top:6px;overflow:visible;cursor:pointer;transition:transform var(--d1),opacity var(--d2),background-color var(--d2)}
+.au-go:active{transform:scale(.98)}
+.au-go.is-sending,.au-g.is-sending{pointer-events:none}
+.au-go .sring,.au-g .sring{position:absolute}
+.au-foot{text-align:center;font-size:14px;color:var(--muted);margin-top:2px}
+.au-fine{font-size:12px;line-height:18px;color:var(--muted);text-align:center;margin-top:-2px}
+.au-p{font-size:15px;line-height:23px;color:var(--text)}
+.au-p b{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.au-gacct{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surf)}
+.au-gacct>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.au-gacct b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.au-gacct small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.au-gacct .av{display:block;flex-shrink:0}
+.au-x:focus-visible,.au-tab:focus-visible,.au-g:focus-visible,.au-go:focus-visible,.au-eye:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent)}
+
+/* the layer: the page waits faint behind it, the card Unfolds, its lines Settle */
+.au-layer{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:24px;overflow:auto;visibility:hidden;transition:visibility 0s linear var(--d3)}
+.au-layer::before{content:'';position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 65%,transparent);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;
+  transition:opacity var(--d3) var(--ease-soft)}
+.au-layer.open{visibility:visible;transition-delay:0s}
+.au-layer.open::before{opacity:1}
+.au-layer .au-card{opacity:0;transform:translateY(14px);clip-path:inset(0 0 78% 0 round 20px);
+  transition:opacity var(--d2) var(--ease-soft),transform var(--d3) var(--ease-dream),clip-path var(--d3) var(--ease-dream)}
+.au-layer.open .au-card{opacity:1;transform:none;clip-path:inset(-80px -80px -140px -80px round 20px)}
+.au-layer.open .au-card.settle-in .au-st>*{animation:auSettle var(--d4) var(--ease-dream) both;animation-delay:calc(var(--k,0) * 45ms + 90ms)}
+@keyframes auSettle{from{opacity:0;transform:translateY(8px);filter:blur(5px)}}
+.au-view[hidden],.au-pane[hidden]{display:none!important}
+.au-pane,.au-view{transition:opacity var(--d2) var(--ease-soft),filter var(--d2) var(--ease-soft)}
+.au-pane.out,.au-view.out{opacity:0;filter:blur(4px)}
+
+/* signed in: your Bloom comes in where the Sign in pill was */
+.acct.arrive{animation:auPop var(--d3) var(--ease-dream)}
+.acct .av{display:block}
+.acct .ring{box-shadow:none}
+
+/* phone: a bottom sheet */
+@media (max-width:600px){
+  .au-layer{place-items:end stretch;padding:0;overflow:hidden}
+  .au-card{width:100%;border-radius:22px 22px 0 0;border-width:1px 0 0;padding:24px 24px 28px;box-shadow:0 -20px 60px -20px var(--shadow);max-height:calc(100dvh - 40px);overflow:auto;overscroll-behavior:contain}
+  .au-layer .au-card{transform:translateY(40px);clip-path:inset(0 0 0 0 round 22px 22px 0 0)}
+  .au-layer.open .au-card{transform:none;clip-path:inset(-80px 0 0 0 round 22px 22px 0 0)}
+  .au-body{gap:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .au-layer .au-card,.au-layer.open .au-card{transform:none!important;clip-path:none!important}
+  .au-layer.open .au-card.settle-in .au-st>*{animation:auFade 200ms linear both;animation-delay:0s}
+  @keyframes auFade{from{opacity:0}}
+  .au-pane.out,.au-view.out{filter:none}
+  .au-arc{animation:none!important}
+  .au-eye span{transform:none!important}
+  .acct.arrive{animation:auFade 200ms linear}
+}

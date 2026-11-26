@@ -6,6 +6,7 @@ import StatusIcon from '@/Components/site/StatusIcon';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { prefersReducedMotion } from '@/lib/motion';
 import { ChapterRow, WorkCard } from '@/types/works';
+import { askSignIn } from '@/lib/signin';
 
 type TabKey = 'all' | 'novel' | 'story' | 'poem' | 'essay';
 type Lead = WorkCard & {
@@ -155,13 +156,13 @@ function WorkRow({ row, i, arrive }: { row: Row; i: number; arrive: boolean }) {
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                window.dispatchEvent(new CustomEvent('eyi:signin', { detail: { follow: row.id } }));
+                                askSignIn({ follow: row.id, why: `Sign in to hear when ${row.title} is out` });
                             }}
                             onKeyDown={(e: KeyboardEvent) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    window.dispatchEvent(new CustomEvent('eyi:signin', { detail: { follow: row.id } }));
+                                    askSignIn({ follow: row.id, why: `Sign in to hear when ${row.title} is out` });
                                 }
                             }}
                         >

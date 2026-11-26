@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Fortify\Fortify;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,8 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Breeze's auth routes serve sign-in until the Fortify-based flow is built.
-        Fortify::ignoreRoutes();
+        //
     }
 
     /**

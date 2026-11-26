@@ -95,6 +95,10 @@ class ReaderPage
                 'unitPlural' => ucfirst($unit === 'story' ? 'stories' : $unit.'s'),
                 'cover' => $isPiece && $work->cover ? WorkPresenter::mediaUrl($work->cover->disk, $work->cover->path) : null,
                 'kindLabel' => WorkPresenter::kindLabel($work),
+                'thumb' => [
+                    'src' => $work->cover ? WorkPresenter::mediaUrl($work->cover->disk, $work->cover->path) : null,
+                    'color' => $work->cover_color,
+                ],
             ],
             'item' => [
                 'id' => $item->id,

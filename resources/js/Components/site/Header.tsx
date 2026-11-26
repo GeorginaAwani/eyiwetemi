@@ -1,14 +1,19 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { inertWhen } from '@/lib/dom';
 import { currentTheme, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
 import { paths } from '@/lib/paths';
+import { askSignIn } from '@/lib/signin';
 import { Section } from '@/types/site';
-import { ChevronDown, MenuIcon, SearchIcon, ThemeIcon } from './Icons';
+import Bloom from './Bloom';
+import { ChevronDown, GearIcon, MenuIcon, SearchIcon, SignOutIcon, ThemeIcon } from './Icons';
 import PhoneMenu from './PhoneMenu';
 import Wordmark from './Wordmark';
 
-type MenuName = 'library' | 'theme' | null;
+type MenuName = 'library' | 'theme' | 'account' | null;
+
+/* the Bloom comes in only when you've just signed in, not on every page */
+let lastUserId: number | null | undefined;
 
 export const useTheme = () => useSyncExternalStore(subscribeTheme, currentTheme, () => 'white' as const);
 
@@ -44,7 +49,7 @@ export default function Header({ current }: { current?: Section }) {
             return;
         }
         const onClick = (e: MouseEvent) => {
-            if (!(e.target as Element).closest('.menu, .navbtn, #tBtn')) {
+            if (!(e.target as Element).closest('.menu, .navbtn, #tBtn, #aBtn')) {
                 setOpen(null);
             }
         };
@@ -65,6 +70,15 @@ export default function Header({ current }: { current?: Section }) {
     const toggle = (name: Exclude<MenuName, null>) => setOpen((o) => (o === name ? null : name));
     const close = () => setOpen(null);
     const counts = site.library;
+    const me = auth.user;
+    const arrive = me !== null && lastUserId === null;
+    useEffect(() => {
+        lastUserId = me?.id ?? null;
+    }, [me]);
+    const signOut = () => {
+        close();
+        router.post('/logout');
+    };
     const rows: { href: string; label: string; count: number }[] = [
         { href: paths.library('novel'), label: 'Novels', count: counts.novel },
         { href: paths.library('story'), label: 'Short stories', count: counts.story },
@@ -117,14 +131,30 @@ export default function Header({ current }: { current?: Section }) {
                             <button className="icon" id="tBtn" type="button" aria-label="Reading theme" aria-expanded={open === 'theme'} onClick={() => toggle('theme')}>
                                 <ThemeIcon />
                             </button>
-                            {auth.user === null && (
-                                <button className="au-sgin" id="sgBtn" type="button" onClick={() => window.dispatchEvent(new CustomEvent('eyi:signin'))}>
+                            {me === null && (
+                                <button className="au-sgin" id="sgBtn" type="button" onClick={() => askSignIn()}>
                                     Sign in
                                 </button>
                             )}
                             <button className="icon" id="mBtn" type="button" aria-label="Menu" aria-expanded={phoneOpen} aria-controls="pMenu" onClick={() => setPhoneOpen(true)}>
                                 <MenuIcon />
                             </button>
+                            {me !== null && (
+                                <button
+                                    className={`icon acct${arrive ? ' arrive' : ''}`}
+                                    id="aBtn"
+                                    type="button"
+                                    aria-label="Your profile"
+                                    aria-expanded={open === 'account'}
+                                    aria-controls="aMenu"
+                                    onClick={() => toggle('account')}
+                                >
+                                    <Bloom seed={me.avatar_seed} size={40} />
+                                    <svg className="ring" viewBox="0 0 46 46" aria-hidden="true">
+                                        <circle cx="23" cy="23" r="22" pathLength="100" />
+                                    </svg>
+                                </button>
+                            )}
                             <div className={`menu${open === 'theme' ? ' open' : ''}`} id="tMenu" style={{ right: 96 }} {...inertWhen(open !== 'theme')}>
                                 <div className="caps" style={{ padding: '8px 14px 6px', fontSize: 10 }}>
                                     Reading theme
@@ -145,6 +175,33 @@ export default function Header({ current }: { current?: Section }) {
                                     </button>
                                 ))}
                             </div>
+                            {me !== null && (
+                                <div className={`menu${open === 'account' ? ' open' : ''}`} id="aMenu" style={{ right: 0, width: 300 }} {...inertWhen(open !== 'account')}>
+                                    <Link className="row prof" href="/profile" onClick={close} style={{ height: 'auto', padding: 12, background: 'var(--surf)' }}>
+                                        <Bloom seed={me.avatar_seed} size={44} />
+                                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                                            <b style={{ fontWeight: 700 }}>{me.name.split(' ')[0]}</b>
+                                            <small style={{ fontSize: 12, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{me.email}</small>
+                                        </span>
+                                        <span style={{ color: 'var(--muted)' }} aria-hidden="true">
+                                            ›
+                                        </span>
+                                    </Link>
+                                    <div style={{ height: 1, background: 'var(--line)', margin: '6px 0' }} />
+                                    <Link className="row" href="/settings" onClick={close}>
+                                        <span style={{ width: 44, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
+                                            <GearIcon />
+                                        </span>
+                                        Settings
+                                    </Link>
+                                    <button className="row" type="button" onClick={signOut}>
+                                        <span style={{ width: 44, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>
+                                            <SignOutIcon />
+                                        </span>
+                                        Sign out
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

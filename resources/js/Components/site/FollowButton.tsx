@@ -1,3 +1,5 @@
+import { askSignIn } from '@/lib/signin';
+
 const Bell = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
@@ -17,7 +19,7 @@ const Cross = () => (
 
 /**
  * The "Follow a work" pill: Follow = outline + bell; Following = grey + tick; hovering Following offers Unfollow.
- * Signed-out readers are asked to sign in first (the sign-in step listens for `eyi:signin`).
+ * Signed-out readers are asked to sign in first.
  */
 export default function FollowButton({ following, onToggle, workId, title }: { following: boolean; onToggle?: () => void; workId: number; title: string }) {
     return (
@@ -25,7 +27,7 @@ export default function FollowButton({ following, onToggle, workId, title }: { f
             type="button"
             className={`follow${following ? '' : ' off'}`}
             aria-pressed={following}
-            onClick={() => (onToggle ? onToggle() : window.dispatchEvent(new CustomEvent('eyi:signin', { detail: { follow: workId, why: `Sign in to follow ${title}` } })))}
+            onClick={() => (onToggle ? onToggle() : askSignIn({ follow: workId, why: `Sign in to follow ${title}` }))}
         >
             <span className="fi fi-b">
                 <Bell />

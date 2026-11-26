@@ -5,6 +5,7 @@ import Runs, { Run } from '@/Components/site/Runs';
 import SendButton from '@/Components/site/SendButton';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
+import { askSignIn } from '@/lib/signin';
 
 type Block =
     | { type: 'p'; id: string | null; runs: Run[] }
@@ -30,7 +31,7 @@ type CommentT = {
 type TopComment = CommentT & { deleted: boolean; replies: CommentT[] };
 type Props = {
     unavailable?: { work: { title: string; href: string }; label: string };
-    work: { id: number; title: string; href: string | null; kind: string; unitPlural: string; cover: string | null; kindLabel: string };
+    work: { id: number; title: string; href: string | null; kind: string; unitPlural: string; cover: string | null; kindLabel: string; thumb: { src: string | null; color: string | null } };
     item: {
         id: number;
         number: number;
@@ -52,7 +53,14 @@ type Props = {
     comments: { count: number; list: TopComment[]; shown: number; repliesShown: number };
 };
 
-const signIn = (why: string) => window.dispatchEvent(new CustomEvent('eyi:signin', { detail: { why } }));
+/** What the sign-in card shows under its why-line: the chapter and work you're reading, with its cover. */
+let reading: { label?: string; title: string; thumb: { src: string | null; color: string | null } | null } = { title: '', thumb: null };
+const signIn = (why: string) =>
+    askSignIn({
+        why,
+        sub: reading.label && !why.endsWith(reading.label) ? `${reading.label} · ${reading.title}` : why.endsWith(reading.title) ? undefined : reading.title,
+        picture: reading.thumb ?? undefined,
+    });
 const v = (vars: Record<string, string | number>) => vars as CSSProperties;
 
 const I = {
@@ -493,6 +501,7 @@ export default function Reader(props: Props) {
 }
 
 function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) {
+    reading = { label: item.isPiece ? undefined : item.label, title: work.title, thumb: work.thumb };
     const { url } = usePage();
     const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => 'white' as const);
     const [panel, setPanel] = useState<PanelName>(null);
@@ -770,7 +779,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
                                                 type="button"
                                                 className="fpill"
                                                 aria-pressed="false"
-                                                onClick={() => window.dispatchEvent(new CustomEvent('eyi:signin', { detail: { follow: work.id, why: `Sign in to follow ${work.title}` } }))}
+                                                onClick={() => askSignIn({ follow: work.id, why: `Sign in to follow ${work.title}`, picture: work.thumb })}
                                             >
                                                 {I.bell}
                                                 <span>Follow</span>

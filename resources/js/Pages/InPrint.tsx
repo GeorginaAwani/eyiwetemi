@@ -2,6 +2,7 @@ import { Link } from "@inertiajs/react";
 import { CSSProperties, Fragment, useEffect, useState } from "react";
 import SiteLayout from "@/Layouts/SiteLayout";
 import { prefersReducedMotion } from "@/lib/motion";
+import { askSignIn } from "@/lib/signin";
 
 type Store = { store: string; price: string | null; url: string | null };
 type Format = { format: string; from: string | null; stores: Store[] };
@@ -370,14 +371,10 @@ function ComingRow({ book, wide }: { book: Coming; wide: boolean }) {
                         type="button"
                         aria-pressed="false"
                         onClick={() =>
-                            window.dispatchEvent(
-                                new CustomEvent("eyi:signin", {
-                                    detail: {
-                                        follow: book.id,
-                                        why: `Sign in to follow ${book.title}`,
-                                    },
-                                }),
-                            )
+                            askSignIn({
+                                follow: book.id,
+                                why: `Sign in to follow ${book.title}`,
+                            })
                         }
                     >
                         <span className="a">{I.bell}Follow</span>
