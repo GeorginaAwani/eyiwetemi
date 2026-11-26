@@ -33,3 +33,10 @@ export const Google = () => (
 );
 /** The sending ring that runs round a round button while it waits. */
 export const Ring = () => <svg className="ad-ring" aria-hidden="true"><rect pathLength={100} /></svg>;
+
+export const Pen = () => <svg width="18" height="18" viewBox="0 0 24 24" {...line} strokeWidth="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></svg>;
+export const Plus = () => <svg width="17" height="17" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+export const Heart = () => <svg width="15" height="15" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" /></svg>;
+export const Broken = () => <svg width="16" height="16" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-2.4-6.8" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 2.4 6.8" /><path d="M4 4l3 3M20 20l-3-3" /></svg>;
+export const Pin = () => <svg width="16" height="16" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M9 4h6l-1 5 3.5 3.5h-11L10 9z" /><path d="M12 12.5V20" /></svg>;
+export const Dot = () => <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor" /></svg>;
