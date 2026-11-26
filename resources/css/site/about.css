@@ -1,0 +1,61 @@
+/* About me, ported from the prototype (about.html). Scoped under .abt; keyframes prefixed. */
+.abt .ahello{display:grid;grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:96px;align-items:center;padding:56px 0 110px}
+.abt .portrait{position:relative;width:min(520px,100%);aspect-ratio:1;justify-self:center}
+.abt .portrait .photo{position:absolute;inset:6%;border-radius:50%;overflow:hidden;clip-path:circle(0% at 50% 100%);background:var(--surf);
+  transition:clip-path 1400ms var(--ease-dream) 150ms}
+.abt .portrait .photo img{width:100%;height:100%;object-fit:cover;object-position:50% 55%;transform:scale(1.14);transition:transform 1800ms var(--ease-dream) 150ms}
+.abt .portrait.in .photo{clip-path:circle(75% at 50% 50%)}
+.abt .portrait.in .photo img{transform:none}
+.abt .portrait:hover .photo img{transform:scale(1.03)}
+/* Draw: the offset hairline ring draws itself around her, then glides to centre on hover */
+.abt .oring{position:absolute;inset:0;width:100%;height:100%;overflow:visible;transform:translate(2.6%,-1.8%);transition:transform var(--d3) var(--ease-dream)}
+.abt .oring circle{fill:none;stroke:var(--accent);stroke-width:.32;stroke-linecap:round;stroke-dasharray:102;stroke-dashoffset:102;transition:stroke-dashoffset 1600ms var(--ease-dream) 700ms}
+.abt .portrait.in .oring circle{stroke-dashoffset:0}
+.abt .portrait:hover .oring{transform:translate(0,0)}
+/* Bloom: the hi! dot pops in last, and waves when you hover her */
+.abt .hi{position:absolute;left:66%;top:5%;width:20%;aspect-ratio:1;border-radius:50%;background:var(--accent);color:var(--jt);display:flex;align-items:center;justify-content:center;
+  font-family:var(--CD);font-size:clamp(22px,3.4vw,44px);box-shadow:0 0 0 6px var(--bg);transform:scale(0);transition:transform 700ms cubic-bezier(.34,1.56,.64,1) 1500ms,box-shadow var(--d3)}
+.abt .portrait.in .hi{transform:scale(1)}
+.abt .portrait:hover .hi{animation:abWave 900ms var(--ease-soft)}
+@keyframes abWave{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}45%{transform:rotate(11deg)}70%{transform:rotate(-6deg)}}
+.abt .ahtext h1{font-family:var(--CD);font-weight:400;font-size:clamp(56px,7.4vw,108px);line-height:.98;color:var(--ink)}
+.abt .ahtext p{font-size:20px;line-height:33px;margin-top:18px;max-width:500px}
+.abt .ahtext h1+p{margin-top:30px}
+/* Margins: one reading column; her asides in the right margin */
+.abt .margins{display:grid;grid-template-columns:minmax(0,640px) 260px;column-gap:72px;justify-content:center;padding:84px 0 140px;border-top:1px solid var(--line);align-items:start}
+.abt .margins>*{grid-column:1}
+.abt .margins h2{font-family:var(--CD);font-weight:400;font-size:44px;line-height:50px;color:var(--ink);margin-bottom:34px}
+.abt .margins .sp{font-size:21px;line-height:36px;margin-bottom:24px}
+.abt .margins .q{font-family:var(--CD);font-size:34px;line-height:42px;color:var(--ink);margin:10px 0 34px}
+.abt .note{grid-column:2;display:flex;gap:10px;align-items:flex-start;padding-top:6px;font-family:var(--CD);font-size:19px;line-height:24px;color:var(--muted);transition:color var(--d2) var(--ease-soft),opacity var(--d4) var(--ease-dream),filter var(--d4) var(--ease-dream)}
+.abt .note i{flex-shrink:0;width:18px;height:1px;margin-top:12px;background:var(--accent);opacity:.6;transform:scaleX(0);transform-origin:left;transition:transform var(--d3) var(--ease-dream),opacity var(--d2)}
+.abt .note.in i{transform:scaleX(1);transition-delay:calc(var(--i,0) * 90ms + 200ms),0ms}
+.abt .note.on{color:var(--ink)}
+.abt .note.on i{opacity:1}
+.abt .mbook{grid-column:2;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.abt .mbook b{font-family:var(--CD);font-weight:400;font-size:19px;line-height:26px;color:var(--ink)}
+.abt .margins h2.h2b{margin-top:56px}
+.abt .mels .ew{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
+.abt .mels .ew a{font-family:var(--NR);font-size:17px;color:var(--ink);text-decoration:none;background:linear-gradient(var(--accent),var(--accent)) 0 100%/0 1px no-repeat;transition:background-size var(--d2) var(--ease-dream),color var(--d1)}
+.abt .mels .ew a:hover,.abt .mels .ew a:focus-visible{color:var(--accent);background-size:100% 1px}
+@media (max-width:1100px){
+  .abt .margins{display:flex;flex-direction:column;align-items:stretch;padding:56px 0 90px}
+  .abt .margins h2{margin-bottom:24px}
+  .abt .margins .note{margin:-14px 0 22px}
+  .abt .mbook{padding:20px 0;margin-top:6px;border-top:1px solid var(--line)}
+}
+@media (max-width:900px){
+  .abt .ahello{grid-template-columns:1fr;gap:36px;padding:28px 0 64px}
+  .abt .portrait{width:min(320px,86%)}
+  .abt .ahtext p{font-size:18px;line-height:29px}
+  .abt .margins .sp{font-size:18px;line-height:30px}
+  .abt .margins h2{font-size:34px;line-height:40px}
+  .abt .margins .q{font-size:26px;line-height:32px}
+}
+@media (prefers-reduced-motion:reduce){
+  .abt .portrait .photo{clip-path:circle(75% at 50% 50%)!important;transition:opacity 200ms linear!important}
+  .abt .portrait .photo img,.abt .portrait:hover .photo img{transform:none!important}
+  .abt .oring{transform:translate(2.6%,-1.8%)!important}.abt .oring circle{stroke-dashoffset:0!important;transition:none!important}
+  .abt .hi{transform:none!important;animation:none!important}
+  .abt .note i{transform:none!important}
+}
