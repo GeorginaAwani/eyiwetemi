@@ -204,16 +204,6 @@ class WorkController extends Controller
         return redirect('/works');
     }
 
-    /**
-     * The writing screen arrives in a later step; until then this opens the work's page.
-     */
-    public function write(Work $work, WorkItem $item): Response
-    {
-        abort_unless($item->work_id === $work->id, 404);
-
-        return Inertia::render('Admin/Section', ['section' => 'works']);
-    }
-
     private function retitle(Work $work, string $title): void
     {
         $title = WorksAdmin::cleanTitle($title);

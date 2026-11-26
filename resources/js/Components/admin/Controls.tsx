@@ -69,7 +69,31 @@ export type Option = { value: string; label: string; add?: boolean };
 /**
  * Our select: a button and a listbox. Arrows, Home and End move; Enter or Space picks; Esc closes; a letter jumps.
  */
-export function KSelect({ value, options, onPick, labelledBy, className = '', id }: { value: string; options: Option[]; onPick: (v: string) => void; labelledBy: string; className?: string; id?: string }) {
+export function KSelect({
+    value,
+    options,
+    onPick,
+    labelledBy,
+    className = '',
+    id,
+    buttonClassName = 'k-in k-sbtn',
+    listClassName = '',
+    label,
+    display,
+}: {
+    value: string;
+    options: Option[];
+    onPick: (v: string) => void;
+    labelledBy?: string;
+    className?: string;
+    id?: string;
+    buttonClassName?: string;
+    listClassName?: string;
+    /** an aria-label, when no visible label names the field */
+    label?: string;
+    /** what the button shows, when not the picked option's name and a chevron */
+    display?: ReactNode;
+}) {
     const uid = useId().replace(/:/g, '');
     const base = id ?? 'ks' + uid;
     const root = useRef<HTMLDivElement>(null);
@@ -175,12 +199,13 @@ export function KSelect({ value, options, onPick, labelledBy, className = '', id
             <button
                 ref={button}
                 type="button"
-                className="k-in k-sbtn"
+                className={buttonClassName}
                 id={base}
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-controls={base + '-lb'}
-                aria-labelledby={`${labelledBy} ${base}`}
+                aria-labelledby={labelledBy ? `${labelledBy} ${base}` : undefined}
+                aria-label={label}
                 onClick={(e) => {
                     e.stopPropagation();
                     show(!open);
@@ -192,15 +217,20 @@ export function KSelect({ value, options, onPick, labelledBy, className = '', id
                     }
                 }}
             >
-                <span className="v">{options[current]?.label}</span>
-                <Chevron />
+                {display ?? (
+                    <>
+                        <span className="v">{options[current]?.label}</span>
+                        <Chevron />
+                    </>
+                )}
             </button>
             <div
-                className="k-lb"
+                className={`k-lb${listClassName ? ' ' + listClassName : ''}`}
                 role="listbox"
                 id={base + '-lb'}
                 tabIndex={-1}
                 aria-labelledby={labelledBy}
+                aria-label={label}
                 aria-activedescendant={open ? `${base}-o${act}` : undefined}
                 ref={list}
                 onKeyDown={key}
