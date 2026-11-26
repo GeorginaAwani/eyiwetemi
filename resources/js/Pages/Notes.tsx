@@ -2,6 +2,7 @@ import { Link } from "@inertiajs/react";
 import { useEffect, useRef, useState } from "react";
 import Runs, { Run } from "@/Components/site/Runs";
 import SiteLayout from "@/Layouts/SiteLayout";
+import { askSignIn } from "@/lib/signin";
 
 type Note = {
     id: number;
@@ -30,12 +31,7 @@ const heart = (
     </svg>
 );
 
-const signIn = () =>
-    window.dispatchEvent(
-        new CustomEvent("eyi:signin", {
-            detail: { why: "Sign in to like this note" },
-        }),
-    );
+const signIn = () => askSignIn({ why: "Sign in to like this note" });
 
 /** Likes: the margin heart on wide screens, the one under the note on phones. */
 function Like({ count, phone }: { count: number; phone?: boolean }) {

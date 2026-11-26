@@ -33,8 +33,9 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => fn (): ?array => $request->user()?->only(['id', 'name', 'username', 'email', 'avatar_seed']),
             ],
+            'signin' => fn (): ?array => $request->session()->get('signin'),
             'site' => fn (): array => SiteChrome::site(),
             'notice' => fn (): ?array => SiteChrome::notice(),
         ];

@@ -1,10 +1,13 @@
+import { SignInFlash } from '@/Components/site/SignIn';
 import { Notice, SiteChrome } from './site';
 
+/** You, when you're signed in. */
 export interface User {
     id: number;
     name: string;
+    username: string;
     email: string;
-    email_verified_at?: string;
+    avatar_seed: string;
 }
 
 export type PageProps<
@@ -14,5 +17,6 @@ export type PageProps<
         user: User | null;
     };
     site: SiteChrome;
+    signin: SignInFlash;
     notice: Notice | null;
 };

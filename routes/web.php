@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\UsernameController;
 use App\Http\Controllers\EmailsController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
@@ -9,11 +12,9 @@ use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\PrivacyController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/about', AboutController::class)->name('about');
@@ -41,14 +42,11 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::delete('/emails/{token}', [EmailsController::class, 'destroy'])->where('token', '[A-Za-z0-9]{32,64}')->name('emails.destroy');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/username-check', UsernameController::class)->middleware('throttle:60,1')->name('username.check');
+Route::get('/reset-password/{token}', PasswordResetLinkController::class)->name('password.reset');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.redirect');
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
+    Route::post('/auth/google/finish', [GoogleController::class, 'finish'])->name('google.finish');
 });
-
-require __DIR__.'/auth.php';
