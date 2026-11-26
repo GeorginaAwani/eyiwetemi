@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Preferences;
 use App\Support\SiteChrome;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -33,7 +34,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => fn (): ?array => $request->user()?->only(['id', 'name', 'username', 'email', 'avatar_seed']),
+                'user' => fn (): ?array => $request->user() ? [
+                    ...$request->user()->only(['id', 'name', 'username', 'email', 'avatar_seed']),
+                    'reading' => Preferences::readingFor($request->user()),
+                ] : null,
             ],
             'signin' => fn (): ?array => $request->session()->get('signin'),
             'site' => fn (): array => SiteChrome::site(),

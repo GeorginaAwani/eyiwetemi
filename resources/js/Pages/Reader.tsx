@@ -6,6 +6,7 @@ import SendButton from '@/Components/site/SendButton';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
 import { askSignIn } from '@/lib/signin';
+import { json } from '@/lib/http';
 
 type Block =
     | { type: 'p'; id: string | null; runs: Run[] }
@@ -230,13 +231,23 @@ function Body({ blocks, poem }: { blocks: Block[]; poem: boolean }) {
 type ReadSettings = { size: number; font: 'serif' | 'sans'; width: 'narrow' | 'wide'; lines: 'close' | 'airy'; sound: 'off' | 'rain' | 'night' | 'cafe' };
 const SIZES = [-3, -2, 0, 2, 4];
 const DEFAULTS: ReadSettings = { size: 2, font: 'serif', width: 'narrow', lines: 'airy', sound: 'off' };
-const loadSettings = (): ReadSettings => {
+/** This device's settings; on a device that has none yet, your account's (signed in). */
+const loadSettings = (account?: Partial<ReadSettings> | null): ReadSettings => {
     try {
-        return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('eyiRead') || '{}') };
+        const local = localStorage.getItem('eyiRead');
+
+        return { ...DEFAULTS, ...(local ? JSON.parse(local) : (account ?? {})) };
     } catch {
         return DEFAULTS;
     }
 };
+
+/** Signed in, a change here also becomes your account's default (a moment after you stop changing it). */
+let saveTimer = 0;
+function saveToAccount(st: ReadSettings) {
+    window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(() => json('PUT', '/settings/reading', { size: st.size, font: st.font, width: st.width, lines: st.lines }), 1200);
+}
 function applySettings(st: ReadSettings) {
     const R = document.documentElement.style;
     R.setProperty('--rso', `${SIZES[st.size]}px`);
@@ -507,7 +518,9 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
     const [panel, setPanel] = useState<PanelName>(null);
     const [barShown, setBarShown] = useState(false);
     const [pct, setPct] = useState(0);
-    const [st, setSt] = useState<ReadSettings>(loadSettings);
+    const { auth } = usePage().props;
+    const [st, setSt] = useState<ReadSettings>(() => loadSettings(auth.user?.reading));
+    const firstSettings = useRef(true);
     const [listening, setListening] = useState(false);
     const [back, setBack] = useState(false);
     const txt = useRef<HTMLElement>(null);
@@ -518,7 +531,14 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
     const key = `eyiPos:${url.split('?')[0]}`;
     const isPhone = () => window.matchMedia('(max-width:900px)').matches;
 
-    useEffect(() => applySettings(st), [st]);
+    useEffect(() => {
+        applySettings(st);
+        if (auth.user && !firstSettings.current) {
+            saveToAccount(st);
+        }
+        firstSettings.current = false;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [st]);
     useEffect(() => duckAmbient(listening), [listening]);
     useEffect(() => () => playAmbient('off', false), []);
     useEffect(() => {

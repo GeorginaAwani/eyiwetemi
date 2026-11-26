@@ -4,7 +4,7 @@ export type JsonResult<T> = { status: number; data: Partial<T> };
 const xsrf = (): string => decodeURIComponent(document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)?.[1] ?? '');
 
 /** Never throws: no connection comes back as status 0. */
-export async function json<T = Record<string, unknown>>(method: 'GET' | 'POST', url: string, body?: Record<string, unknown>): Promise<JsonResult<T>> {
+export async function json<T = Record<string, unknown>>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, body?: Record<string, unknown>): Promise<JsonResult<T>> {
     try {
         const res = await fetch(url, {
             method,

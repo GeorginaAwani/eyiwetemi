@@ -8,6 +8,8 @@ export interface User {
     username: string;
     email: string;
     avatar_seed: string;
+    /** Your reading defaults, so a new device opens chapters the way you set them. */
+    reading: { size: number; font: 'serif' | 'sans'; width: 'narrow' | 'wide'; lines: 'close' | 'airy'; theme: string };
 }
 
 export type PageProps<
