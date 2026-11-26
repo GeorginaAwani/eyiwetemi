@@ -2,6 +2,7 @@
 /* The reading site's own styles sit outside Tailwind's layers, so they win over its reset. */
 @import "./site/layout.css";
 @import "./site/home.css";
+@import "./site/library.css";
 @plugin "@tailwindcss/typography";
 
 @utility prose-poem {
