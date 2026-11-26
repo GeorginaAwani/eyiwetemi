@@ -6,6 +6,8 @@ use App\Enums\PublishStatus;
 use Database\Factories\NoteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -74,5 +76,14 @@ class Note extends Model
     public function likes(): MorphMany
     {
         return $this->morphMany(Like::class, 'likeable');
+    }
+
+    /**
+     * Notes readers can see: published, and their time has come.
+     */
+    #[Scope]
+    protected function released(Builder $query): Builder
+    {
+        return $query->where('status', PublishStatus::Published)->where('published_at', '<=', now());
     }
 }

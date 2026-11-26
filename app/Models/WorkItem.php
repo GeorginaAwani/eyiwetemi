@@ -7,6 +7,8 @@ use App\Enums\WorkItemType;
 use Database\Factories\WorkItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -90,6 +92,15 @@ class WorkItem extends Model
     public function plotPoints(): HasMany
     {
         return $this->hasMany(PlotPoint::class);
+    }
+
+    /**
+     * Chapters and pieces readers can open: published, and their time has come.
+     */
+    #[Scope]
+    protected function released(Builder $query): Builder
+    {
+        return $query->where('status', PublishStatus::Published)->where('published_at', '<=', now());
     }
 
     /**
