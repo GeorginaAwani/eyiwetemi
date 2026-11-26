@@ -21,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        /* the writing screen's saves keep every space she typed (a space beside italics is part of the text) */
+        $writing = fn (Request $request): bool => $request->isMethod('PATCH') && $request->is('works/*/write/*');
+        $middleware->trimStrings(except: [$writing]);
+        $middleware->convertEmptyStringsToNull(except: [$writing]);
+
         /* private pages: Home with the sign-in card; signing in carries on to the page they asked for */
         $middleware->redirectGuestsTo(function (Request $request): string {
             $request->session()->flash('signin', [

@@ -7,6 +7,7 @@ import NameField from '../../Components/admin/NameField';
 import { COLLECTION_KINDS, CollectionChoice, KINDS, KKind, SeriesChoice } from '../../Components/admin/NewWork';
 import { bloomStyle } from '../../Components/site/Bloom';
 import AdminLayout from '../../Layouts/AdminLayout';
+import { heading } from '../../lib/headings';
 import { json } from '../../lib/http';
 import { prefersReducedMotion } from '../../lib/motion';
 
@@ -63,28 +64,7 @@ const VIS: ['private' | 'reviewers' | 'public', string, string, string][] = [
     ['reviewers', 'people', 'Reviewers', 'Only your reviewers'],
     ['public', 'globe', 'Public', 'Everyone, published chapters only'],
 ];
-const WORDS: Record<number, string> = { 1: 'one', 2: 'two', 12: 'twelve' };
-const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 12: 'XII' };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-/** "chapter one", "Part II", "Twelve"… in a heading style. */
-function heading(n: number, word: string, style: string): string {
-    const w = WORDS[n];
-    switch (style) {
-        case 'chapter_word':
-            return `${word} ${cap(w)}`;
-        case 'chapter_word_lower':
-            return `${word.toLowerCase()} ${w}`;
-        case 'chapter_roman':
-            return `${word} ${ROMAN[n]}`;
-        case 'word':
-            return cap(w);
-        case 'number':
-            return String(n);
-        default:
-            return `${word} ${n}`;
-    }
-}
 
 const xsrf = () => decodeURIComponent(document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)?.[1] ?? '');
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\SignInController;
 use App\Http\Controllers\Admin\WorkController;
 use App\Http\Controllers\Admin\WorkCoverController;
 use App\Http\Controllers\Admin\WorkReviewerController;
+use App\Http\Controllers\Admin\WriteController;
 use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -50,7 +51,9 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::post('/works/{work:slug}/reviewers', [WorkReviewerController::class, 'store'])->name('works.reviewers.store');
     Route::delete('/works/{work:slug}/reviewers/{kind}/{id}', [WorkReviewerController::class, 'destroy'])
         ->whereIn('kind', ['user', 'invite'])->whereNumber('id')->name('works.reviewers.destroy');
-    Route::get('/works/{work:slug}/write/{item}', [WorkController::class, 'write'])->whereNumber('item')->name('works.write');
+    Route::get('/works/{work:slug}/write/{item}', [WriteController::class, 'show'])->whereNumber('item')->name('works.write');
+    Route::patch('/works/{work:slug}/write/{item}', [WriteController::class, 'save'])->whereNumber('item')->name('works.write.save');
+    Route::post('/works/{work:slug}/write/{item}/image', [WriteController::class, 'image'])->whereNumber('item')->name('works.write.image');
 
     Route::post('/series', [SeriesController::class, 'store'])->name('series.store');
     Route::patch('/series/{series}', [SeriesController::class, 'update'])->name('series.update');

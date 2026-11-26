@@ -5,9 +5,8 @@ import { External, ThemeIcon, Tick } from './Icons';
 
 export const ADMIN_THEME_KEY = 'eyiAdmTheme';
 
-/** The admin header: the wordmark and "Admin" (both back to the reading site), View site ↗ and the theme menu. */
-export default function AdminTop({ className = '' }: { className?: string }) {
-    const { siteUrl } = usePage().props as unknown as { siteUrl: string };
+/** The theme menu: the round button and its four themes, as on the reading site. */
+export function ThemeMenu() {
     const [open, setOpen] = useState(false);
     const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => 'night');
     const button = useRef<HTMLButtonElement>(null);
@@ -53,58 +52,83 @@ export default function AdminTop({ className = '' }: { className?: string }) {
     };
 
     return (
-        <header className={`ad-top ${className}`.trim()}>
-            <div className="ad-brand">
-                <a className="ad-home" href={siteUrl} aria-label="eyiwetemi, the reading site">
-                    <span className="wm" aria-label="eyiwetemi">
-                        <span className="r">ey</span>
-                        <span className="r i first">ı</span>wetem<span className="i">ı</span>
-                    </span>
-                </a>
-                <span className="ad-adm">Admin</span>
-            </div>
-            <div className="ad-tr">
-                <a className="ad-site" href={siteUrl} aria-label="View site">
-                    View site
-                    <External />
-                </a>
-                <div className="ad-tw">
+        <div className="ad-tw">
+            <button
+                ref={button}
+                className="ad-ic"
+                id="tBtn"
+                type="button"
+                aria-label="Theme"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                onClick={(e) => {
+                    e.nativeEvent.stopImmediatePropagation();
+                    setOpen(!open);
+                }}
+            >
+                <ThemeIcon />
+            </button>
+            <div ref={menu} className={`ad-menu${open ? ' open' : ''}`} id="tMenu" role="menu" onKeyDown={arrows}>
+                {THEMES.map((t) => (
                     <button
-                        ref={button}
-                        className="ad-ic"
-                        id="tBtn"
+                        key={t.key}
+                        className="ad-mi"
                         type="button"
-                        aria-label="Theme"
-                        aria-haspopup="menu"
-                        aria-expanded={open}
+                        role="menuitemradio"
+                        aria-checked={theme === t.key}
+                        tabIndex={open ? 0 : -1}
                         onClick={(e) => {
-                            e.nativeEvent.stopImmediatePropagation();
-                            setOpen(!open);
+                            setOpen(false);
+                            setThemeFrom(t.key, e.currentTarget, ADMIN_THEME_KEY);
+                            button.current?.focus();
                         }}
                     >
-                        <ThemeIcon />
+                        <span>{t.name}</span>
+                        <Tick />
                     </button>
-                    <div ref={menu} className={`ad-menu${open ? ' open' : ''}`} id="tMenu" role="menu" onKeyDown={arrows}>
-                        {THEMES.map((t) => (
-                            <button
-                                key={t.key}
-                                className="ad-mi"
-                                type="button"
-                                role="menuitemradio"
-                                aria-checked={theme === t.key}
-                                tabIndex={open ? 0 : -1}
-                                onClick={(e) => {
-                                    setOpen(false);
-                                    setThemeFrom(t.key, e.currentTarget, ADMIN_THEME_KEY);
-                                    button.current?.focus();
-                                }}
-                            >
-                                <span>{t.name}</span>
-                                <Tick />
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/** The wordmark and "Admin": both lead back to the reading site. */
+export function Brand() {
+    const { siteUrl } = usePage().props as unknown as { siteUrl: string };
+
+    return (
+        <div className="ad-brand">
+            <a className="ad-home" href={siteUrl} aria-label="eyiwetemi, the reading site">
+                <span className="wm" aria-label="eyiwetemi">
+                    <span className="r">ey</span>
+                    <span className="r i first">ı</span>wetem<span className="i">ı</span>
+                </span>
+            </a>
+            <span className="ad-adm">Admin</span>
+        </div>
+    );
+}
+
+/** View site ↗ */
+export function ViewSite() {
+    const { siteUrl } = usePage().props as unknown as { siteUrl: string };
+
+    return (
+        <a className="ad-site" href={siteUrl} aria-label="View site">
+            View site
+            <External />
+        </a>
+    );
+}
+
+/** The admin header: the wordmark and "Admin", View site ↗ and the theme menu. */
+export default function AdminTop({ className = '' }: { className?: string }) {
+    return (
+        <header className={`ad-top ${className}`.trim()}>
+            <Brand />
+            <div className="ad-tr">
+                <ViewSite />
+                <ThemeMenu />
             </div>
         </header>
     );
