@@ -6,6 +6,7 @@ import { BackSmall, Book15, BoxTick, Chevron, Close, FACT_ICONS, Globe, Plus, Ri
 import NameField from '../../Components/admin/NameField';
 import { COLLECTION_KINDS, CollectionChoice, KINDS, KKind, SeriesChoice } from '../../Components/admin/NewWork';
 import { bloomStyle } from '../../Components/site/Bloom';
+import ChaptersTab, { Contents } from '../../Components/admin/ChaptersTab';
 import AdminLayout from '../../Layouts/AdminLayout';
 import { heading } from '../../lib/headings';
 import { json } from '../../lib/http';
@@ -79,7 +80,7 @@ const names = (list: Reviewer[]) => {
  * A work's page: its cover and title over Chapters, Plan and Settings. Settings save as she goes ("Saving…", "Saved");
  * a title another work has, or no title, is "Not saved" until it's fixed.
  */
-export default function Work({ tab: firstTab, work: initial, choices }: { tab: Tab; work: Settings; choices: Choices }) {
+export default function Work({ tab: firstTab, work: initial, choices, contents }: { tab: Tab; work: Settings; choices: Choices; contents: Contents | null }) {
     const [w, setW] = useState(initial);
     const [tab, setTab] = useState<Tab>(firstTab);
     const [save, setSave] = useState<SaveState>('saved');
@@ -235,7 +236,14 @@ export default function Work({ tab: firstTab, work: initial, choices }: { tab: T
                     </div>
                 </div>
             </div>
-            <section className={`wpan${tab === 'chapters' ? ' on' : ''}`} id="p-chapters" role="tabpanel" ref={tab === 'chapters' ? panel : undefined} />
+            <section className={`wpan${tab === 'chapters' ? ' on' : ''}`} id="p-chapters" role="tabpanel" ref={tab === 'chapters' ? panel : undefined}>
+                {contents && (
+                    <ChaptersTab
+                        work={{ slug: slug.current, kind: w.kind, collectionKind: w.collectionKind, headingStyle: w.headingStyle, partWord: w.partWord, partStyle: w.partStyle, showPartNumbers: w.showPartNumbers }}
+                        contents={contents}
+                    />
+                )}
+            </section>
             {hasPlan && <section className={`wpan${tab === 'plan' ? ' on' : ''}`} id="p-plan" role="tabpanel" ref={tab === 'plan' ? panel : undefined} />}
             <section className={`wpan${tab === 'settings' ? ' on' : ''}`} id="p-settings" role="tabpanel" ref={tab === 'settings' ? panel : undefined}>
                 <SettingsForm
@@ -256,7 +264,7 @@ export default function Work({ tab: firstTab, work: initial, choices }: { tab: T
                     setSave={setSave}
                 />
             </section>
-            {w.inPrint && (
+            {w.inPrint && tab === 'settings' && (
                 <a className="k-l sp-wlink" href={w.inPrint.href}>
                     <Book15 />
                     <span>{w.inPrint.coming ? 'Coming: stores and pre-order' : 'In print: stores and prices'}</span>

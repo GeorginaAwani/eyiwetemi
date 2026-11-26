@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\ChapterController;
+use App\Http\Controllers\Admin\PublishController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SeriesController;
 use App\Http\Controllers\Admin\SignInController;
@@ -54,6 +56,18 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::get('/works/{work:slug}/write/{item}', [WriteController::class, 'show'])->whereNumber('item')->name('works.write');
     Route::patch('/works/{work:slug}/write/{item}', [WriteController::class, 'save'])->whereNumber('item')->name('works.write.save');
     Route::post('/works/{work:slug}/write/{item}/image', [WriteController::class, 'image'])->whereNumber('item')->name('works.write.image');
+    Route::post('/works/{work:slug}/write/{item}/publish', [PublishController::class, 'publish'])->whereNumber('item')->name('works.publish');
+    Route::post('/works/{work:slug}/write/{item}/schedule', [PublishController::class, 'schedule'])->whereNumber('item')->name('works.schedule');
+    Route::delete('/works/{work:slug}/write/{item}/schedule', [PublishController::class, 'unschedule'])->whereNumber('item')->name('works.unschedule');
+    Route::post('/works/{work:slug}/write/{item}/unpublish', [PublishController::class, 'unpublish'])->whereNumber('item')->name('works.unpublish');
+    Route::get('/works/{work:slug}/write/{item}/versions/{version}', [PublishController::class, 'version'])->whereNumber(['item', 'version'])->name('works.version');
+    Route::post('/works/{work:slug}/write/{item}/versions/{version}/restore', [PublishController::class, 'restore'])->whereNumber(['item', 'version'])->name('works.version.restore');
+    Route::get('/works/{work:slug}/opening', [ChapterController::class, 'opening'])->name('works.opening');
+    Route::patch('/works/{work:slug}/opening', [ChapterController::class, 'saveOpening'])->name('works.opening.save');
+    Route::post('/works/{work:slug}/items', [ChapterController::class, 'store'])->name('works.items.store');
+    Route::patch('/works/{work:slug}/items/order', [ChapterController::class, 'order'])->name('works.items.order');
+    Route::post('/works/{work:slug}/items/borrow', [ChapterController::class, 'borrow'])->name('works.items.borrow');
+    Route::delete('/works/{work:slug}/items/{item}', [ChapterController::class, 'release'])->whereNumber('item')->name('works.items.release');
 
     Route::post('/series', [SeriesController::class, 'store'])->name('series.store');
     Route::patch('/series/{series}', [SeriesController::class, 'update'])->name('series.update');

@@ -67,7 +67,7 @@ class WorkItem extends Model
     /** @return MorphMany<Version, $this> */
     public function versions(): MorphMany
     {
-        return $this->morphMany(Version::class, 'versionable')->latest();
+        return $this->morphMany(Version::class, 'versionable')->latest()->latest('id');
     }
 
     /** @return HasMany<Comment, $this> */

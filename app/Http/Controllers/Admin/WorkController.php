@@ -17,6 +17,7 @@ use App\Models\Series;
 use App\Models\SlugHistory;
 use App\Models\Work;
 use App\Models\WorkItem;
+use App\Support\ChaptersAdmin;
 use App\Support\WorksAdmin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -43,7 +44,31 @@ class WorkController extends Controller
             'tab' => $tab,
             'work' => WorksAdmin::settings($work),
             'choices' => WorksAdmin::choices($work),
+            'contents' => in_array($work->kind, [WorkKind::Novel, WorkKind::Collection], true) ? [
+                'rows' => ChaptersAdmin::rows($work),
+                'opening' => $work->kind === WorkKind::Novel && ($work->opening_quote || $work->opening_quote_by)
+                    ? ['q' => $work->opening_quote ?? '', 'by' => $work->opening_quote_by ?? ''] : null,
+                'pool' => $work->kind === WorkKind::Collection ? self::pool($work) : [],
+            ] : null,
         ]);
+    }
+
+    /**
+     * Poems, stories or essays (the collection's kind) that sit in no collection yet: what Add can take in.
+     *
+     * @return list<array{id: int, title: string, meta: string}>
+     */
+    private static function pool(Work $work): array
+    {
+        $rows = collect(WorksAdmin::rows())->keyBy('slug');
+
+        return Work::query()
+            ->where('kind', $work->collection_kind?->value ?? 'story')
+            ->whereNull('collection_id')
+            ->orderBy('title')
+            ->get(['id', 'slug', 'title'])
+            ->map(fn (Work $w): array => ['id' => $w->id, 'title' => $w->title, 'meta' => trim(explode(' · ', $rows[$w->slug]['length'] ?? '')[0].' · '.($rows[$w->slug]['edited'] ?? ''), ' ·')])
+            ->all();
     }
 
     /**

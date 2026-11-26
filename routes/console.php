@@ -8,6 +8,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+/* scheduled chapters come out first, so the announcement that follows includes them */
+Schedule::command('eyiwetemi:publish-due')->everyMinute()->withoutOverlapping();
 Schedule::command('eyiwetemi:announce')->everyMinute()->withoutOverlapping();
 
 /*

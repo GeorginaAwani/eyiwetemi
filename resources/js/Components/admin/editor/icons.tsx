@@ -33,3 +33,20 @@ export const MusicIcon = () => (
         <circle cx="16.5" cy="16" r="2.5" />
     </svg>
 );
+
+const sized = (size: number, width: number, children: JSX.Element) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...line} strokeWidth={width}>
+        {children}
+    </svg>
+);
+export const ChaptersIcon = () => sized(19, 1.8, <path d="M8 6.5h12M8 12h12M8 17.5h12M4 6.5h.5M4 12h.5M4 17.5h.5" />);
+export const VersionsIcon = () => sized(19, 1.8, <><path d="M3.6 12a8.4 8.4 0 1 0 2.6-6.1" /><path d="M3.4 4.2v4.2h4.2" /><path d="M12 8v4.2l2.8 1.8" /></>);
+export const GripIcon = () => sized(18, 1.8, <path d="M5 9h14M5 15h14" />);
+export const FoldIcon = () => sized(16, 1.8, <path d="m6 9 6 6 6-6" />);
+export const PovIcon = () => sized(15, 1.8, <><circle cx="12" cy="8" r="3.4" /><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6" /></>);
+export const Link15 = () => sized(15, 1.8, <><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></>);
+export const Clock15 = () => sized(15, 1.8, <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>);
+export const Clock18 = () => sized(18, 2, <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>);
+export const Done15 = () => sized(15, 1.8, <><circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.8 2.8L16.5 9.5" /></>);
+export const Pen15 = () => sized(15, 1.8, <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></>);
+export const Draft15 = () => sized(15, 1.8, <path d="M4 20h4L19 9l-4-4L4 16z" strokeDasharray="3 2.4" />);
