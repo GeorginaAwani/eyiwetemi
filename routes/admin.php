@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\SeriesController;
 use App\Http\Controllers\Admin\SignInController;
+use App\Http\Controllers\Admin\WorkController;
+use App\Http\Controllers\Admin\WorkCoverController;
+use App\Http\Controllers\Admin\WorkReviewerController;
 use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -32,8 +36,24 @@ Route::middleware('throttle:20,1')->group(function () {
 Route::middleware(EnsureAdmin::class)->group(function () {
     Route::get('/', [SectionController::class, 'desk'])->name('desk');
     Route::get('/{section}', [SectionController::class, 'show'])
-        ->whereIn('section', ['works', 'notes', 'comments', 'reviewers', 'stats', 'newsletter', 'site'])
+        ->whereIn('section', ['notes', 'comments', 'reviewers', 'stats', 'newsletter', 'site'])
         ->name('section');
+
+    Route::get('/works', [WorkController::class, 'index'])->name('works.index');
+    Route::post('/works', [WorkController::class, 'store'])->name('works.store');
+    Route::get('/works/title-taken', [WorkController::class, 'titleTaken'])->name('works.title-taken');
+    Route::get('/works/{work:slug}', [WorkController::class, 'show'])->name('works.show');
+    Route::patch('/works/{work:slug}', [WorkController::class, 'update'])->name('works.update');
+    Route::delete('/works/{work:slug}', [WorkController::class, 'destroy'])->name('works.destroy');
+    Route::post('/works/{work:slug}/cover', [WorkCoverController::class, 'store'])->name('works.cover.store');
+    Route::delete('/works/{work:slug}/cover', [WorkCoverController::class, 'destroy'])->name('works.cover.destroy');
+    Route::post('/works/{work:slug}/reviewers', [WorkReviewerController::class, 'store'])->name('works.reviewers.store');
+    Route::delete('/works/{work:slug}/reviewers/{kind}/{id}', [WorkReviewerController::class, 'destroy'])
+        ->whereIn('kind', ['user', 'invite'])->whereNumber('id')->name('works.reviewers.destroy');
+    Route::get('/works/{work:slug}/write/{item}', [WorkController::class, 'write'])->whereNumber('item')->name('works.write');
+
+    Route::post('/series', [SeriesController::class, 'store'])->name('series.store');
+    Route::patch('/series/{series}', [SeriesController::class, 'update'])->name('series.update');
 
     Route::post('/sign-out', [SignInController::class, 'signOut'])->name('signout');
     Route::post('/forget-device', [SignInController::class, 'forgetDevice'])->name('device.forget');

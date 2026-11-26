@@ -40,3 +40,26 @@ export const Heart = () => <svg width="15" height="15" viewBox="0 0 24 24" {...l
 export const Broken = () => <svg width="16" height="16" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-2.4-6.8" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 2.4 6.8" /><path d="M4 4l3 3M20 20l-3-3" /></svg>;
 export const Pin = () => <svg width="16" height="16" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M9 4h6l-1 5 3.5 3.5h-11L10 9z" /><path d="M12 12.5V20" /></svg>;
 export const Dot = () => <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor" /></svg>;
+
+/* ---------- works (step 3) ---------- */
+const fact = (paths: JSX.Element) => <svg width="16" height="16" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true">{paths}</svg>;
+
+/** The small icons before a work's status and who can see it. */
+export const FACT_ICONS: Record<string, JSX.Element> = {
+    lock: fact(<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>),
+    people: fact(<><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M15.5 5.2a3 3 0 0 1 0 5.6M17.5 14.3c1.7.6 2.7 2.2 3 4.7" /></>),
+    globe: fact(<><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" /></>),
+    draft: fact(<path d="M4 20h4L19 9l-4-4L4 16z" strokeDasharray="3 2.4" />),
+    pen: fact(<><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></>),
+    done: fact(<><circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.8 2.8L16.5 9.5" /></>),
+    book: fact(<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>),
+    clock: fact(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
+};
+
+export const Search = () => <svg width="18" height="18" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>;
+export const Close = ({ size = 20, width = 1.8 }: { size?: number; width?: number }) => <svg width={size} height={size} viewBox="0 0 24 24" {...line} strokeWidth={width} aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>;
+export const BackSmall = () => <svg width="16" height="16" viewBox="0 0 24 24" {...line} strokeWidth="2" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>;
+export const Globe = () => <svg width="18" height="18" viewBox="0 0 24 24" {...line} strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" /></svg>;
+export const Saved = () => <svg width="15" height="15" viewBox="0 0 24 24" {...line} strokeWidth="2.4" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" /></svg>;
+export const BoxTick = () => <svg width="14" height="14" viewBox="0 0 24 24" {...line} strokeWidth="3"><path d="m5 12.5 4.5 4.5L19 7.5" pathLength={1} /></svg>;
+export const Book15 = () => <svg width="15" height="15" viewBox="0 0 24 24" {...line} strokeWidth="1.8" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;

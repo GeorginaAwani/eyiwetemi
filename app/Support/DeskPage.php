@@ -102,7 +102,7 @@ class DeskPage
             return [
                 'href' => self::writePath($work, $item),
                 'title' => $work->title,
-                'meta' => ($unit !== null ? ucfirst($unit).' · ' : '').self::writingNowWhen($item->draft_saved_at),
+                'meta' => ($unit !== null ? ucfirst($unit).' · ' : '').self::when($item->draft_saved_at),
             ];
         })->values()->all();
     }
@@ -137,7 +137,7 @@ class DeskPage
             'title' => $item->title ?: ($item->pieceWork?->title ?? $work->title),
             'meta' => ($item->status === PublishStatus::Draft ? 'Draft' : 'Edits not out')
                 .' · '.self::wordCount((int) $item->draft_words)
-                .' · '.self::writingNowWhen($item->draft_saved_at),
+                .' · '.self::when($item->draft_saved_at),
         ];
     }
 
@@ -733,7 +733,7 @@ class DeskPage
      * When a draft was last saved, as the writing list writes it: "Just now", "25 min ago", "2 h ago", "Yesterday",
      * "Mon" within the week, then "12 Nov" (with the year when it is not this year).
      */
-    private static function writingNowWhen(CarbonInterface $at): string
+    public static function when(CarbonInterface $at): string
     {
         $zone = self::zone();
         $seconds = max(0, now()->getTimestamp() - $at->getTimestamp());

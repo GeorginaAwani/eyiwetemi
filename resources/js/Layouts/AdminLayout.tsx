@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AdminTop from '../Components/admin/AdminTop';
-import { Chevron, NAV_ICONS } from '../Components/admin/Icons';
+import { Chevron, NAV_ICONS, Plus } from '../Components/admin/Icons';
+import NewWork, { openNewWork } from '../Components/admin/NewWork';
 import { json } from '../lib/http';
 
 export type AdminSection = 'desk' | 'works' | 'notes' | 'comments' | 'reviewers' | 'stats' | 'newsletter' | 'site';
@@ -63,24 +64,45 @@ const signOut = () => router.post('/sign-out');
 
 type NowRow = { href: string; title: string; meta: string };
 
-/** Writing now: the works with the freshest drafts, each opening where she left off. */
-function WritingNow({ rows }: { rows: NowRow[] }) {
-    if (rows.length === 0) {
+/** Writing now: the works with the freshest drafts, each opening where she left off; New work under them. */
+function WritingNow({ rows, newWork = false }: { rows: NowRow[]; newWork?: boolean }) {
+    if (rows.length === 0 && !newWork) {
         return null;
     }
 
     return (
         <div className="b-now">
-            <h3>Writing now</h3>
-            <div className="nowl">
-                {rows.map((r) => (
-                    <Link key={r.href} href={r.href}>
-                        <b>{r.title}</b>
-                        <small>{r.meta}</small>
-                    </Link>
-                ))}
-            </div>
+            {rows.length > 0 && (
+                <>
+                    <h3>Writing now</h3>
+                    <div className="nowl">
+                        {rows.map((r) => (
+                            <Link key={r.href} href={r.href}>
+                                <b>{r.title}</b>
+                                <small>{r.meta}</small>
+                            </Link>
+                        ))}
+                    </div>
+                </>
+            )}
+            {newWork && <NewWorkButton />}
         </div>
+    );
+}
+
+function NewWorkButton() {
+    return (
+        <button
+            className="k-l"
+            type="button"
+            onClick={(e) => {
+                e.nativeEvent.stopImmediatePropagation();
+                openNewWork();
+            }}
+        >
+            <Plus />
+            <span>New work</span>
+        </button>
     );
 }
 
@@ -106,6 +128,14 @@ export default function AdminLayout({ section, title, children }: { section: Adm
         void el.offsetWidth;
         el.classList.add('settle');
     }, [section]);
+
+    /* New work opened from the switcher closes it */
+    useEffect(() => {
+        const close = () => setSwitcher(false);
+        window.addEventListener('admin:new-work', close);
+
+        return () => window.removeEventListener('admin:new-work', close);
+    }, []);
 
     useEffect(() => {
         if (!switcher) {
@@ -134,7 +164,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
                 <div className="b-wrap">
                     <aside className="b-mg">
                         <Nav section={section} />
-                        <WritingNow rows={writingNow} />
+                        <WritingNow rows={writingNow} newWork />
                         <div className="b-out">
                             <button className="k-l" type="button" onClick={signOut}>
                                 <span>Sign out</span>
@@ -164,6 +194,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
                                 <Nav section={section} />
                                 <WritingNow rows={writingNow.slice(0, 3)} />
                                 <div className="foot">
+                                    <NewWorkButton />
                                     <button className="k-l" type="button" onClick={signOut}>
                                         <span>Sign out</span>
                                     </button>
@@ -175,6 +206,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
                 </div>
                 <div className={`b-dim${switcher ? ' on' : ''}`} onClick={() => setSwitcher(false)} />
             </main>
+            <NewWork />
         </>
     );
 }
