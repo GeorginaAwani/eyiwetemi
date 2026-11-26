@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\DeskPage;
 use App\Support\Preferences;
 use App\Support\SiteChrome;
 use Illuminate\Http\Request;
@@ -51,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                     'user' => fn (): ?array => $request->session()->get('admin.verified') ? $request->user()?->only(['name', 'email']) : null,
                 ],
                 'siteUrl' => rtrim((string) config('app.url'), '/').'/',
+                'writingNow' => fn (): array => $request->session()->get('admin.verified') && $request->user()?->isAuthor() ? DeskPage::writingNow() : [],
             ];
         }
 

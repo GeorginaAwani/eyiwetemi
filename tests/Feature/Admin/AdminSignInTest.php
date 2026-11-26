@@ -95,7 +95,7 @@ class AdminSignInTest extends TestCase
         $response->assertCookie(AdminSignIn::DEVICE_COOKIE);
         $this->assertSame(1, TrustedDevice::query()->where('user_id', $this->author->id)->count());
         Notification::assertSentTo($this->author, NewSignIn::class);
-        $this->get(route('admin.desk'))->assertOk()->assertInertia(fn ($page) => $page->component('Admin/Section')->where('section', 'desk'));
+        $this->get(route('admin.desk'))->assertOk()->assertInertia(fn ($page) => $page->component('Admin/Desk')->has('lead')->has('writingNow'));
     }
 
     public function test_without_remember_no_device_is_kept(): void

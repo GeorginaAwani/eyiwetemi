@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import AdminTop from '../Components/admin/AdminTop';
 import { Chevron, NAV_ICONS } from '../Components/admin/Icons';
@@ -61,6 +61,29 @@ function ForgetDevice() {
 
 const signOut = () => router.post('/sign-out');
 
+type NowRow = { href: string; title: string; meta: string };
+
+/** Writing now: the works with the freshest drafts, each opening where she left off. */
+function WritingNow({ rows }: { rows: NowRow[] }) {
+    if (rows.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="b-now">
+            <h3>Writing now</h3>
+            <div className="nowl">
+                {rows.map((r) => (
+                    <Link key={r.href} href={r.href}>
+                        <b>{r.title}</b>
+                        <small>{r.meta}</small>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 /**
  * The admin shell, as the prototype's desk: header, the margin (menu, sign out), and the page, which settles in.
  * On phones the margin becomes a section switcher at the top of the page.
@@ -70,6 +93,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
     const fold = useRef<HTMLDivElement>(null);
     const main = useRef<HTMLDivElement>(null);
     const current = SECTIONS.find((s) => s.key === section)!;
+    const { writingNow = [] } = usePage().props as unknown as { writingNow?: NowRow[] };
 
     /* Settle: each block of the page inks in, one after another */
     useEffect(() => {
@@ -110,6 +134,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
                 <div className="b-wrap">
                     <aside className="b-mg">
                         <Nav section={section} />
+                        <WritingNow rows={writingNow} />
                         <div className="b-out">
                             <button className="k-l" type="button" onClick={signOut}>
                                 <span>Sign out</span>
@@ -137,6 +162,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
                             </button>
                             <div className={`b-swf${switcher ? ' open' : ''}`} id="swf" ref={fold}>
                                 <Nav section={section} />
+                                <WritingNow rows={writingNow.slice(0, 3)} />
                                 <div className="foot">
                                     <button className="k-l" type="button" onClick={signOut}>
                                         <span>Sign out</span>

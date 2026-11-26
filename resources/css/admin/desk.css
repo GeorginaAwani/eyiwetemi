@@ -1,0 +1,29 @@
+/* Desk rules that live in the later parts' prototype styles (desk.html styles 2-6), ported verbatim. Each part's full file arrives with its own step. */
+/* 2d comments */
+a.pp-dc{display:block;text-decoration:none;color:inherit}
+a.pp-dc p{transition:color var(--d1)}
+a.pp-dc:hover p{color:var(--accent)}
+/* 2e notes */
+.nt-dsch{color:var(--accent)!important}
+.nt-dh{display:inline-flex;align-items:center;gap:5px}
+#ntDesk{margin-top:0}
+/* 2f newsletter */
+a.nw-dk{color:inherit;display:block;border-radius:8px;transition:opacity var(--d1)}
+a.nw-dk:hover b{color:var(--accent)}a.nw-dk b{transition:color var(--d1)}
+/* 2g site */
+.sp-dk{display:flex;flex-direction:column;padding-top:44px}
+.sp-dk h2{font-family:var(--CD);font-weight:400;font-size:28px;color:var(--ink);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sp-dkr{display:flex;align-items:center;gap:12px;min-height:52px;border-bottom:1px solid var(--line);font-size:15px;color:var(--text)}
+.sp-dkr:last-child{border-bottom:0}
+.sp-dkr svg{color:var(--accent);flex-shrink:0}.sp-dkr b{color:var(--ink);font-weight:600}.sp-dkr .k-l{margin-left:auto}
+.sp-dk .k-l{font-size:15px}
+/* 2h stats */
+.st-cv{border-radius:3px;overflow:hidden;display:block}.st-cv img{width:100%;height:100%;object-fit:cover;display:block}
+.st-f em.dn,.st-mini em.dn,.b-fig em.dn,.st-f em.eq{color:var(--muted)}
+/* Desk: most read */
+.b-fig a.st-top{grid-column:1/3;display:grid;grid-template-columns:22px auto minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:0 0 22px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;flex-direction:row}
+.b-fig a.st-top .l{font-size:14px;color:var(--muted);white-space:nowrap}
+.b-fig a.st-top b{font-family:var(--CD);font-weight:400;font-size:19px;line-height:24px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color var(--d1)}
+.b-fig a.st-top:hover b{color:var(--accent)}
+.b-fig a.st-top .v{font-size:14px;font-weight:600;color:var(--ink)}
+.b-fig .wide{border-bottom:0!important;padding-bottom:18px!important}
