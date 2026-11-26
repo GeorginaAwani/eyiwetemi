@@ -241,6 +241,27 @@ class AnnounceReleasesTest extends TestCase
         ]);
     }
 
+    public function test_a_reply_to_a_reply_notifies_the_writer_of_that_reply_and_not_the_top_comment(): void
+    {
+        Notification::fake([CommentReply::class]);
+        $topWriter = User::factory()->create();
+        $replier = User::factory()->create();
+        $answerer = User::factory()->create();
+        $work = $this->publishedNovel();
+        $top = Comment::factory()->create(['user_id' => $topWriter->id, 'work_id' => $work->id]);
+        $answer = Comment::factory()->create([
+            'user_id' => $answerer->id,
+            'work_id' => $work->id,
+            'parent_id' => $top->id,
+            'reply_to_user_id' => $replier->id,
+        ]);
+
+        app(Announcer::class)->reply($answer);
+
+        Notification::assertSentTo($replier, CommentReply::class, fn (CommentReply $notification): bool => $notification->commentId === $answer->id);
+        Notification::assertNotSentTo($topWriter, CommentReply::class);
+    }
+
     public function test_replying_to_yourself_notifies_nobody(): void
     {
         Notification::fake([CommentReply::class]);

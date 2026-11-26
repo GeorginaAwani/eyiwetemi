@@ -2,10 +2,11 @@ import { Link, usePage } from '@inertiajs/react';
 import { CSSProperties, FormEvent, Fragment, ReactNode, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Bloom from '@/Components/site/Bloom';
 import Runs, { Run } from '@/Components/site/Runs';
-import SendButton from '@/Components/site/SendButton';
+import SendButton, { SendState } from '@/Components/site/SendButton';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
-import { askSignIn } from '@/lib/signin';
+import { act, Action, ask, useAnyDone, useDone, useFollow, useLike } from '@/lib/live';
+import { SignInDetail } from '@/lib/signin';
 import { json } from '@/lib/http';
 
 type Block =
@@ -28,11 +29,13 @@ type CommentT = {
     body: string | null;
     when: string;
     likes: number;
+    liked?: boolean;
 };
 type TopComment = CommentT & { deleted: boolean; replies: CommentT[] };
+type Thread = { count: number; list: TopComment[]; shown: number; repliesShown: number };
 type Props = {
     unavailable?: { work: { title: string; href: string }; label: string };
-    work: { id: number; title: string; href: string | null; kind: string; unitPlural: string; cover: string | null; kindLabel: string; thumb: { src: string | null; color: string | null } };
+    work: { id: number; following?: boolean; title: string; href: string | null; kind: string; unitPlural: string; cover: string | null; kindLabel: string; thumb: { src: string | null; color: string | null } };
     item: {
         id: number;
         number: number;
@@ -45,23 +48,23 @@ type Props = {
         epigraph: { q: string; by: string | null } | null;
         soundtrack: { url: string; label: string | null } | null;
         likes: number;
+        liked?: boolean;
         blocks: Block[];
         poem: boolean;
     };
     sceneBreak: string | null;
     nav: { prev: string | null; next: string | null; end: string | null; follow: boolean } | null;
     chapters: Chapter[];
-    comments: { count: number; list: TopComment[]; shown: number; repliesShown: number };
+    comments: Thread;
 };
 
 /** What the sign-in card shows under its why-line: the chapter and work you're reading, with its cover. */
 let reading: { label?: string; title: string; thumb: { src: string | null; color: string | null } | null } = { title: '', thumb: null };
-const signIn = (why: string) =>
-    askSignIn({
-        why,
-        sub: reading.label && !why.endsWith(reading.label) ? `${reading.label} · ${reading.title}` : why.endsWith(reading.title) ? undefined : reading.title,
-        picture: reading.thumb ?? undefined,
-    });
+const whyFor = (why: string): SignInDetail => ({
+    why,
+    sub: reading.label && !why.endsWith(reading.label) ? `${reading.label} · ${reading.title}` : why.endsWith(reading.title) ? undefined : reading.title,
+    picture: reading.thumb ?? undefined,
+});
 const v = (vars: Record<string, string | number>) => vars as CSSProperties;
 
 const I = {
@@ -342,23 +345,79 @@ function embedUrl(url: string): { src: string; kind: 'youtube' | 'spotify' } | n
     return null;
 }
 
-function CommentForm({ placeholder, reply, prefill = '', why }: { placeholder: string; reply?: boolean; prefill?: string; why: string }) {
+/** Add a comment, or a reply (it starts with "@Name "). Signed out, it's kept and posts once you're in. */
+function CommentForm({
+    itemId,
+    replyTo = null,
+    placeholder,
+    reply,
+    prefill = '',
+    why,
+}: {
+    itemId: number;
+    replyTo?: number | null;
+    placeholder: string;
+    reply?: boolean;
+    prefill?: string;
+    why: string;
+}) {
     const { auth } = usePage().props;
     const [text, setText] = useState(prefill);
-    const can = text.trim().length > prefill.trim().length;
-    const submit = (e: FormEvent) => {
+    const [state, setState] = useState<SendState>('idle');
+    const lead = prefill.trim();
+    const body = () => {
+        const t = text.trim();
+
+        return lead && t.startsWith(lead) ? t.slice(lead.length).trim() : t;
+    };
+    const can = body().length > 0 && state !== 'sending';
+    const action = (): Action => ({ kind: 'comment', work_item_id: itemId, body: body(), reply_to: replyTo });
+
+    /* posted (here, or carried on after signing in): the box empties */
+    useDone({ kind: 'comment', work_item_id: itemId, body: '', reply_to: replyTo }, ({ status }) => {
+        if (status === 201) {
+            setText(prefill);
+            setState('idle');
+        }
+    });
+
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
-        if (can) {
-            signIn(why);
+        if (!can) {
+            return;
+        }
+        if (!auth.user) {
+            ask(action(), whyFor(why));
+
+            return;
+        }
+        setState('sending');
+        const { status } = await act(action());
+        if (status !== 201) {
+            setState('failed');
         }
     };
 
     return (
         <form className={`cnew${reply ? ' rform settle' : ''}`} onSubmit={submit}>
-            {auth.user && <Bloom seed={auth.user.name} size={reply ? 32 : 40} />}
+            {auth.user && <Bloom seed={auth.user.avatar_seed} size={reply ? 32 : 40} />}
             <div className="cin">
-                <input type="text" value={text} placeholder={placeholder} aria-label={placeholder || 'Reply'} autoFocus={reply} onChange={(e) => setText(e.target.value)} />
-                <SendButton className="send" type="submit" state="idle" aria-label="Send" disabled={!can}>
+                <input
+                    type="text"
+                    value={text}
+                    maxLength={2000}
+                    placeholder={placeholder}
+                    aria-label={placeholder || 'Reply'}
+                    autoFocus={reply}
+                    onFocus={(e) => reply && e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length)}
+                    onChange={(e) => {
+                        setText(e.target.value);
+                        if (state === 'failed') {
+                            setState('idle');
+                        }
+                    }}
+                />
+                <SendButton className="send" type="submit" state={state} aria-label="Send" disabled={!can}>
                     {I.send}
                 </SendButton>
             </div>
@@ -366,9 +425,21 @@ function CommentForm({ placeholder, reply, prefill = '', why }: { placeholder: s
     );
 }
 
-function CommentView({ c, reply, onReply }: { c: CommentT; reply?: boolean; onReply: (name: string) => void }) {
+/** A comment's heart. */
+function CommentLike({ c }: { c: CommentT }) {
+    const like = useLike('comment', c.id, c.liked ?? false, c.likes, whyFor(`Sign in to like ${c.name}’s comment`));
+
     return (
-        <div className={`cm ${reply ? 'rp' : 'top'}`}>
+        <button className={`lk sm${like.liked ? ' on' : ''}${like.liked && like.pop ? ' pop' : ''}`} type="button" aria-pressed={like.liked} aria-label="Like" onClick={like.toggle}>
+            {I.heart}
+            <span>{like.count}</span>
+        </button>
+    );
+}
+
+function CommentView({ c, reply, fresh, onReply }: { c: CommentT; reply?: boolean; fresh?: boolean; onReply: (c: CommentT) => void }) {
+    return (
+        <div className={`cm ${reply ? 'rp' : 'top'}${fresh ? ' settle' : ''}`} id={`c-${c.id}`}>
             <Bloom seed={c.seed} size={reply ? 32 : 40} photo={c.photo} name={c.name} />
             <div className="cbd">
                 <div className="chd">
@@ -385,11 +456,8 @@ function CommentView({ c, reply, onReply }: { c: CommentT; reply?: boolean; onRe
                     {c.body}
                 </p>
                 <div className="cft">
-                    <button className="lk sm" type="button" aria-pressed="false" aria-label="Like" onClick={() => signIn(`Sign in to like ${c.name}’s comment`)}>
-                        {I.heart}
-                        <span>{c.likes}</span>
-                    </button>
-                    <button className="rbtn" type="button" onClick={() => onReply(c.name)}>
+                    <CommentLike c={c} />
+                    <button className="rbtn" type="button" onClick={() => onReply(c)}>
                         Reply
                     </button>
                 </div>
@@ -398,27 +466,53 @@ function CommentView({ c, reply, onReply }: { c: CommentT; reply?: boolean; onRe
     );
 }
 
-function Comments({ comments, why }: { comments: Props['comments']; why: string }) {
-    const [shown, setShown] = useState(comments.shown);
+/** Reader comments, oldest first, replies one level under; what you post settles in where it belongs. */
+function Comments({ itemId, thread, setThread, why }: { itemId: number; thread: Thread; setThread: (f: (t: Thread) => Thread) => void; why: string }) {
+    const [shown, setShown] = useState(thread.shown);
     const [openReplies, setOpenReplies] = useState<Record<number, boolean>>({});
-    const [replying, setReplying] = useState<{ top: number; name: string } | null>(null);
-    const left = comments.list.length - shown;
+    const [replying, setReplying] = useState<{ top: number; to: number; name: string } | null>(null);
+    const [fresh, setFresh] = useState<Record<number, true>>({});
+    const left = thread.list.filter((t, idx) => idx >= shown && !fresh[t.id]).length;
+
+    useAnyDone(({ action, status, data }) => {
+        if (action.kind !== 'comment' || action.work_item_id !== itemId || status !== 201 || !data?.comment) {
+            return;
+        }
+        const c = data.comment as TopComment & { parent: number | null };
+        setFresh((f) => ({ ...f, [c.id]: true }));
+        setThread((t) => ({
+            ...t,
+            count: typeof data.count === 'number' ? data.count : t.count + 1,
+            list: c.parent === null ? [...t.list, { ...c, deleted: false, replies: [] }] : t.list.map((top) => (top.id === c.parent ? { ...top, replies: [...top.replies, c] } : top)),
+        }));
+        if (c.parent !== null) {
+            setOpenReplies((o) => ({ ...o, [c.parent as number]: true }));
+            setReplying(null);
+        }
+        window.setTimeout(() => document.getElementById(`c-${c.id}`)?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' }), 60);
+    });
+
+    const replyTo = (top: number) => (c: CommentT) => setReplying({ top, to: c.id, name: c.name });
 
     return (
         <section className="cmts" id="comments">
             <h2 className="ch2">
-                Comments <small className="ccount">{comments.count}</small>
+                Comments <small className="ccount">{thread.count}</small>
             </h2>
-            <CommentForm placeholder="Add a comment" why="Sign in to post your comment" />
+            <CommentForm itemId={itemId} placeholder="Add a comment" why="Sign in to post your comment" />
             <div className="clist">
-                {comments.list.slice(0, shown).map((top, idx) => {
+                {thread.list.map((top, idx) => {
+                    if (idx >= shown && !fresh[top.id]) {
+                        return null;
+                    }
+                    const late = idx >= thread.shown && !fresh[top.id];
                     const all = openReplies[top.id];
-                    const reps = all ? top.replies : top.replies.slice(0, comments.repliesShown);
+                    const reps = all ? top.replies : top.replies.slice(0, thread.repliesShown);
                     const more = top.replies.length - reps.length;
                     const content = (
                         <div className="reps">
                             {reps.map((r) => (
-                                <CommentView key={r.id} c={r} reply onReply={(name) => setReplying({ top: top.id, name })} />
+                                <CommentView key={r.id} c={r} reply fresh={!!fresh[r.id]} onReply={replyTo(top.id)} />
                             ))}
                             {more > 0 && (
                                 <button type="button" className="more mrep" onClick={() => setOpenReplies((o) => ({ ...o, [top.id]: true }))}>
@@ -428,12 +522,14 @@ function Comments({ comments, why }: { comments: Props['comments']; why: string 
                                     </span>
                                 </button>
                             )}
-                            {replying?.top === top.id && <CommentForm placeholder="" reply prefill={`@${replying.name} `} why={why} key={replying.name} />}
+                            {replying?.top === top.id && (
+                                <CommentForm itemId={itemId} replyTo={replying.to} placeholder="" reply prefill={`@${replying.name} `} why={`Sign in to reply to ${replying.name}`} key={replying.to} />
+                            )}
                         </div>
                     );
 
                     return top.deleted ? (
-                        <div className={`cm top gone${idx >= comments.shown ? ' settle' : ''}`} key={top.id}>
+                        <div className={`cm top gone${late ? ' settle' : ''}`} key={top.id} id={`c-${top.id}`}>
                             <span className="av cdel-av" aria-hidden="true" />
                             <div className="cbd">
                                 <div className="chd cdel">Comment deleted</div>
@@ -441,7 +537,12 @@ function Comments({ comments, why }: { comments: Props['comments']; why: string 
                             </div>
                         </div>
                     ) : (
-                        <div className={`cm top${idx >= comments.shown ? ' settle' : ''}`} key={top.id} style={idx >= comments.shown ? { animationDelay: `${(idx - comments.shown) * 70}ms` } : undefined}>
+                        <div
+                            className={`cm top${late || fresh[top.id] ? ' settle' : ''}`}
+                            key={top.id}
+                            id={`c-${top.id}`}
+                            style={late ? { animationDelay: `${(idx - thread.shown) * 70}ms` } : undefined}
+                        >
                             <Bloom seed={top.seed} size={40} photo={top.photo} name={top.name} />
                             <div className="cbd">
                                 <div className="chd">
@@ -451,11 +552,8 @@ function Comments({ comments, why }: { comments: Props['comments']; why: string 
                                 </div>
                                 <p>{top.body}</p>
                                 <div className="cft">
-                                    <button className="lk sm" type="button" aria-pressed="false" aria-label="Like" onClick={() => signIn(`Sign in to like ${top.name}’s comment`)}>
-                                        {I.heart}
-                                        <span>{top.likes}</span>
-                                    </button>
-                                    <button className="rbtn" type="button" onClick={() => setReplying({ top: top.id, name: top.name })}>
+                                    <CommentLike c={top} />
+                                    <button className="rbtn" type="button" onClick={() => replyTo(top.id)(top)}>
                                         Reply
                                     </button>
                                 </div>
@@ -530,6 +628,11 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
     const embed = item.soundtrack ? embedUrl(item.soundtrack.url) : null;
     const key = `eyiPos:${url.split('?')[0]}`;
     const isPhone = () => window.matchMedia('(max-width:900px)').matches;
+    const [thread, setThread] = useState(comments);
+    useEffect(() => setThread(comments), [comments]);
+    const itemName = item.isPiece ? work.title : item.label;
+    const like = useLike('work_item', item.id, item.liked ?? false, item.likes, whyFor(`Sign in to like ${itemName}`));
+    const follow = useFollow('work', work.id, work.following ?? false, { why: `Sign in to follow ${work.title}`, picture: work.thumb });
 
     useEffect(() => {
         applySettings(st);
@@ -719,14 +822,14 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
                     }}
                 >
                     {I.bubble}
-                    <span className="n">{comments.count}</span>
+                    <span className="n">{thread.count}</span>
                 </a>
             )}
         </>
     );
 
     const title = item.title ?? item.label;
-    const why = `Sign in to reply on ${item.isPiece ? work.title : item.label}`;
+    const why = `Sign in to reply on ${itemName}`;
 
     return (
         <SiteLayout title={item.isPiece ? work.title : `${title} · ${work.title}`} notice={false}>
@@ -764,9 +867,9 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
                 </article>
                 <div className="end">
                     <div className="endl">
-                        <button className="lk" type="button" aria-pressed="false" aria-label="Like" onClick={() => signIn(`Sign in to like ${item.isPiece ? work.title : item.label}`)}>
+                        <button className={`lk${like.liked ? ' on' : ''}${like.liked && like.pop ? ' pop' : ''}`} type="button" aria-pressed={like.liked} aria-label="Like" onClick={like.toggle}>
                             {I.heart}
-                            <span>{item.likes}</span>
+                            <span>{like.count}</span>
                         </button>
                         {!item.isPiece && (
                             <span className="endm">
@@ -795,14 +898,9 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
                                     {nav.follow && (
                                         <>
                                             {' '}
-                                            <button
-                                                type="button"
-                                                className="fpill"
-                                                aria-pressed="false"
-                                                onClick={() => askSignIn({ follow: work.id, why: `Sign in to follow ${work.title}`, picture: work.thumb })}
-                                            >
+                                            <button type="button" className={`fpill${follow.following ? ' on' : ''}`} aria-pressed={follow.following} onClick={follow.toggle}>
                                                 {I.bell}
-                                                <span>Follow</span>
+                                                <span>{follow.following ? 'Following' : 'Follow'}</span>
                                             </button>
                                         </>
                                     )}
@@ -810,7 +908,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
                             )}
                         </nav>
                     )}
-                    <Comments comments={comments} why={why} />
+                    <Comments itemId={item.id} thread={thread} setThread={setThread} why={why} />
                 </div>
             </div>
 

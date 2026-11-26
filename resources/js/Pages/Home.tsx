@@ -2,11 +2,11 @@ import { Link } from '@inertiajs/react';
 import { CSSProperties, Fragment, useEffect, useRef, useState } from 'react';
 import BookPicture from '@/Components/site/BookPicture';
 import StatusIcon from '@/Components/site/StatusIcon';
+import TellMe from '@/Components/site/TellMe';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { prefersReducedMotion } from '@/lib/motion';
 import { paths } from '@/lib/paths';
 import { Action, ChapterRow, WorkCard } from '@/types/works';
-import { askSignIn } from '@/lib/signin';
 
 type Spine = { title: string; href: string; color: string; dark: boolean; sub: string | null; meta: string; height: number; width: number; left: number };
 type NoteRef = { label: string; text: string; href: string };
@@ -254,9 +254,7 @@ function NovelCell({ work, i }: { work: More; i: number }) {
                 )}
                 {soon && (
                     <div style={{ marginTop: 8 }}>
-                        <button type="button" className="link" onClick={() => askSignIn({ follow: work.id, why: `Sign in to hear when ${work.title} is out` })}>
-                            Tell me when it’s out
-                        </button>
+                        <TellMe id={work.id} title={work.title} following={work.following ?? false} />
                     </div>
                 )}
             </div>

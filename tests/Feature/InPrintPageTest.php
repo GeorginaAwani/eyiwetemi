@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Follow;
 use App\Models\SitePage;
+use App\Models\User;
 use App\Models\Work;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -58,6 +60,20 @@ class InPrintPageTest extends TestCase
             ->where('upcoming.1.where', 'Abeokuta · 11 am · 2027')
             ->where('past.0', ['id' => 'p1', 'day' => 16, 'month' => 'Nov', 'title' => 'Book festival', 'online' => false, 'where' => 'Port Harcourt · 2026', 'cancelled' => false, 'link' => null])
         );
+    }
+
+    public function test_a_signed_in_reader_sees_which_coming_books_they_follow(): void
+    {
+        $reader = User::factory()->create();
+        $coming = Work::factory()->novel()->public()->comingSoon()->create(['title' => 'Paper Boats']);
+        Follow::factory()->for($reader)->create(['followable_type' => 'work', 'followable_id' => $coming->id]);
+        SitePage::factory()->inPrint()->create(['live' => [
+            'books' => [],
+            'coming' => [['slug' => $coming->slug, 'title' => 'Paper Boats', 'kind' => 'A novel', 'cover' => '#977AA0', 'when' => '2027', 'mode' => 'follow', 'store' => '', 'price' => ['amount' => 0, 'currency' => 'NGN'], 'url' => null]],
+        ]]);
+
+        $this->get('/in-print')->assertInertia(fn (Assert $page) => $page->where('coming.0.following', false));
+        $this->actingAs($reader)->get('/in-print')->assertInertia(fn (Assert $page) => $page->where('coming.0.following', true));
     }
 
     public function test_in_print_is_not_found_until_published(): void

@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\Follow;
 use App\Models\Note;
 use App\Models\Series;
 use App\Models\User;
 use App\Models\Work;
 use App\Models\WorkItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class LikeAndFollowTest extends TestCase
@@ -54,6 +56,26 @@ class LikeAndFollowTest extends TestCase
         $this->assertSame(1, $user->follows()->count());
 
         $this->actingAs($user)->putJson('/follows/work/'.Work::factory()->novel()->create()->id)->assertNotFound();
+    }
+
+    public function test_the_series_page_shows_the_series_and_each_book_the_reader_follows(): void
+    {
+        $reader = User::factory()->create();
+        $series = Series::factory()->create();
+        Work::factory()->novel()->public()->published()->create(['series_id' => $series->id, 'series_position' => 1]);
+        $soon = Work::factory()->novel()->public()->comingSoon()->create(['series_id' => $series->id, 'series_position' => 2]);
+        Follow::factory()->for($reader)->create(['followable_type' => 'series', 'followable_id' => $series->id]);
+        Follow::factory()->for($reader)->create(['followable_type' => 'work', 'followable_id' => $soon->id]);
+
+        $this->get('/series/'.$series->slug)->assertInertia(fn (Assert $page) => $page
+            ->where('series.following', false)
+            ->where('books.1.following', false)
+        );
+        $this->actingAs($reader)->get('/series/'.$series->slug)->assertInertia(fn (Assert $page) => $page
+            ->where('series.following', true)
+            ->where('books.0.following', false)
+            ->where('books.1.following', true)
+        );
     }
 
     public function test_guests_cannot_like_or_follow(): void

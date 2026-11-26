@@ -1,4 +1,5 @@
-import { askSignIn } from '@/lib/signin';
+import { FollowType, useFollow } from '@/lib/live';
+import { SignInDetail } from '@/lib/signin';
 
 const Bell = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -17,18 +18,26 @@ const Cross = () => (
     </svg>
 );
 
+type Props = {
+    following: boolean;
+    /** The page keeps the state itself (Profile, Notifications); otherwise the button follows for real. */
+    onToggle?: () => void;
+    workId: number;
+    title: string;
+    type?: FollowType;
+    picture?: SignInDetail['picture'];
+};
+
 /**
  * The "Follow a work" pill: Follow = outline + bell; Following = grey + tick; hovering Following offers Unfollow.
- * Signed-out readers are asked to sign in first.
+ * Signed-out readers are asked to sign in first, and it follows once they're in.
  */
-export default function FollowButton({ following, onToggle, workId, title }: { following: boolean; onToggle?: () => void; workId: number; title: string }) {
+export default function FollowButton({ following, onToggle, workId, title, type = 'work', picture }: Props) {
+    const live = useFollow(type, workId, following, { why: `Sign in to follow ${title}`, picture });
+    const on = onToggle ? following : live.following;
+
     return (
-        <button
-            type="button"
-            className={`follow${following ? '' : ' off'}`}
-            aria-pressed={following}
-            onClick={() => (onToggle ? onToggle() : askSignIn({ follow: workId, why: `Sign in to follow ${title}` }))}
-        >
+        <button type="button" className={`follow${on ? '' : ' off'}`} aria-pressed={on} onClick={onToggle ?? live.toggle}>
             <span className="fi fi-b">
                 <Bell />
             </span>

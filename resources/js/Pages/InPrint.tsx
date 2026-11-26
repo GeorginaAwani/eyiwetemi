@@ -2,12 +2,13 @@ import { Link } from "@inertiajs/react";
 import { CSSProperties, Fragment, useEffect, useState } from "react";
 import SiteLayout from "@/Layouts/SiteLayout";
 import { prefersReducedMotion } from "@/lib/motion";
-import { askSignIn } from "@/lib/signin";
+import { useFollow } from "@/lib/live";
 
 type Store = { store: string; price: string | null; url: string | null };
 type Format = { format: string; from: string | null; stores: Store[] };
 type BookBase = {
     id: number | null;
+    following?: boolean;
     title: string;
     kind: string;
     href: string;
@@ -366,23 +367,25 @@ function ComingRow({ book, wide }: { book: Coming; wide: boolean }) {
                         Pre-order · {book.preorder.price} ↗
                     </a>
                 ) : (
-                    <button
-                        className="fp-follow"
-                        type="button"
-                        aria-pressed="false"
-                        onClick={() =>
-                            askSignIn({
-                                follow: book.id,
-                                why: `Sign in to follow ${book.title}`,
-                            })
-                        }
-                    >
-                        <span className="a">{I.bell}Follow</span>
-                        <span className="b">{I.check}Following</span>
-                    </button>
+                    book.id !== null && <PrintFollow book={book} />
                 )}
             </div>
         </div>
+    );
+}
+
+/** Follow a book that isn't out yet, so you hear when it is. */
+function PrintFollow({ book }: { book: Coming }) {
+    const { following, toggle } = useFollow("work", book.id ?? 0, book.following ?? false, {
+        why: `Sign in to follow ${book.title}`,
+        picture: { src: book.image, color: book.color },
+    });
+
+    return (
+        <button className="fp-follow" type="button" aria-pressed={following} onClick={toggle}>
+            <span className="a">{I.bell}Follow</span>
+            <span className="b">{I.check}Following</span>
+        </button>
     );
 }
 

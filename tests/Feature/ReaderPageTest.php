@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Comment;
+use App\Models\Follow;
+use App\Models\Like;
 use App\Models\User;
 use App\Models\Work;
 use App\Models\WorkItem;
@@ -122,6 +124,33 @@ class ReaderPageTest extends TestCase
             ->where('comments.list.1.deleted', true)
             ->where('comments.list.1.body', null)
             ->where('comments.list.1.replies.0.body', 'Read chapter 4.')
+        );
+    }
+
+    public function test_a_signed_in_reader_sees_their_own_likes_and_follow_and_guests_see_none(): void
+    {
+        $work = $this->novel(1);
+        $item = $work->items()->first();
+        $writer = User::factory()->reader()->create();
+        $reader = User::factory()->reader()->create();
+        $comment = Comment::factory()->create(['work_id' => $work->id, 'work_item_id' => $item->id, 'user_id' => $writer->id]);
+        $reply = Comment::factory()->replyTo($comment)->create(['user_id' => User::factory()->author()->create()->id]);
+        Like::factory()->for($reader)->create(['likeable_type' => 'work_item', 'likeable_id' => $item->id]);
+        Like::factory()->for($reader)->create(['likeable_type' => 'comment', 'likeable_id' => $reply->id]);
+        Follow::factory()->for($reader)->create(['followable_type' => 'work', 'followable_id' => $work->id]);
+
+        $this->get('/library/'.$work->slug.'/1')->assertInertia(fn (Assert $page) => $page
+            ->where('item.liked', false)
+            ->where('work.following', false)
+            ->where('comments.list.0.liked', false)
+            ->where('comments.list.0.replies.0.liked', false)
+        );
+
+        $this->actingAs($reader)->get('/library/'.$work->slug.'/1')->assertInertia(fn (Assert $page) => $page
+            ->where('item.liked', true)
+            ->where('work.following', true)
+            ->where('comments.list.0.liked', false)
+            ->where('comments.list.0.replies.0.liked', true)
         );
     }
 

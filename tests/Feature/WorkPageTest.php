@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Follow;
 use App\Models\Genre;
 use App\Models\Series;
 use App\Models\SitePage;
@@ -87,6 +88,16 @@ class WorkPageTest extends TestCase
         $this->actingAs(User::factory()->reader()->create())->get('/library/'.$forReviewers->slug)->assertNotFound();
         $this->actingAs($reviewer)->get('/library/'.$forReviewers->slug)->assertOk();
         $this->actingAs(User::factory()->author()->create())->get('/library/'.$private->slug)->assertOk();
+    }
+
+    public function test_a_signed_in_reader_sees_whether_they_follow_the_work(): void
+    {
+        $work = $this->novel(1);
+        $reader = User::factory()->create();
+        Follow::factory()->for($reader)->create(['followable_type' => 'work', 'followable_id' => $work->id]);
+
+        $this->get('/library/'.$work->slug)->assertInertia(fn (Assert $page) => $page->where('work.following', false));
+        $this->actingAs($reader)->get('/library/'.$work->slug)->assertInertia(fn (Assert $page) => $page->where('work.following', true));
     }
 
     public function test_an_old_address_moves_to_the_current_one(): void

@@ -234,7 +234,7 @@ export default function Work({ work, facts, prints, actions, list }: Props) {
                             <Bubble />
                             {work.comments}
                         </span>
-                        <FollowButton following={false} workId={work.id} title={work.title} />
+                        <FollowButton following={work.following ?? false} workId={work.id} title={work.title} picture={{ src: work.cover.src, color: work.cover.color }} />
                     </div>
                     <Contents list={list} workKind={work.kind} />
                 </div>

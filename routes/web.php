@@ -4,6 +4,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\UsernameController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\EmailsController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/follows/{type}/{id}', [FollowController::class, 'store'])->whereIn('type', ['work', 'series'])->whereNumber('id')->name('follows.store');
         Route::delete('/follows/{type}/{id}', [FollowController::class, 'destroy'])->whereIn('type', ['work', 'series'])->whereNumber('id')->name('follows.destroy');
     });
+
+    Route::post('/comments', [CommentController::class, 'store'])->middleware('throttle:10,1')->name('comments.store');
 });
 
 Route::post('/newsletter', [NewsletterController::class, 'store'])

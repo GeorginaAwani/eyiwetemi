@@ -3,13 +3,13 @@ import { CSSProperties, Fragment } from 'react';
 import BookPicture from '@/Components/site/BookPicture';
 import FollowButton from '@/Components/site/FollowButton';
 import StatusIcon from '@/Components/site/StatusIcon';
+import TellMe from '@/Components/site/TellMe';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { Action, WorkCard } from '@/types/works';
-import { askSignIn } from '@/lib/signin';
 
 type Book = WorkCard & { position: number; soon: boolean; statusText: string; href: string };
 type Props = {
-    series: { id: number; name: string; blurb: string | null; statusLine: string; facts: { label: string; value: string }[] };
+    series: { id: number; name: string; following?: boolean; blurb: string | null; statusLine: string; facts: { label: string; value: string }[] };
     actions: Action[];
     books: Book[];
 };
@@ -101,7 +101,7 @@ export default function Series({ series, actions, books }: Props) {
                         </div>
                     )}
                     <div className="stats">
-                        <FollowButton following={false} workId={series.id} title={series.name} />
+                        <FollowButton type="series" following={series.following ?? false} workId={series.id} title={series.name} />
                     </div>
                     <div className="lh">
                         <h2>Books</h2>
@@ -134,14 +134,7 @@ export default function Series({ series, actions, books }: Props) {
                                         )}
                                         {b.soon && (
                                             <div style={{ marginTop: 10 }}>
-                                                <button
-                                                    type="button"
-                                                    className="link"
-                                                    style={{ fontSize: 14 }}
-                                                    onClick={() => askSignIn({ follow: b.id, why: `Sign in to hear when ${b.title} is out` })}
-                                                >
-                                                    Tell me when it’s out
-                                                </button>
+                                                <TellMe id={b.id} title={b.title} following={b.following ?? false} size={14} />
                                             </div>
                                         )}
                                     </div>

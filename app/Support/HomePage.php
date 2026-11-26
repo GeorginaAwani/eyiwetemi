@@ -195,6 +195,8 @@ class HomePage
         $rows = WorkPresenter::numbered($lead);
         $newest = $rows->last();
         $note = Note::query()->released()->where('work_id', $lead->id)->latest('published_at')->first();
+        $more = $novels->reject(fn (Work $work): bool => $work->is($lead))->take(self::MORE)->values();
+        $followed = ReaderMarks::followed('work', $more->pluck('id'));
 
         return [
             'lead' => [
@@ -210,9 +212,12 @@ class HomePage
                     'href' => '/notes#n-'.$note->id,
                 ] : null,
             ],
-            'more' => $novels->reject(fn (Work $work): bool => $work->is($lead))
-                ->take(self::MORE)
-                ->map(fn (Work $work): array => [...WorkPresenter::card($work), 'firstLine' => $this->firstLine($work)])
+            'more' => $more
+                ->map(fn (Work $work): array => [
+                    ...WorkPresenter::card($work),
+                    'firstLine' => $this->firstLine($work),
+                    'following' => $followed->contains($work->id),
+                ])
                 ->values()->all(),
             'total' => $total,
         ];

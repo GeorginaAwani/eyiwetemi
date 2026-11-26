@@ -2,6 +2,8 @@ export type Cover = { src: string | null; color: string; dark: boolean };
 
 export type WorkCard = {
     id: number;
+    /** You follow it (coming soon: you'll hear when it's out). */
+    following?: boolean;
     kind: 'novel' | 'story' | 'poem' | 'essay' | 'collection';
     kindLabel: string;
     tab: 'novel' | 'story' | 'poem' | 'essay';

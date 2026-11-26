@@ -93,16 +93,18 @@ class NotesPage
      */
     private function months(Collection $notes): array
     {
+        $liked = ReaderMarks::liked('note', $notes->pluck('id'));
+
         return $notes
             ->groupBy(fn (Note $note): string => $note->published_at->copy()->setTimezone($this->zone())->format('Y-m'))
-            ->map(function (Collection $group, string $key): array {
+            ->map(function (Collection $group, string $key) use ($liked): array {
                 $first = $group->first()->published_at->copy()->setTimezone($this->zone());
 
                 return [
                     'key' => $key,
                     'name' => $first->format('F'),
                     'year' => $first->year,
-                    'notes' => $group->map(fn (Note $note): array => $this->note($note))->values()->all(),
+                    'notes' => $group->map(fn (Note $note): array => $this->note($note, $liked))->values()->all(),
                 ];
             })
             ->values()
@@ -110,9 +112,10 @@ class NotesPage
     }
 
     /**
+     * @param  Collection<int, int>  $liked  Ids of the notes the signed-in reader has liked.
      * @return array<string, mixed>
      */
-    private function note(Note $note): array
+    private function note(Note $note, Collection $liked): array
     {
         $work = $note->work;
 
@@ -123,6 +126,7 @@ class NotesPage
             'picture' => $note->media ? WorkPresenter::mediaUrl($note->media->disk, $note->media->path) : null,
             'work' => $work instanceof Work ? ['title' => $work->title, 'href' => WorkPresenter::href($work)] : null,
             'likes' => $note->likes_count,
+            'liked' => $liked->contains($note->id),
         ];
     }
 
