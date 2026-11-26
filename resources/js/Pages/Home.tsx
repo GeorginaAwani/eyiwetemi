@@ -223,16 +223,16 @@ function NovelCell({ work, i }: { work: More; i: number }) {
                 <div
                     className="book turn"
                     aria-hidden="true"
-                    style={{ width: 96, height: 144, flexShrink: 0, background: 'var(--tint)', border: '1.5px dashed var(--accent)', boxShadow: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 10 }}
+                    style={{ width: 96, height: 144, flexShrink: 0, background: 'var(--tint)', border: '1.5px dashed var(--accent)', boxShadow: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 12 }}
                 >
                     <span className="caps" style={{ fontSize: 7, color: 'var(--accent)' }}>
                         Coming soon
                     </span>
-                    <span style={{ fontFamily: 'var(--CD)', fontSize: 12, color: 'var(--accent)' }}>{work.title}</span>
+                    <span style={{ fontFamily: 'var(--CD)', fontSize: 16, lineHeight: 1, color: 'var(--accent)' }}>{work.title}</span>
                     <span />
                 </div>
             ) : (
-                <BookPicture work={work} width={96} height={144} type={{ k: 7, t: 12, w: 7, pad: '10px' }} firstLine={work.firstLine} style={{ flexShrink: 0 }} />
+                <BookPicture work={work} width={120} height={180} type={{ k: 7, t: 16, w: 8, pad: '12px' }} firstLine={work.firstLine} style={{ flexShrink: 0 }} />
             )}
             <div>
                 <div className="t">
