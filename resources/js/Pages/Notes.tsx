@@ -2,7 +2,7 @@ import { Link } from "@inertiajs/react";
 import { useEffect, useRef, useState } from "react";
 import Runs, { Run } from "@/Components/site/Runs";
 import SiteLayout from "@/Layouts/SiteLayout";
-import { askSignIn } from "@/lib/signin";
+import { useLike } from "@/lib/live";
 
 type Note = {
     id: number;
@@ -11,6 +11,7 @@ type Note = {
     picture: string | null;
     work: { title: string; href: string } | null;
     likes: number;
+    liked?: boolean;
 };
 type Month = { key: string; name: string; year: number; notes: Note[] };
 type Batch = { months: Month[]; olderAfter: number | null };
@@ -31,25 +32,31 @@ const heart = (
     </svg>
 );
 
-const signIn = () => askSignIn({ why: "Sign in to like this note" });
+type LikeState = ReturnType<typeof useLike>;
 
-/** Likes: the margin heart on wide screens, the one under the note on phones. */
-function Like({ count, phone }: { count: number; phone?: boolean }) {
+/** Likes: the margin heart on wide screens, the one under the note on phones; both show one like. */
+function Like({ like, was, phone }: { like: LikeState; was: boolean; phone?: boolean }) {
     return (
         <button
-            className={`lk${phone ? " ph" : ""}`}
+            className={`lk${phone ? " ph" : ""}${like.liked ? " on" : ""}${was ? " was" : ""}`}
             type="button"
-            aria-pressed="false"
+            aria-pressed={like.liked}
             aria-label="Like this note"
-            onClick={signIn}
+            onClick={like.toggle}
         >
             {heart}
-            <span>{count}</span>
+            <span>{like.count}</span>
         </button>
     );
 }
 
 function NoteRow({ note }: { note: Note }) {
+    const like = useLike("note", note.id, note.liked ?? false, note.likes, {
+        why: "Sign in to like this note",
+        sub: `Note · ${note.day}`,
+    });
+    /* liked before the page opened: no bloom until you like it again */
+    const was = like.pop === 0;
     return (
         <article className="dn" id={`n-${note.id}`}>
             <div className="dc">
@@ -65,7 +72,7 @@ function NoteRow({ note }: { note: Note }) {
                         <img src={note.picture} alt="" />
                     </div>
                 )}
-                <Like count={note.likes} phone />
+                <Like like={like} was={was} phone />
             </div>
             <aside className="as">
                 <i className="dash" />
@@ -78,7 +85,7 @@ function NoteRow({ note }: { note: Note }) {
                         </Link>
                     </span>
                 )}
-                <Like count={note.likes} />
+                <Like like={like} was={was} />
             </aside>
         </article>
     );

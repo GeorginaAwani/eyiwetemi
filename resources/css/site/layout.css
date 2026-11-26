@@ -356,3 +356,15 @@ html .follow:focus-visible,html .fpill:focus-visible{outline:none;box-shadow:0 0
 .nav>a.on::after,.navbtn.on::after{transform:scaleX(1)}
 .navbtn.on{cursor:pointer}
 .colo .flink[aria-current]{color:var(--ink);background-size:100% 1.5px;cursor:default}
+
+/* Tell me when it's out: follows a work that isn't out yet; on, it says so with a tick */
+.tellme{display:inline-grid;justify-items:start;background:none;padding-bottom:0;cursor:pointer;border:0;text-align:left}
+.tellme>span{grid-area:1/1;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding-bottom:3px;transition:opacity var(--d2) var(--ease-soft),transform var(--d2) var(--ease-dream),color var(--d1)}
+.tellme .tm-a{background:linear-gradient(currentColor,currentColor) 0 100%/100% 1.5px no-repeat}
+.tellme .tm-b{opacity:0;transform:translateY(6px);color:var(--muted);font-weight:500}
+.tellme.on .tm-a{opacity:0;transform:translateY(-6px);pointer-events:none}
+.tellme.on .tm-b{opacity:1;transform:none}
+.tellme.on:hover .tm-b{color:var(--ink)}
+.tellme .tm-b svg{color:var(--accent);flex:none}
+.tellme:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent);border-radius:4px}
+@media (prefers-reduced-motion:reduce){.tellme>span{transform:none!important;transition:opacity var(--d2) linear,color var(--d1) linear}}

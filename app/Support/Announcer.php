@@ -140,29 +140,31 @@ class Announcer
 
     /**
      * The reply notice for one comment, if it should go out: a public, visible reply to a visible comment
-     * whose author is a reader or reviewer and not the person replying.
+     * whose answered reader is a reader or reviewer and not the person replying. The reader answered is the
+     * one the reply names, or the writer of the comment it sits under when it names nobody.
      *
      * @return Collection<int, array{notification: \Illuminate\Notifications\Notification, users: Collection<int, User>, at: CarbonInterface}>
      */
     public function replyDeliveries(Comment $reply, bool $mail = true): Collection
     {
-        $reply->loadMissing('parent.user');
+        $reply->loadMissing(['parent.user', 'replyToUser']);
         $parent = $reply->parent;
+        $answered = $reply->replyToUser ?? $parent?->user;
 
         if ($parent === null
-            || $parent->user === null
+            || $answered === null
             || $reply->audience !== CommentAudience::Public
             || $reply->hidden_at !== null
             || $parent->hidden_at !== null
-            || $parent->user->isAuthor()
-            || $parent->user->id === $reply->user_id
-            || ! $this->reaches($parent->user, 'replies', $mail)) {
+            || $answered->isAuthor()
+            || $answered->id === $reply->user_id
+            || ! $this->reaches($answered, 'replies', $mail)) {
             return collect();
         }
 
         return collect([[
             'notification' => new CommentReply($reply->id, 'replies', $mail),
-            'users' => collect([$parent->user]),
+            'users' => collect([$answered]),
             'at' => $reply->created_at,
         ]]);
     }

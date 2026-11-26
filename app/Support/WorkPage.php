@@ -69,6 +69,7 @@ class WorkPage
                 'blurb' => $work->description,
                 'likes' => number_format((int) $work->likes_count),
                 'comments' => number_format((int) $work->comments_count),
+                'following' => ReaderMarks::followed('work', $work->id)->isNotEmpty(),
                 'note' => $note && Reading::firstSentence($note->live_text) ? [
                     'label' => 'Note · '.Reading::day($note->published_at),
                     'text' => Reading::noteOpening($note->live_text),

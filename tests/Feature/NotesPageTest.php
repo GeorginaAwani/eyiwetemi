@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Like;
 use App\Models\Note;
+use App\Models\User;
 use App\Models\Work;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -77,6 +78,23 @@ class NotesPageTest extends TestCase
             ->assertJsonPath('months.0.name', 'September')
             ->assertJsonPath('months.0.notes.0.id', $september->id)
             ->assertJsonPath('olderAfter', null);
+    }
+
+    public function test_a_signed_in_reader_sees_the_notes_they_liked_on_the_page_and_in_older_batches(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-26 12:00', 'Africa/Lagos'));
+        $reader = User::factory()->create();
+        $newer = $this->note('2026-11-25 09:00');
+        $older = $this->note('2026-11-20 09:00');
+        Like::factory()->for($reader)->create(['likeable_type' => 'note', 'likeable_id' => $older->id]);
+
+        $this->actingAs($reader)->get('/notes')->assertInertia(fn (Assert $page) => $page
+            ->where('months.0.notes.0.liked', false)
+            ->where('months.0.notes.1.liked', true)
+        );
+        $this->actingAs($reader)->getJson('/notes-older?after='.$newer->id)
+            ->assertJsonPath('months.0.notes.0.id', $older->id)
+            ->assertJsonPath('months.0.notes.0.liked', true);
     }
 
     public function test_older_notes_need_a_note_to_follow(): void

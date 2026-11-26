@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\CollectionKind;
+use App\Models\Follow;
 use App\Models\Note;
 use App\Models\SitePage;
 use App\Models\SiteSetting;
+use App\Models\User;
 use App\Models\Work;
 use App\Models\WorkItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -175,6 +177,20 @@ class HomePageTest extends TestCase
             ->where('novels.more.0.title', 'Salt Season')
             ->where('novels.more.0.inPrint', '₦8,500')
             ->where('novels.more.0.status', ['icon' => 'check', 'text' => '1 chapter'])
+        );
+    }
+
+    public function test_a_signed_in_reader_sees_which_novels_in_the_more_row_they_follow(): void
+    {
+        $this->novel('Lead novel', [1]);
+        $followed = $this->novel('Followed novel', [5]);
+        $reader = User::factory()->create();
+        Follow::factory()->for($reader)->create(['followable_type' => 'work', 'followable_id' => $followed->id]);
+
+        $this->get('/')->assertInertia(fn (Assert $page) => $page->where('novels.more.0.following', false));
+        $this->actingAs($reader)->get('/')->assertInertia(fn (Assert $page) => $page
+            ->where('novels.more.0.title', 'Followed novel')
+            ->where('novels.more.0.following', true)
         );
     }
 

@@ -3,10 +3,10 @@ import { CSSProperties, KeyboardEvent, useEffect, useRef, useState } from 'react
 import BookPicture from '@/Components/site/BookPicture';
 import SendButton from '@/Components/site/SendButton';
 import StatusIcon from '@/Components/site/StatusIcon';
+import TellMe from '@/Components/site/TellMe';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { prefersReducedMotion } from '@/lib/motion';
 import { ChapterRow, WorkCard } from '@/types/works';
-import { askSignIn } from '@/lib/signin';
 
 type TabKey = 'all' | 'novel' | 'story' | 'poem' | 'essay';
 type Lead = WorkCard & {
@@ -148,26 +148,7 @@ function WorkRow({ row, i, arrive }: { row: Row; i: number; arrive: boolean }) {
                     row.line.text && <span className="l3 ex">{row.line.text}</span>
                 ) : row.line.type === 'soon' ? (
                     <span className="l3">
-                        <span
-                            className="link"
-                            style={{ fontSize: 14 }}
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                askSignIn({ follow: row.id, why: `Sign in to hear when ${row.title} is out` });
-                            }}
-                            onKeyDown={(e: KeyboardEvent) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    askSignIn({ follow: row.id, why: `Sign in to hear when ${row.title} is out` });
-                                }
-                            }}
-                        >
-                            {row.line.text}
-                        </span>
+                        <TellMe id={row.id} title={row.title} following={row.following ?? false} inLink size={14} />
                     </span>
                 ) : (
                     <span className="l3 ch">

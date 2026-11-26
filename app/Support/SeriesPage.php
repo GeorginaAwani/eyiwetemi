@@ -41,6 +41,7 @@ class SeriesPage
         $count = $this->books->count();
         $since = $this->books->pluck('first_published_at')->filter()->min();
         $first = $this->books->first(fn (Work $book): bool => WorkPresenter::numbered($book)->isNotEmpty());
+        $followedBooks = ReaderMarks::followed('work', $this->books->pluck('id'));
 
         return [
             'series' => [
@@ -52,13 +53,14 @@ class SeriesPage
                     ['label' => 'Books', 'value' => (string) $count],
                     $since ? ['label' => 'Since', 'value' => (string) $since->copy()->setTimezone(config('eyiwetemi.timezone'))->year] : null,
                 ])),
+                'following' => ReaderMarks::followed('series', $this->series->id)->isNotEmpty(),
             ],
             'actions' => $first ? [[
                 'label' => 'Start from book '.$first->series_position,
                 'href' => WorkPresenter::itemHref($first, WorkPresenter::numbered($first)->first()['number'], true),
                 'style' => 'solid',
             ]] : [],
-            'books' => $this->books->map(function (Work $book): array {
+            'books' => $this->books->map(function (Work $book) use ($followedBooks): array {
                 $card = WorkPresenter::card($book);
                 $soon = $book->status === WorkStatus::ComingSoon;
 
@@ -72,6 +74,7 @@ class SeriesPage
                         default => WorkPresenter::units($book, WorkPresenter::numbered($book)->count()).' so far',
                     },
                     'href' => $soon ? null : $card['href'],
+                    'following' => $followedBooks->contains($book->id),
                 ];
             })->values()->all(),
         ];

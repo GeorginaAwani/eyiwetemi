@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Follow;
 use App\Models\Series;
+use App\Models\User;
 use App\Models\Work;
 use App\Models\WorkItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -85,6 +87,20 @@ class LibraryPageTest extends TestCase
             ->where('panels.novel.rows.1.title', 'Loose novel')
             ->where('panels.all.rows.0.sub', 'Novel · Book 2 of The Harbour books')
         );
+    }
+
+    public function test_a_signed_in_reader_sees_which_rows_they_follow_on_the_page_and_in_show_more(): void
+    {
+        $reader = User::factory()->create();
+        $this->poem('Newest', 1);
+        $followed = $this->poem('Followed', 2);
+        Follow::factory()->for($reader)->create(['followable_type' => 'work', 'followable_id' => $followed->id]);
+
+        $this->get('/library')->assertInertia(fn (Assert $page) => $page->where('panels.all.rows.0.following', false));
+        $this->actingAs($reader)->get('/library')->assertInertia(fn (Assert $page) => $page->where('panels.all.rows.0.following', true));
+        $this->actingAs($reader)->getJson('/library-rows?tab=all&shown=1')
+            ->assertJsonPath('rows.0.title', 'Followed')
+            ->assertJsonPath('rows.0.following', true);
     }
 
     public function test_show_more_returns_the_next_page_of_rows(): void

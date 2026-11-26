@@ -29,6 +29,9 @@ class ReaderPage
     /** Replies shown before "Show N more replies". */
     public const REPLIES_SHOWN = 4;
 
+    /** What a comment's writer and the reader it answers load, for comment(). */
+    public const COMMENT_WITH = ['user:id,name,username,avatar_seed,role', 'replyToUser:id,name,username,role'];
+
     private const ROMAN = [1000 => 'M', 900 => 'CM', 500 => 'D', 400 => 'CD', 100 => 'C', 90 => 'XC', 50 => 'L', 40 => 'XL', 10 => 'X', 9 => 'IX', 5 => 'V', 4 => 'IV', 1 => 'I'];
 
     private const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
@@ -91,6 +94,7 @@ class ReaderPage
                 'id' => $work->id,
                 'title' => $work->title,
                 'href' => $isPiece ? null : WorkPresenter::href($work),
+                'following' => ReaderMarks::followed('work', $work->id)->isNotEmpty(),
                 'kind' => $work->kind->value,
                 'unitPlural' => ucfirst($unit === 'story' ? 'stories' : $unit.'s'),
                 'cover' => $isPiece && $work->cover ? WorkPresenter::mediaUrl($work->cover->disk, $work->cover->path) : null,
@@ -112,6 +116,7 @@ class ReaderPage
                 'epigraph' => $item->epigraph ? ['q' => $item->epigraph, 'by' => $item->epigraph_by] : null,
                 'soundtrack' => $item->soundtrack_url ? ['url' => $item->soundtrack_url, 'label' => $item->soundtrack_label] : null,
                 'likes' => (int) $item->likes_count,
+                'liked' => ReaderMarks::liked('work_item', $item->id)->isNotEmpty(),
                 'blocks' => $this->blocks($body),
                 'poem' => $work->kind === WorkKind::Poem || ($work->kind === WorkKind::Collection && $work->collection_kind?->value === 'poem'),
             ],
@@ -272,7 +277,7 @@ class ReaderPage
     private function comments(WorkItem $item): array
     {
         $all = Comment::withTrashed()
-            ->with(['user:id,name,username,avatar_seed,role', 'replyToUser:id,name,username,role'])
+            ->with(self::COMMENT_WITH)
             ->where('work_item_id', $item->id)
             ->where('audience', CommentAudience::Public)
             ->whereNull('hidden_at')
@@ -280,6 +285,11 @@ class ReaderPage
             ->get();
 
         $authorPhoto = self::authorPhoto();
+        $liked = ReaderMarks::liked('comment', $all->pluck('id'));
+        $shape = fn (Comment $comment): array => [
+            ...self::comment($comment, $authorPhoto),
+            'liked' => $liked->contains($comment->id),
+        ];
         $replies = $all->whereNotNull('parent_id')->whereNull('deleted_at')->groupBy('parent_id');
         $list = [];
 
@@ -291,9 +301,9 @@ class ReaderPage
             }
 
             $list[] = [
-                ...$this->comment($comment, $authorPhoto),
+                ...$shape($comment),
                 'deleted' => $comment->trashed(),
-                'replies' => $kids->map(fn (Comment $reply): array => $this->comment($reply, $authorPhoto))->values()->all(),
+                'replies' => $kids->map(fn (Comment $reply): array => $shape($reply))->values()->all(),
             ];
         }
 
@@ -306,9 +316,12 @@ class ReaderPage
     }
 
     /**
-     * @return array<string, mixed>
+     * One comment as the reader page and the comment post draw it. Expects `user` and `replyToUser` loaded
+     * with COMMENT_WITH. Her comments take her photo and read "Georgina" with "Author".
+     *
+     * @return array{id: int, name: string, username: string|null, seed: string, photo: string|null, author: bool, replyTo: string|null, body: string|null, when: string, likes: int}
      */
-    private function comment(Comment $comment, ?string $authorPhoto): array
+    public static function comment(Comment $comment, ?string $authorPhoto): array
     {
         $user = $comment->user;
         $isAuthor = $user?->isAuthor() ?? false;
@@ -322,7 +335,7 @@ class ReaderPage
             'author' => $isAuthor,
             'replyTo' => $comment->replyToUser ? ($comment->replyToUser->isAuthor() ? 'Georgina' : $comment->replyToUser->name) : null,
             'body' => $comment->trashed() ? null : $comment->body,
-            'when' => $this->ago($comment->created_at),
+            'when' => self::ago($comment->created_at),
             'likes' => (int) $comment->likes_count,
         ];
     }
@@ -341,7 +354,7 @@ class ReaderPage
     /**
      * "now", "12 min", "5 h", "2 d", then the day.
      */
-    private function ago(?CarbonInterface $at): string
+    public static function ago(?CarbonInterface $at): string
     {
         if ($at === null) {
             return '';

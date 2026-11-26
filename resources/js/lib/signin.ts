@@ -7,9 +7,8 @@ export type SignInDetail = {
     /** The work's cover, or its colour when it has none. */
     picture?: { src?: string | null; color?: string | null };
     tab?: 'in' | 'up';
-    /** Runs after signing in, so the Like, Follow or comment carries on. */
+    /** Runs after signing in (a Like, Follow or comment carries on through lib/live instead). */
     then?: () => void;
-    follow?: number | null;
 };
 
 export const askSignIn = (detail: SignInDetail = {}): void => {

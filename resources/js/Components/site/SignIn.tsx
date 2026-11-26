@@ -3,6 +3,7 @@ import { FormEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode, useCallback,
 import { flushSync } from 'react-dom';
 import { inertWhen } from '@/lib/dom';
 import { fieldErrors, json } from '@/lib/http';
+import { forgetPending, resumePending } from '@/lib/live';
 import { prefersReducedMotion } from '@/lib/motion';
 import { paths } from '@/lib/paths';
 import { SignInDetail, usernameFrom } from '@/lib/signin';
@@ -341,6 +342,9 @@ export default function SignIn() {
         setOpen(false);
         const after = done ? then.current : null;
         then.current = null;
+        if (!done) {
+            forgetPending();
+        }
         if (lastFocus.current?.isConnected) {
             lastFocus.current.focus({ preventScroll: true });
         }
@@ -348,6 +352,16 @@ export default function SignIn() {
             window.setTimeout(after, prefersReducedMotion() ? 60 : 260);
         }
     }, []);
+
+    /* signed in (here, or back from Google): the Like, Follow or comment you tapped carries on once the card is gone */
+    useEffect(() => {
+        if (!signedIn) {
+            return;
+        }
+        const t = window.setTimeout(resumePending, prefersReducedMotion() ? 300 : 700);
+
+        return () => window.clearTimeout(t);
+    }, [signedIn]);
 
     /* Sign in buttons, and anything that needs you signed in */
     useEffect(() => {

@@ -45,6 +45,7 @@ class InPrintPage
             ->all();
 
         [$upcoming, $past] = $this->readings($live['events'] ?? []);
+        $followed = ReaderMarks::followed('work', $works->pluck('id'));
 
         return [
             'columns' => [...self::COLUMNS, ...$extra],
@@ -60,13 +61,18 @@ class InPrintPage
                     ], $format['stores'] ?? []),
                 ], $book['formats'] ?? []), fn (array $format): bool => $format['stores'] !== [])),
             ], $books),
-            'coming' => array_map(fn (array $book): array => [
-                ...$this->book($book, $works->get($book['slug'])),
-                'when' => (string) ($book['when'] ?? ''),
-                'preorder' => ($book['mode'] ?? '') === 'pre' && $this->price($book['price'] ?? null) && ! empty($book['url'])
-                    ? ['price' => $this->price($book['price']), 'url' => $book['url']]
-                    : null,
-            ], $coming),
+            'coming' => array_map(function (array $book) use ($works, $followed): array {
+                $work = $works->get($book['slug']);
+
+                return [
+                    ...$this->book($book, $work),
+                    'when' => (string) ($book['when'] ?? ''),
+                    'preorder' => ($book['mode'] ?? '') === 'pre' && $this->price($book['price'] ?? null) && ! empty($book['url'])
+                        ? ['price' => $this->price($book['price']), 'url' => $book['url']]
+                        : null,
+                    'following' => $work !== null && $followed->contains($work->id),
+                ];
+            }, $coming),
             'upcoming' => $upcoming,
             'past' => $past,
         ];

@@ -26,6 +26,9 @@ class LibraryPage
     /** @var array<int, array<string, mixed>|null>|null First chapter or piece text by work id, loaded once. */
     private ?array $bodies = null;
 
+    /** @var Collection<int, int>|null Ids of the works the signed-in reader follows, loaded once. */
+    private ?Collection $followed = null;
+
     public function __construct()
     {
         $this->works = WorkPresenter::query()->get()
@@ -243,9 +246,20 @@ class LibraryPage
             'line' => $line,
             'status' => $printOnly ? ['icon' => 'book', 'text' => 'In print'] : $card['status'],
             'printOnly' => $printOnly,
+            'following' => $this->followed()->contains($work->id),
             'dt' => $work->status === WorkStatus::ComingSoon ? null
                 : (($work->status === WorkStatus::Finished && $work->kind === WorkKind::Novel) || $printOnly ? Reading::month($updated) : $card['date']),
         ];
+    }
+
+    /**
+     * The works the signed-in reader follows, among all the works this page can show.
+     *
+     * @return Collection<int, int>
+     */
+    private function followed(): Collection
+    {
+        return $this->followed ??= ReaderMarks::followed('work', $this->works->pluck('id'));
     }
 
     /**
