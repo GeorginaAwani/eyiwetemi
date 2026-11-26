@@ -3,6 +3,7 @@
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InPrintController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NoteController;
@@ -21,6 +22,7 @@ Route::get('/library/{slug}', [WorkController::class, 'show'])->name('works.show
 Route::get('/library/{slug}/{number}', [WorkController::class, 'chapter'])->whereNumber('number')->name('works.chapter');
 Route::get('/notes', [NoteController::class, 'index'])->name('notes');
 Route::get('/notes-older', [NoteController::class, 'older'])->name('notes.older');
+Route::get('/in-print', InPrintController::class)->name('in-print');
 Route::get('/privacy', PrivacyController::class)->name('privacy');
 Route::get('/rss', [FeedController::class, 'index'])->name('rss');
 Route::get('/feed/{kind?}', [FeedController::class, 'show'])->whereIn('kind', ['novels', 'stories', 'poetry', 'essays', 'notes'])->name('feed');
