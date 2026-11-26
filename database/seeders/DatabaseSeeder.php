@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call([
+            MediaFileSeeder::class,
             UserSeeder::class,
             WorkSeeder::class,
             PlanningSeeder::class,

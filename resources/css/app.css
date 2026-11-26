@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* The reading site's own styles sit outside Tailwind's layers, so they win over its reset. */
+@import "./site/layout.css";
 @plugin "@tailwindcss/typography";
 
 @utility prose-poem {

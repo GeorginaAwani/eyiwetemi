@@ -12,6 +12,8 @@ use App\Enums\WorkStatus;
 use Database\Factories\WorkFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -57,6 +59,30 @@ class Work extends Model
             'first_published_at' => 'datetime',
             'last_published_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Works a visitor can find in the Library: public, out (or announced as coming soon),
+     * and not a piece that sits inside a collection.
+     */
+    #[Scope]
+    protected function listed(Builder $query): Builder
+    {
+        return $query->where('visibility', Visibility::Public)
+            ->whereNull('collection_id')
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('first_published_at')->orWhere('status', WorkStatus::ComingSoon);
+            });
+    }
+
+    /**
+     * The Library tab a work is listed under: novel, story, poem or essay.
+     */
+    public function libraryTab(): string
+    {
+        return $this->kind === WorkKind::Collection
+            ? $this->collection_kind->value
+            : $this->kind->value;
     }
 
     /** @return BelongsTo<Series, $this> */
