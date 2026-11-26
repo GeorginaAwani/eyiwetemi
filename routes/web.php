@@ -13,6 +13,7 @@ use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SeriesController;
@@ -38,6 +39,11 @@ Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.sh
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+    Route::get('/notifications/older', [NotificationController::class, 'older'])->name('notifications.older');
+    Route::get('/notifications/menu', [NotificationController::class, 'menu'])->name('notifications.menu');
+    Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->whereUuid('id')->name('notifications.read');
     Route::get('/profile/{which}', [ProfileController::class, 'list'])->whereIn('which', ['following', 'likes', 'comments'])->name('profile.list');
 
     Route::middleware('throttle:60,1')->group(function () {

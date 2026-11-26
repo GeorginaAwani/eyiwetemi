@@ -1,16 +1,18 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { inertWhen } from '@/lib/dom';
+import { json } from '@/lib/http';
 import { currentTheme, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
 import { paths } from '@/lib/paths';
 import { askSignIn } from '@/lib/signin';
 import { Section } from '@/types/site';
 import Bloom from './Bloom';
-import { ChevronDown, GearIcon, MenuIcon, SearchIcon, SignOutIcon, ThemeIcon } from './Icons';
+import { NotificationPicture, NotificationT, openNotification } from './NotificationRow';
+import { BellIcon, ChevronDown, GearIcon, MenuIcon, SearchIcon, SignOutIcon, ThemeIcon } from './Icons';
 import PhoneMenu from './PhoneMenu';
 import Wordmark from './Wordmark';
 
-type MenuName = 'library' | 'theme' | 'account' | null;
+type MenuName = 'library' | 'theme' | 'account' | 'bell' | null;
 
 /* the Bloom comes in only when you've just signed in, not on every page */
 let lastUserId: number | null | undefined;
@@ -49,7 +51,7 @@ export default function Header({ current }: { current?: Section }) {
             return;
         }
         const onClick = (e: MouseEvent) => {
-            if (!(e.target as Element).closest('.menu, .navbtn, #tBtn, #aBtn')) {
+            if (!(e.target as Element).closest('.menu, .navbtn, #tBtn, #aBtn, #nBtn')) {
                 setOpen(null);
             }
         };
@@ -75,6 +77,23 @@ export default function Header({ current }: { current?: Section }) {
     useEffect(() => {
         lastUserId = me?.id ?? null;
     }, [me]);
+    /* the bell: its dot follows what's unread; the short list loads when you open it */
+    const [unread, setUnread] = useState(me?.unread ?? 0);
+    const [bell, setBell] = useState<NotificationT[] | null>(null);
+    useEffect(() => setUnread(me?.unread ?? 0), [me?.unread]);
+    const openBell = async () => {
+        toggle('bell');
+        const { status, data } = await json<{ unread: number; rows: NotificationT[] }>('GET', '/notifications/menu');
+        if (status === 200) {
+            setBell(data.rows ?? []);
+            setUnread(data.unread ?? 0);
+        }
+    };
+    const markAll = async () => {
+        setBell((rows) => rows?.map((r) => ({ ...r, unread: false })) ?? null);
+        setUnread(0);
+        await json('POST', '/notifications/read');
+    };
     const signOut = () => {
         close();
         router.post('/logout');
@@ -136,6 +155,12 @@ export default function Header({ current }: { current?: Section }) {
                                     Sign in
                                 </button>
                             )}
+                            {me !== null && (
+                                <button className="icon" id="nBtn" type="button" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'} aria-expanded={open === 'bell'} aria-controls="nMenu" onClick={openBell}>
+                                    <BellIcon />
+                                    <span className={`ndot${unread ? '' : ' gone'}`} />
+                                </button>
+                            )}
                             <button className="icon" id="mBtn" type="button" aria-label="Menu" aria-expanded={phoneOpen} aria-controls="pMenu" onClick={() => setPhoneOpen(true)}>
                                 <MenuIcon />
                             </button>
@@ -175,6 +200,53 @@ export default function Header({ current }: { current?: Section }) {
                                     </button>
                                 ))}
                             </div>
+                            {me !== null && (
+                                <div className={`menu${open === 'bell' ? ' open' : ''}`} id="nMenu" style={{ right: 48, width: 400 }} {...inertWhen(open !== 'bell')}>
+                                    <div className="nhead">
+                                        <b>Notifications</b>
+                                        {unread > 0 && (
+                                            <button className="mark" type="button" onClick={markAll}>
+                                                Mark all read
+                                            </button>
+                                        )}
+                                    </div>
+                                    {bell !== null && bell.length === 0 && <div className="nlabel caps">Nothing yet</div>}
+                                    {(bell ?? []).map((n, k, all) => {
+                                        const label = n.unread ? 'New' : 'Earlier';
+                                        const first = k === 0 || (all[k - 1].unread ? 'New' : 'Earlier') !== label;
+
+                                        return (
+                                            <Fragment key={n.id}>
+                                                {first && <div className="caps nlabel">{label}</div>}
+                                                <a
+                                                    className={`nrow${n.unread ? ' unread' : ' read'}`}
+                                                    href={n.href}
+                                                    onClick={(e) => {
+                                                        close();
+                                                        openNotification(e, n, setUnread);
+                                                    }}
+                                                >
+                                                    <NotificationPicture thumb={n.thumb} size="menu" />
+                                                    <span className="nt">
+                                                        <span>{n.title}</span>
+                                                        <small>{n.small}</small>
+                                                    </span>
+                                                    <span className="nw">
+                                                        {n.when}
+                                                        <i />
+                                                    </span>
+                                                </a>
+                                            </Fragment>
+                                        );
+                                    })}
+                                    <div style={{ height: 1, background: 'var(--line)', margin: '8px 0' }} />
+                                    <div style={{ padding: '6px 14px 10px' }}>
+                                        <Link className="link" href="/notifications" style={{ fontSize: 14 }} onClick={close}>
+                                            See all notifications
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
                             {me !== null && (
                                 <div className={`menu${open === 'account' ? ' open' : ''}`} id="aMenu" style={{ right: 0, width: 300 }} {...inertWhen(open !== 'account')}>
                                     <Link className="row prof" href="/profile" onClick={close} style={{ height: 'auto', padding: 12, background: 'var(--surf)' }}>

@@ -10,6 +10,7 @@
 @import "./site/footer-pages.css";
 @import "./site/signin.css";
 @import "./site/profile.css";
+@import "./site/notifications.css";
 @plugin "@tailwindcss/typography";
 
 @utility prose-poem {

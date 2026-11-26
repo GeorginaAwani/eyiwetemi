@@ -9,6 +9,8 @@ export interface User {
     email: string;
     avatar_seed: string;
     /** Your reading defaults, so a new device opens chapters the way you set them. */
+    /** Notifications you haven't read: the bell's rose dot. */
+    unread: number;
     reading: { size: number; font: 'serif' | 'sans'; width: 'narrow' | 'wide'; lines: 'close' | 'airy'; theme: string };
 }
 

@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => fn (): ?array => $request->user() ? [
                     ...$request->user()->only(['id', 'name', 'username', 'email', 'avatar_seed']),
                     'reading' => Preferences::readingFor($request->user()),
+                    'unread' => $request->user()->unreadNotifications()->count(),
                 ] : null,
             ],
             'signin' => fn (): ?array => $request->session()->get('signin'),

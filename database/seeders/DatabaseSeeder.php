@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             NewsletterSeeder::class,
             SiteSeeder::class,
             StatsSeeder::class,
+            NotificationSeeder::class,
         ]);
     }
 }
