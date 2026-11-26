@@ -50,3 +50,13 @@ export const Clock18 = () => sized(18, 2, <><circle cx="12" cy="12" r="9" /><pat
 export const Done15 = () => sized(15, 1.8, <><circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.8 2.8L16.5 9.5" /></>);
 export const Pen15 = () => sized(15, 1.8, <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="m13.5 6.5 4 4" /></>);
 export const Draft15 = () => sized(15, 1.8, <path d="M4 20h4L19 9l-4-4L4 16z" strokeDasharray="3 2.4" />);
+
+/* planning */
+export const ImgIcon19 = () => sized(19, 1.8, <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-9 8" /></>);
+export const FileIcon19 = () => sized(19, 1.8, <><path d="M6 3h9l4 4v14H6z" /><path d="M14 3v5h5" /></>);
+export const NoteIcon19 = () => sized(19, 1.8, <path d="M5 5h14M5 10h14M5 15h9" />);
+export const LinkIcon19 = () => sized(19, 1.8, <><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></>);
+export const ExtIcon = ({ size = 15 }: { size?: number }) => sized(size, 1.8, <path d="M8 16 16 8M9 8h7v7" />);
+export const SweepIcon = ({ size = 15 }: { size?: number }) => sized(size, 1.8, <><path d="M4 20 14.5 9.5" /><path d="M16 3.5v3M16 11.5v3M19.5 9h-3M12.5 9h3" /><path d="M8 4.5v2M7 5.5h2" /></>);
+export const PlanIcon = () => sized(19, 1.8, <><path d="M4 6h16M4 12h10M4 18h13" /><circle cx="18" cy="12" r="1.2" fill="currentColor" /></>);
+export const PinIcon = ({ size = 17 }: { size?: number }) => sized(size, 1.8, <><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.3" /></>);

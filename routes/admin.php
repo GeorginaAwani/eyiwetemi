@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ChapterController;
+use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PublishController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SeriesController;
@@ -53,6 +54,28 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::post('/works/{work:slug}/reviewers', [WorkReviewerController::class, 'store'])->name('works.reviewers.store');
     Route::delete('/works/{work:slug}/reviewers/{kind}/{id}', [WorkReviewerController::class, 'destroy'])
         ->whereIn('kind', ['user', 'invite'])->whereNumber('id')->name('works.reviewers.destroy');
+    Route::post('/works/{work:slug}/plan/characters', [PlanController::class, 'storeCharacter'])->name('plan.characters.store');
+    Route::patch('/works/{work:slug}/plan/characters/{character}', [PlanController::class, 'updateCharacter'])->whereNumber('character')->name('plan.characters.update');
+    Route::delete('/works/{work:slug}/plan/characters/{character}', [PlanController::class, 'destroyCharacter'])->whereNumber('character')->name('plan.characters.destroy');
+    Route::post('/works/{work:slug}/plan/links', [PlanController::class, 'storeLink'])->name('plan.links.store');
+    Route::patch('/works/{work:slug}/plan/links/{link}', [PlanController::class, 'updateLink'])->whereNumber('link')->name('plan.links.update');
+    Route::delete('/works/{work:slug}/plan/links/{link}', [PlanController::class, 'destroyLink'])->whereNumber('link')->name('plan.links.destroy');
+    Route::post('/works/{work:slug}/plan/groups', [PlanController::class, 'storeGroup'])->name('plan.groups.store');
+    Route::patch('/works/{work:slug}/plan/groups/{group}', [PlanController::class, 'updateGroup'])->whereNumber('group')->name('plan.groups.update');
+    Route::delete('/works/{work:slug}/plan/groups/{group}', [PlanController::class, 'destroyGroup'])->whereNumber('group')->name('plan.groups.destroy');
+    Route::post('/works/{work:slug}/plan/entries', [PlanController::class, 'storeEntry'])->name('plan.entries.store');
+    Route::patch('/works/{work:slug}/plan/entries/{entry}', [PlanController::class, 'updateEntry'])->whereNumber('entry')->name('plan.entries.update');
+    Route::delete('/works/{work:slug}/plan/entries/{entry}', [PlanController::class, 'destroyEntry'])->whereNumber('entry')->name('plan.entries.destroy');
+    Route::post('/works/{work:slug}/plan/threads', [PlanController::class, 'storeThread'])->name('plan.threads.store');
+    Route::patch('/works/{work:slug}/plan/threads/{thread}', [PlanController::class, 'updateThread'])->whereNumber('thread')->name('plan.threads.update');
+    Route::delete('/works/{work:slug}/plan/threads/{thread}', [PlanController::class, 'destroyThread'])->whereNumber('thread')->name('plan.threads.destroy');
+    Route::post('/works/{work:slug}/plan/points', [PlanController::class, 'storePoint'])->name('plan.points.store');
+    Route::patch('/works/{work:slug}/plan/points/{point}', [PlanController::class, 'updatePoint'])->whereNumber('point')->name('plan.points.update');
+    Route::delete('/works/{work:slug}/plan/points/{point}', [PlanController::class, 'destroyPoint'])->whereNumber('point')->name('plan.points.destroy');
+    Route::post('/works/{work:slug}/plan/research', [PlanController::class, 'storeResearch'])->name('plan.research.store');
+    Route::patch('/works/{work:slug}/plan/research/{research}', [PlanController::class, 'updateResearch'])->whereNumber('research')->name('plan.research.update');
+    Route::delete('/works/{work:slug}/plan/research/{research}', [PlanController::class, 'destroyResearch'])->whereNumber('research')->name('plan.research.destroy');
+    Route::patch('/works/{work:slug}/plan/notes', [PlanController::class, 'updateNotes'])->name('plan.notes.update');
     Route::get('/works/{work:slug}/write/{item}', [WriteController::class, 'show'])->whereNumber('item')->name('works.write');
     Route::patch('/works/{work:slug}/write/{item}', [WriteController::class, 'save'])->whereNumber('item')->name('works.write.save');
     Route::post('/works/{work:slug}/write/{item}/image', [WriteController::class, 'image'])->whereNumber('item')->name('works.write.image');

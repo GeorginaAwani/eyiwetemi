@@ -18,6 +18,7 @@ use App\Models\SlugHistory;
 use App\Models\Work;
 use App\Models\WorkItem;
 use App\Support\ChaptersAdmin;
+use App\Support\PlanPage;
 use App\Support\WorksAdmin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,7 @@ class WorkController extends Controller
                     ? ['q' => $work->opening_quote ?? '', 'by' => $work->opening_quote_by ?? ''] : null,
                 'pool' => $work->kind === WorkKind::Collection ? self::pool($work) : [],
             ] : null,
+            'plan' => $work->kind === WorkKind::Poem ? null : PlanPage::props($work),
         ]);
     }
 

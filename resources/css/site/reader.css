@@ -536,3 +536,19 @@ html.reader .epi.big .by{font-size:16px}
 /* narrow phones: when the last chapter's row holds both "Previous chapter" and "Next chapter soon" + Follow, it wraps
    (the prototype let them run into each other) */
 @media (max-width:600px){html.reader .pn:has(.soon){flex-wrap:wrap;height:auto;padding:14px 0;row-gap:12px}html.reader .pn:has(.soon) .nx.soon{margin-left:auto}}
+
+/* footnotes: the number in the text; the note in the margin beside its line on wide screens, unfolding under the line on narrower ones */
+html.reader .txt2 .pp,html.reader .txt2 blockquote,html.reader .txt2 li{position:relative}
+html.reader .rfn-n{display:inline;padding:0 1px 0 2px;border:0;background:none;font-family:var(--A);font-weight:700;font-size:11px;line-height:1;vertical-align:super;text-indent:0;font-style:normal;color:var(--accent);cursor:pointer;transition:color var(--d1)}
+html.reader .rfn-note b{font-family:var(--A);font-size:11px;font-weight:700;font-style:normal;color:var(--accent);margin-right:7px}
+@media (min-width:1181px){
+  html.reader .rfn-note{position:absolute;left:calc(100% + 44px);width:200px;font-family:var(--NR);font-style:normal;font-size:14px;line-height:21px;color:var(--muted);text-indent:0;transition:color var(--d2) var(--ease-soft)}
+  html.reader .rfn:hover .rfn-note{color:var(--ink)}
+  html.reader .rfn-n{cursor:default}
+}
+@media (max-width:1180px){
+  html.reader .rfn-note{display:block;overflow:hidden;max-height:0;opacity:0;margin:0;padding:0 16px;border-radius:12px;background:var(--surf);font-family:var(--NR);font-style:normal;font-size:16px;line-height:25px;color:var(--text);text-indent:0;transition:max-height var(--d3) var(--ease-dream),opacity var(--d2) var(--ease-soft),margin var(--d3) var(--ease-dream),padding var(--d3) var(--ease-dream)}
+  html.reader .rfn.open .rfn-note{max-height:420px;opacity:1;margin:10px 0 14px;padding:12px 16px}
+  html.reader .rfn.open .rfn-n{color:var(--ink)}
+}
+@media (prefers-reduced-motion:reduce){html.reader .rfn-note{transition:opacity 200ms}}
