@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Character;
 use App\Models\Comment;
 use App\Models\Note;
+use App\Models\PlotThread;
 use App\Models\Series;
 use App\Models\SitePage;
 use App\Models\User;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
             'site_page' => SitePage::class,
             'character' => Character::class,
             'world_entry' => WorldEntry::class,
+            'plot_thread' => PlotThread::class,
             'user' => User::class,
         ]);
     }

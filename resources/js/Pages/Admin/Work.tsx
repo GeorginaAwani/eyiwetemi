@@ -7,6 +7,7 @@ import NameField from '../../Components/admin/NameField';
 import { COLLECTION_KINDS, CollectionChoice, KINDS, KKind, SeriesChoice } from '../../Components/admin/NewWork';
 import { bloomStyle } from '../../Components/site/Bloom';
 import ChaptersTab, { Contents } from '../../Components/admin/ChaptersTab';
+import PlanTab, { Plan } from '../../Components/admin/PlanTab';
 import AdminLayout from '../../Layouts/AdminLayout';
 import { heading } from '../../lib/headings';
 import { json } from '../../lib/http';
@@ -80,7 +81,7 @@ const names = (list: Reviewer[]) => {
  * A work's page: its cover and title over Chapters, Plan and Settings. Settings save as she goes ("Saving…", "Saved");
  * a title another work has, or no title, is "Not saved" until it's fixed.
  */
-export default function Work({ tab: firstTab, work: initial, choices, contents }: { tab: Tab; work: Settings; choices: Choices; contents: Contents | null }) {
+export default function Work({ tab: firstTab, work: initial, choices, contents, plan }: { tab: Tab; work: Settings; choices: Choices; contents: Contents | null; plan: Plan | null }) {
     const [w, setW] = useState(initial);
     const [tab, setTab] = useState<Tab>(firstTab);
     const [save, setSave] = useState<SaveState>('saved');
@@ -232,7 +233,7 @@ export default function Work({ tab: firstTab, work: initial, choices, contents }
                                 </a>
                             ))}
                         </nav>
-                        <SavedNote state={save} hidden={tab !== 'settings'} />
+                        <SavedNote state={save} hidden={tab === 'chapters'} />
                     </div>
                 </div>
             </div>
@@ -244,7 +245,11 @@ export default function Work({ tab: firstTab, work: initial, choices, contents }
                     />
                 )}
             </section>
-            {hasPlan && <section className={`wpan${tab === 'plan' ? ' on' : ''}`} id="p-plan" role="tabpanel" ref={tab === 'plan' ? panel : undefined} />}
+            {hasPlan && (
+                <section className={`wpan${tab === 'plan' ? ' on' : ''}`} id="p-plan" role="tabpanel" ref={tab === 'plan' ? panel : undefined}>
+                    {plan && <PlanTab slug={slug.current} kind={w.kind === 'collection' ? 'collection' : w.kind} initial={plan} setSave={setSave} parts={{ word: w.partWord, style: w.partStyle, show: w.showPartNumbers }} />}
+                </section>
+            )}
             <section className={`wpan${tab === 'settings' ? ' on' : ''}`} id="p-settings" role="tabpanel" ref={tab === 'settings' ? panel : undefined}>
                 <SettingsForm
                     w={w}
