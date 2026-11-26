@@ -39,7 +39,7 @@ class SiteLayoutTest extends TestCase
             );
     }
 
-    public function test_library_counts_only_public_published_works_with_collections_counted_once(): void
+    public function test_library_counts_only_public_published_works_and_a_collection_counts_once(): void
     {
         Work::factory()->novel()->public()->published()->count(2)->create();
         Work::factory()->novel()->public()->comingSoon()->create();
@@ -48,13 +48,14 @@ class SiteLayoutTest extends TestCase
         Work::factory()->novel()->public()->create();
 
         $stories = Work::factory()->collection(CollectionKind::Story)->public()->published()->create();
+        /* a piece in a collection is listed on its own too, as in the prototype */
         Work::factory()->story()->public()->published()->create(['collection_id' => $stories->id]);
         Work::factory()->story()->public()->published()->create();
         Work::factory()->poem()->public()->published()->count(3)->create();
         Work::factory()->essay()->public()->published()->create();
 
         $this->get('/')->assertInertia(fn (Assert $page) => $page
-            ->where('site.library', ['all' => 9, 'novel' => 3, 'story' => 2, 'poem' => 3, 'essay' => 1])
+            ->where('site.library', ['all' => 10, 'novel' => 3, 'story' => 3, 'poem' => 3, 'essay' => 1])
         );
     }
 

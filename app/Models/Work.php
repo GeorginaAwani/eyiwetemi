@@ -62,14 +62,13 @@ class Work extends Model
     }
 
     /**
-     * Works a visitor can find in the Library: public, out (or announced as coming soon),
-     * and not a piece that sits inside a collection.
+     * Works a visitor can find in the Library: public, and out (or announced as coming soon).
+     * A poem that also sits in a collection is listed on its own too, as in the prototype.
      */
     #[Scope]
     protected function listed(Builder $query): Builder
     {
         return $query->where('visibility', Visibility::Public)
-            ->whereNull('collection_id')
             ->where(function (Builder $query): void {
                 $query->whereNotNull('first_published_at')->orWhere('status', WorkStatus::ComingSoon);
             });

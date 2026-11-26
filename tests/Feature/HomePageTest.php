@@ -52,9 +52,12 @@ class HomePageTest extends TestCase
         return $work;
     }
 
-    public function test_the_newest_released_work_leads_and_the_pile_holds_the_next_ones(): void
+    public function test_the_newest_released_work_leads_and_the_pile_holds_the_next_pieces_and_finished_novels(): void
     {
-        $older = $this->novel('Salt Season', [40, 30]);
+        $older = $this->novel('Salt Season', [40, 30], ['status' => 'finished']);
+        $this->novel('Being written', [20]);
+        $collection = Work::factory()->collection(CollectionKind::Poem)->public()->published()->create(['title' => 'Midnight Poems']);
+        WorkItem::factory()->published()->for($collection)->create(['type' => 'piece', 'piece_work_id' => null, 'position' => 1, 'published_at' => now()->subDays(4)]);
         $newest = $this->piece('poem', 'Harmattan', 2);
         $this->piece('essay', 'On leaving home twice', 9);
 
@@ -66,6 +69,7 @@ class HomePageTest extends TestCase
             ->where('pile.0.title', 'On leaving home twice')
             ->where('pile.1.title', 'Salt Season')
             ->where('pile.1.sub', 'Novel · 2 chapters')
+            ->where('pile.1.meta', 'finished in '.now('Africa/Lagos')->subDays(30)->format('M'))
             ->count('pile', 2)
         );
 
@@ -108,7 +112,7 @@ class HomePageTest extends TestCase
             ->where('novels.more.0.title', 'Public with a draft chapter')
             ->where('novels.more.0.status.text', '1 chapter')
             ->where('novels.total', 2)
-            ->count('pile', 1)
+            ->count('pile', 0)
         );
     }
 

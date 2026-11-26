@@ -106,14 +106,17 @@ class HomePage
     }
 
     /**
-     * The pile beside the hero: the newest works after it, as spines.
+     * The pile beside the hero: the newest works after it, as spines. Novels still being written and
+     * collections stay out (they have their own sections with chapters), as in the prototype's pile.
      *
      * @return list<array<string, mixed>>
      */
     private function pile(?Work $hero): array
     {
         return $this->released()
-            ->reject(fn (Work $work): bool => $work->is($hero))
+            ->reject(fn (Work $work): bool => $work->is($hero)
+                || $work->kind === WorkKind::Collection
+                || ($work->kind === WorkKind::Novel && $work->status !== WorkStatus::Finished))
             ->take(self::PILE)
             ->map(function (Work $work): array {
                 $card = WorkPresenter::card($work);
