@@ -8,7 +8,7 @@ import { Action, WorkCard } from '@/types/works';
 
 type Book = WorkCard & { position: number; soon: boolean; statusText: string; href: string };
 type Props = {
-    series: { id: number; name: string; statusLine: string; facts: { label: string; value: string }[] };
+    series: { id: number; name: string; blurb: string | null; statusLine: string; facts: { label: string; value: string }[] };
     actions: Action[];
     books: Book[];
 };
@@ -89,6 +89,7 @@ export default function Series({ series, actions, books }: Props) {
                         <StatusIcon name="book" size={17} />
                         {series.statusLine}
                     </div>
+                    {series.blurb && <p className="blurb">{series.blurb}</p>}
                     {actions.length > 0 && (
                         <div className="acts wacts">
                             {actions.map((a) => (

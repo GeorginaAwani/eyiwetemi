@@ -25,3 +25,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Her own pictures (About portrait, share card): kept on this machine, not published in the repo
+/database/seeders/media/site/

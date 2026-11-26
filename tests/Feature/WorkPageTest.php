@@ -124,7 +124,7 @@ class WorkPageTest extends TestCase
 
     public function test_a_series_lists_its_public_books_in_order(): void
     {
-        $series = Series::factory()->create(['name' => 'The Harbour books']);
+        $series = Series::factory()->create(['name' => 'The Harbour books', 'description' => 'Three novels about one harbour town.']);
         $this->novel(1, ['title' => 'Book two', 'series_id' => $series->id, 'series_position' => 2]);
         $this->novel(2, ['title' => 'Book one', 'series_id' => $series->id, 'series_position' => 1, 'status' => 'finished']);
         Work::factory()->novel()->public()->comingSoon()->create(['title' => 'Book three', 'series_id' => $series->id, 'series_position' => 3]);
@@ -133,6 +133,7 @@ class WorkPageTest extends TestCase
         $this->get('/series/'.$series->slug)->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('Series')
             ->where('series.statusLine', 'A series · 3 books')
+            ->where('series.blurb', 'Three novels about one harbour town.')
             ->where('books.0.title', 'Book one')
             ->where('books.0.statusText', '2 chapters')
             ->where('books.1.statusText', '1 chapter so far')
