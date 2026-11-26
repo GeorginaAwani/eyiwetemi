@@ -4,12 +4,16 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SeriesController;
+use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/library', [LibraryController::class, 'index'])->name('library');
 Route::get('/library-rows', [LibraryController::class, 'rows'])->name('library.rows');
+Route::get('/library/{slug}', [WorkController::class, 'show'])->name('works.show');
+Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.show');
 
 Route::post('/newsletter', [NewsletterController::class, 'store'])
     ->middleware('throttle:6,1')

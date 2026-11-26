@@ -311,14 +311,14 @@ class WorkSeeder extends Seeder
     }
 
     /**
-     * The Ember Gate: the prototype's seven chapters, a week apart up to 19 Nov, then the admin's draft of chapter 8.
+     * The Ember Gate: the prototype's seven chapters, May (when it started) to 19 Nov, then the admin's draft of chapter 8.
      *
      * @return list<array<string, mixed>>
      */
     private function emberSpecs(): array
     {
         $chapters = $this->proto['the-ember-gate']['chapters'];
-        $dates = $this->spread('2026-10-01 18:00', '2026-11-19 18:00', count($chapters));
+        $dates = $this->spread('2026-05-09 18:00', '2026-11-19 18:00', count($chapters));
         $specs = [];
 
         foreach ($chapters as $i => $chapter) {
