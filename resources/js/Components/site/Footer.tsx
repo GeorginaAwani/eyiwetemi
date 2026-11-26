@@ -26,6 +26,7 @@ const FOOTER_LINKS: { key: FooterPage; href: string; label: string }[] = [
     { key: "in-print", href: paths.inPrint, label: "In print" },
     { key: "rss", href: paths.rss, label: "RSS" },
     { key: "privacy", href: paths.privacy, label: "Privacy" },
+    { key: "terms", href: paths.terms, label: "Terms" },
 ];
 
 /** New work, by email: the five kinds (all on) and the email field with Subscribe inside it. */

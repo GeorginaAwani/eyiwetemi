@@ -11,4 +11,4 @@ export type Notice = { id: number; text: string; href: string | null; go: string
 export type Section = 'about' | 'library' | 'notes';
 
 /** Which footer link is the page you're on. */
-export type FooterPage = 'about' | 'notes' | 'in-print' | 'rss' | 'privacy';
+export type FooterPage = 'about' | 'notes' | 'in-print' | 'rss' | 'privacy' | 'terms';

@@ -752,7 +752,7 @@ export default function SignIn() {
     const pic = why?.picture;
     const fine = (
         <div className="au-fine">
-            By creating an account you agree to the Terms and <a href={paths.privacy}>Privacy</a>.
+            By creating an account you agree to the <a href={paths.terms}>Terms</a> and <a href={paths.privacy}>Privacy</a>.
         </div>
     );
 

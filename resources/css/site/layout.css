@@ -395,3 +395,6 @@ html .follow:focus-visible,html .fpill:focus-visible{outline:none;box-shadow:0 0
   .search .sl{padding-left:12px}
 }
 @media (prefers-reduced-motion:reduce){.search .res{animation:srIn var(--d1) linear both}}
+
+/* six footer links: on narrow phones they sit in a 3×2 grid, the theme dots below (prototype style#eyiColo) */
+@media (max-width:480px){.colo .r{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;column-gap:22px;row-gap:12px}.colo .r .flink{justify-self:start}.colo .r .tdots{grid-column:1/-1;margin-top:4px}}

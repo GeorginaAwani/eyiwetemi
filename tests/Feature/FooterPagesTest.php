@@ -30,6 +30,28 @@ class FooterPagesTest extends TestCase
         );
     }
 
+    public function test_terms_shows_her_sections_like_privacy(): void
+    {
+        SitePage::factory()->terms()->create(['live' => [
+            'updated_on' => '2026-11-26',
+            'sections' => [['id' => 'writing', 'heading' => 'My writing', 'html' => '<p>Please don’t copy it.</p><script>bad()</script>']],
+        ]]);
+
+        $this->get('/terms')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Terms')
+            ->where('updated', '26 November 2026')
+            ->where('sections.0.heading', 'My writing')
+            ->where('sections.0.html', '<p>Please don’t copy it.</p>')
+        );
+    }
+
+    public function test_terms_is_not_found_until_it_is_published(): void
+    {
+        SitePage::factory()->terms()->create(['live' => null]);
+
+        $this->get('/terms')->assertNotFound();
+    }
+
     public function test_safe_html_keeps_site_links_and_opens_others_in_a_new_tab(): void
     {
         $this->assertSame(

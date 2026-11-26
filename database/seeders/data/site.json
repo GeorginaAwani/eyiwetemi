@@ -426,5 +426,55 @@
    "line": "I write about things I love and hate"
   },
   "works": {}
+ },
+ "terms": {
+  "upd": "2026-11-26",
+  "secs": [
+   {
+    "id": "site",
+    "h": "This site",
+    "html": "<p>Eyiwetemi is run by me, Georgina Awani, from Port Harcourt, Nigeria. Reading here, or making an account, means you accept these terms. I’ve kept them short.</p>"
+   },
+   {
+    "id": "account",
+    "h": "Your account",
+    "html": "<p>Everything here is free to read without an account. You need one to like, comment or follow. Give a real email, keep your password to yourself, and choose a username that doesn’t pretend to be someone else or set out to hurt anyone. If it does, I may ask you to change it.</p>"
+   },
+   {
+    "id": "comments",
+    "h": "Comments",
+    "html": "<p>Comments and replies are for talking about the writing, and disagreeing is welcome. Harassment, hate, spam and other people’s private details are not. I may hide a comment that crosses that line, and close an account that keeps crossing it.</p><p>Your words stay yours. Posting them lets them appear here, under your name.</p>"
+   },
+   {
+    "id": "writing",
+    "h": "My writing",
+    "html": "<p>Unless a page says otherwise, everything I publish here is mine and protected by copyright. Read it, share links to it, quote a few lines with my name beside them. Please don’t copy, repost, translate or sell it, or use it to train AI, without asking me first.</p>"
+   },
+   {
+    "id": "drafts",
+    "h": "Shared drafts",
+    "html": "<p>If I invite you to review unpublished work, it’s shared with you alone. Keep it that way: no copies, screenshots or forwarding. Your notes stay between us, and I’m free to use any suggestion you make in the finished work.</p>"
+   },
+   {
+    "id": "notices",
+    "h": "Likes, follows, emails",
+    "html": "<p>Likes and follows are counted on each work, and only you can see which ones are yours. Following a work brings notifications, and emails too if you turn them on in <a class=\"link\" href=\"settings.html#notifications\">Settings</a>. Every email has a link to stop them.</p>"
+   },
+   {
+    "id": "leaving",
+    "h": "Leaving",
+    "html": "<p>Delete your account in <a class=\"link\" href=\"settings.html\">Settings</a> and it goes at once, with your likes and follows. Your comments are deleted too. If someone replied to one, their reply stays, under “Comment deleted”.</p>"
+   },
+   {
+    "id": "small",
+    "h": "The small print",
+    "html": "<p>I keep the site running as well as I can, but it comes as it is, and works may change or be taken down. Other sites I link to, the bookshops included, answer for themselves. These terms follow the laws of Nigeria.</p>"
+   },
+   {
+    "id": "changes",
+    "h": "Changes",
+    "html": "<p>If these terms change in a way that matters, I’ll say so in a note. Anything unclear? Write to <a class=\"link\" href=\"mailto:hello@eyiwetemi.com\">hello@eyiwetemi.com</a>.</p>"
+   }
+  ]
  }
 }
