@@ -3,6 +3,7 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\NewsletterController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\WorkController;
@@ -14,6 +15,8 @@ Route::get('/library', [LibraryController::class, 'index'])->name('library');
 Route::get('/library-rows', [LibraryController::class, 'rows'])->name('library.rows');
 Route::get('/library/{slug}', [WorkController::class, 'show'])->name('works.show');
 Route::get('/library/{slug}/{number}', [WorkController::class, 'chapter'])->whereNumber('number')->name('works.chapter');
+Route::get('/notes', [NoteController::class, 'index'])->name('notes');
+Route::get('/notes-older', [NoteController::class, 'older'])->name('notes.older');
 Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.show');
 
 Route::post('/newsletter', [NewsletterController::class, 'store'])

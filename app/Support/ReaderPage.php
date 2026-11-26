@@ -223,13 +223,13 @@ class ReaderPage
             $flush();
 
             $blocks[] = match ($type) {
-                'paragraph' => ['type' => 'p', 'id' => $node['attrs']['id'] ?? null, 'runs' => $this->runs($node)],
-                'heading' => ['type' => 'h', 'runs' => $this->runs($node)],
-                'blockquote' => ['type' => 'quote', 'runs' => $this->runs($node['content'][0] ?? [])],
+                'paragraph' => ['type' => 'p', 'id' => $node['attrs']['id'] ?? null, 'runs' => Doc::runs($node)],
+                'heading' => ['type' => 'h', 'runs' => Doc::runs($node)],
+                'blockquote' => ['type' => 'quote', 'runs' => Doc::runs($node['content'][0] ?? [])],
                 'sceneBreak' => ['type' => 'break'],
                 'bulletList', 'orderedList' => [
                     'type' => $type === 'bulletList' ? 'ul' : 'ol',
-                    'items' => array_map(fn (array $li): array => $this->runs($li['content'][0] ?? $li), $node['content'] ?? []),
+                    'items' => array_map(fn (array $li): array => Doc::runs($li['content'][0] ?? $li), $node['content'] ?? []),
                 ],
                 'image' => [
                     'type' => 'img',
@@ -238,51 +238,13 @@ class ReaderPage
                     'caption' => $node['attrs']['caption'] ?? null,
                     'credit' => $node['attrs']['credit'] ?? null,
                 ],
-                default => ['type' => 'p', 'id' => null, 'runs' => $this->runs($node)],
+                default => ['type' => 'p', 'id' => null, 'runs' => Doc::runs($node)],
             };
         }
 
         $flush();
 
         return $blocks;
-    }
-
-    /**
-     * A block's text as runs with their marks (italic, bold, link).
-     *
-     * @param  array<string, mixed>  $node
-     * @return list<array{text: string, em?: bool, strong?: bool, href?: string}>
-     */
-    private function runs(array $node): array
-    {
-        $runs = [];
-
-        foreach ($node['content'] ?? [] as $child) {
-            if (($child['type'] ?? '') === 'hardBreak') {
-                $runs[] = ['text' => "\n"];
-
-                continue;
-            }
-
-            if (! isset($child['text'])) {
-                array_push($runs, ...$this->runs($child));
-
-                continue;
-            }
-
-            $run = ['text' => (string) $child['text']];
-            foreach ($child['marks'] ?? [] as $mark) {
-                match ($mark['type'] ?? '') {
-                    'italic' => $run['em'] = true,
-                    'bold' => $run['strong'] = true,
-                    'link' => $run['href'] = (string) ($mark['attrs']['href'] ?? ''),
-                    default => null,
-                };
-            }
-            $runs[] = $run;
-        }
-
-        return $runs;
     }
 
     /**
