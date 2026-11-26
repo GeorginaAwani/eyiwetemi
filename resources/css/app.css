@@ -3,6 +3,7 @@
 @import "./site/layout.css";
 @import "./site/home.css";
 @import "./site/library.css";
+@import "./site/work.css";
 @plugin "@tailwindcss/typography";
 
 @utility prose-poem {

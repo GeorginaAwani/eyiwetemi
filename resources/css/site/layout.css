@@ -13,6 +13,8 @@
 [data-theme=night]{--bg:#151314;--surf:#1C1A1B;--line:#2C292A;--ink:#DCD5D3;--text:#BDB5B3;--muted:#8A8284;--accent:#D495A8;--tint:#2A1F24;--shadow:rgba(0,0,0,.6);--pop:.88}
 
 *{box-sizing:border-box;margin:0}
+/* Tailwind's reset sets 1.5; the prototype uses the browser's normal line height */
+html{line-height:normal;-webkit-text-size-adjust:100%}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--text);font-family:var(--NR);-webkit-font-smoothing:antialiased;
   transition:background-color var(--d3) var(--ease-soft),color var(--d3) var(--ease-soft)}

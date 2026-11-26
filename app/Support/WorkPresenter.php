@@ -220,6 +220,34 @@ class WorkPresenter
     }
 
     /**
+     * Every chapter or piece readers can see listed, oldest first. One that was pulled back keeps its
+     * number and shows as not available.
+     *
+     * @return list<array{number: int, title: string|null, label: string, minutes: int, href: string|null, isNew: bool, unavailable: bool}>
+     */
+    public static function allItems(Work $work): array
+    {
+        $unit = ucfirst(self::unit($work));
+        $released = self::numbered($work);
+        $newest = $released->last();
+
+        return $work->items->values()->map(function (WorkItem $item, int $i) use ($work, $unit, $newest): array {
+            $number = $i + 1;
+            $out = $item->status === PublishStatus::Published && $item->published_at?->lte(now());
+
+            return [
+                'number' => $number,
+                'title' => $item->title,
+                'label' => $item->title ?? $unit.' '.$number,
+                'minutes' => Reading::minutes((int) $item->live_words),
+                'href' => $out ? self::itemHref($work, $number) : null,
+                'isNew' => $out && $newest !== null && $newest['item']->is($item) && $item->published_at->gt(now()->subDays(14)),
+                'unavailable' => ! $out,
+            ];
+        })->all();
+    }
+
+    /**
      * Works readers can see, with what the presenter needs.
      *
      * @return Builder<Work>
