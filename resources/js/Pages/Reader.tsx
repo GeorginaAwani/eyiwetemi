@@ -10,6 +10,8 @@ import { act, Action, ask, useAnyDone, useDone, useFollow, useLike } from '@/lib
 import { SignInDetail } from '@/lib/signin';
 import { json } from '@/lib/http';
 import { useReadCount } from '@/lib/count';
+import { CloudOff, useOfflineReading } from '@/Components/site/Offline';
+import { isOnline, onConnection } from '@/lib/offline';
 
 type Block =
     | { type: 'p'; id: string | null; runs: Run[] }
@@ -37,7 +39,17 @@ type TopComment = CommentT & { deleted: boolean; replies: CommentT[] };
 type Thread = { count: number; list: TopComment[]; shown: number; repliesShown: number };
 type Props = {
     unavailable?: { work: { title: string; href: string }; label: string };
-    work: { id: number; following?: boolean; title: string; href: string | null; kind: string; unitPlural: string; cover: string | null; kindLabel: string; thumb: { src: string | null; color: string | null } };
+    work: {
+        id: number;
+        following?: boolean;
+        title: string;
+        href: string | null;
+        kind: string;
+        unitPlural: string;
+        cover: string | null;
+        kindLabel: string;
+        thumb: { src: string | null; color: string | null };
+    };
     item: {
         id: number;
         number: number;
@@ -357,6 +369,7 @@ function embedUrl(url: string): { src: string; kind: 'youtube' | 'spotify' } | n
 function CommentForm({
     itemId,
     replyTo = null,
+    top = null,
     placeholder,
     reply,
     prefill = '',
@@ -364,6 +377,7 @@ function CommentForm({
 }: {
     itemId: number;
     replyTo?: number | null;
+    top?: number | null;
     placeholder: string;
     reply?: boolean;
     prefill?: string;
@@ -399,6 +413,12 @@ function CommentForm({
 
             return;
         }
+        if (!isOnline()) {
+            window.dispatchEvent(new CustomEvent<Waiting>(WAIT, { detail: { id: -Date.now(), top, action: action() } }));
+            setText(prefill);
+
+            return;
+        }
         setState('sending');
         const { status } = await act(action());
         if (status !== 201) {
@@ -430,6 +450,28 @@ function CommentForm({
                 </SendButton>
             </div>
         </form>
+    );
+}
+
+/** A comment written with no connection: it shows at once, marked, and sends when the connection is back. */
+type Waiting = { id: number; top: number | null; action: Action };
+const WAIT = 'eyi:comment-waits';
+
+function WaitingView({ w, reply }: { w: Waiting; reply?: boolean }) {
+    const { auth } = usePage().props;
+    const body = w.action.kind === 'comment' ? w.action.body : '';
+
+    return (
+        <div className={`cm ${reply ? 'rp' : 'top'} settle`}>
+            <Bloom seed={auth.user?.avatar_seed ?? ''} size={reply ? 32 : 40} name={auth.user?.name} />
+            <div className="cbd">
+                <div className="chd">
+                    <b>{auth.user?.name}</b>
+                    <span className="of-wait">Waiting to send</span>
+                </div>
+                <p>{body}</p>
+            </div>
+        </div>
     );
 }
 
@@ -475,11 +517,44 @@ function CommentView({ c, reply, fresh, onReply }: { c: CommentT; reply?: boolea
 }
 
 /** Reader comments, oldest first, replies one level under; what you post settles in where it belongs. */
-function Comments({ itemId, thread, setThread, why }: { itemId: number; thread: Thread; setThread: (f: (t: Thread) => Thread) => void; why: string }) {
+function Comments({ itemId, thread, setThread, why, online }: { itemId: number; thread: Thread; setThread: (f: (t: Thread) => Thread) => void; why: string; online: boolean }) {
     const [shown, setShown] = useState(thread.shown);
     const [openReplies, setOpenReplies] = useState<Record<number, boolean>>({});
     const [replying, setReplying] = useState<{ top: number; to: number; name: string } | null>(null);
     const [fresh, setFresh] = useState<Record<number, true>>({});
+    const [waits, setWaits] = useState<Waiting[]>([]);
+    const waitsRef = useRef(waits);
+    waitsRef.current = waits;
+
+    useEffect(() => {
+        const add = (e: Event) => {
+            const w = (e as CustomEvent<Waiting>).detail;
+            if (w.action.kind === 'comment' && w.action.work_item_id === itemId) {
+                setWaits((l) => [...l, w]);
+                if (w.top !== null) {
+                    setReplying(null);
+                }
+            }
+        };
+        window.addEventListener(WAIT, add);
+        const off = onConnection(async (on) => {
+            if (!on) {
+                return;
+            }
+            for (const w of waitsRef.current) {
+                const { status } = await act(w.action);
+                if (status === 0) {
+                    break;
+                }
+                setWaits((l) => l.filter((x) => x.id !== w.id));
+            }
+        });
+
+        return () => {
+            window.removeEventListener(WAIT, add);
+            off();
+        };
+    }, [itemId]);
     const left = thread.list.filter((t, idx) => idx >= shown && !fresh[t.id]).length;
 
     useAnyDone(({ action, status, data }) => {
@@ -508,6 +583,12 @@ function Comments({ itemId, thread, setThread, why }: { itemId: number; thread: 
                 Comments <small className="ccount">{thread.count}</small>
             </h2>
             <CommentForm itemId={itemId} placeholder="Add a comment" why="Sign in to post your comment" />
+            {!online && (
+                <div className="of-note">
+                    <CloudOff />
+                    Sends when you’re back online
+                </div>
+            )}
             <div className="clist">
                 {thread.list.map((top, idx) => {
                     if (idx >= shown && !fresh[top.id]) {
@@ -530,8 +611,22 @@ function Comments({ itemId, thread, setThread, why }: { itemId: number; thread: 
                                     </span>
                                 </button>
                             )}
+                            {waits
+                                .filter((w) => w.top === top.id)
+                                .map((w) => (
+                                    <WaitingView key={w.id} w={w} reply />
+                                ))}
                             {replying?.top === top.id && (
-                                <CommentForm itemId={itemId} replyTo={replying.to} placeholder="" reply prefill={`@${replying.name} `} why={`Sign in to reply to ${replying.name}`} key={replying.to} />
+                                <CommentForm
+                                    itemId={itemId}
+                                    replyTo={replying.to}
+                                    top={top.id}
+                                    placeholder=""
+                                    reply
+                                    prefill={`@${replying.name} `}
+                                    why={`Sign in to reply to ${replying.name}`}
+                                    key={replying.to}
+                                />
                             )}
                         </div>
                     );
@@ -571,6 +666,11 @@ function Comments({ itemId, thread, setThread, why }: { itemId: number; thread: 
                     );
                 })}
             </div>
+            {waits
+                .filter((w) => w.top === null)
+                .map((w) => (
+                    <WaitingView key={w.id} w={w} />
+                ))}
             {left > 0 && (
                 <button type="button" className="more mcom" onClick={() => setShown((s) => s + 5)}>
                     <i />
@@ -629,6 +729,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
     const firstSettings = useRef(true);
     const [listening, setListening] = useState(false);
     const [back, setBack] = useState(false);
+    const off = useOfflineReading({ number: item.number, nextHref: nav?.next ?? null, chapters });
     const txt = useRef<HTMLElement>(null);
     const marks = useReviewMarks(review ?? null, item.id, txt);
     const endRow = useRef<HTMLDivElement>(null);
@@ -920,7 +1021,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                             )}
                         </nav>
                     )}
-                    <Comments itemId={item.id} thread={thread} setThread={setThread} why={why} />
+                    <Comments itemId={item.id} thread={thread} setThread={setThread} why={why} online={off.online} />
                 </div>
             </div>
 
@@ -950,11 +1051,23 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                         </div>
                         <div className="crows">
                             {chapters.map((c) => (
-                                <Link key={c.number} className={`crow${c.number === item.number ? ' chere' : ''}`} href={c.href ?? '#'} onClick={() => setPanel(null)}>
+                                <Link
+                                    key={c.number}
+                                    className={`crow${c.number === item.number ? ' chere' : ''}${off.away(c.number) ? ' of-away' : ''}`}
+                                    href={c.href ?? '#'}
+                                    onClick={() => setPanel(null)}
+                                >
                                     <span className="cn">{c.title ? c.number : ''}</span>
                                     <span className="ct">{c.label}</span>
                                     {c.number === item.number ? <span className="pill2">you’re here</span> : c.isNew ? <span className="pill2">new</span> : null}
-                                    <span className="cmn">{c.minutes} min</span>
+                                    <span className="cmn">
+                                        {off.away(c.number) && (
+                                            <span className="of-i">
+                                                <CloudOff />
+                                            </span>
+                                        )}
+                                        {c.minutes} min
+                                    </span>
                                 </Link>
                             ))}
                         </div>
@@ -991,7 +1104,14 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                             <small>A</small>
                             <span className="szd">
                                 {SIZES.map((_, k) => (
-                                    <button key={k} type="button" className={st.size === k ? 'cur' : undefined} aria-label={`Size ${k + 1}`} aria-pressed={st.size === k} onClick={() => set('size', k)}>
+                                    <button
+                                        key={k}
+                                        type="button"
+                                        className={st.size === k ? 'cur' : undefined}
+                                        aria-label={`Size ${k + 1}`}
+                                        aria-pressed={st.size === k}
+                                        onClick={() => set('size', k)}
+                                    >
                                         <i />
                                     </button>
                                 ))}
@@ -1001,23 +1121,47 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                     </div>
                     {(
                         [
-                            ['font', 'Font', [['serif', 'Serif'], ['sans', 'Sans']]],
-                            ['width', 'Width', [['narrow', 'Narrow'], ['wide', 'Wide']]],
-                            ['lines', 'Lines', [['close', 'Close'], ['airy', 'Airy']]],
-                            ['sound', 'Sound', [['off', 'Off'], ['rain', 'Rain'], ['night', 'Night'], ['cafe', 'Café']]],
+                            [
+                                'font',
+                                'Font',
+                                [
+                                    ['serif', 'Serif'],
+                                    ['sans', 'Sans'],
+                                ],
+                            ],
+                            [
+                                'width',
+                                'Width',
+                                [
+                                    ['narrow', 'Narrow'],
+                                    ['wide', 'Wide'],
+                                ],
+                            ],
+                            [
+                                'lines',
+                                'Lines',
+                                [
+                                    ['close', 'Close'],
+                                    ['airy', 'Airy'],
+                                ],
+                            ],
+                            [
+                                'sound',
+                                'Sound',
+                                [
+                                    ['off', 'Off'],
+                                    ['rain', 'Rain'],
+                                    ['night', 'Night'],
+                                    ['cafe', 'Café'],
+                                ],
+                            ],
                         ] as const
                     ).map(([k, label, opts]) => (
                         <div className="sr" key={k}>
                             <span className="sl">{label}</span>
                             <div className="sg">
                                 {opts.map(([value, text]) => (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        className={st[k] === value ? 'cur' : undefined}
-                                        aria-pressed={st[k] === value}
-                                        onClick={() => set(k, value as never)}
-                                    >
+                                    <button key={value} type="button" className={st[k] === value ? 'cur' : undefined} aria-pressed={st[k] === value} onClick={() => set(k, value as never)}>
                                         {value === 'serif' ? <span className="f1">{text}</span> : text}
                                     </button>
                                 ))}
@@ -1050,7 +1194,13 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                                 <iframe
                                     title={item.soundtrack?.label ?? 'Soundtrack'}
                                     src={embed.src}
-                                    style={{ display: 'block', width: '100%', border: 0, aspectRatio: embed.kind === 'youtube' ? '16/9' : undefined, height: embed.kind === 'spotify' ? 152 : undefined }}
+                                    style={{
+                                        display: 'block',
+                                        width: '100%',
+                                        border: 0,
+                                        aspectRatio: embed.kind === 'youtube' ? '16/9' : undefined,
+                                        height: embed.kind === 'spotify' ? 152 : undefined,
+                                    }}
                                     allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
                                     loading="lazy"
                                 />
@@ -1060,6 +1210,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                     </div>
                 )}
             </div>
+            {off.pill}
             <div className={`backpill live${back ? ' show' : ''}`} id="backp" role="status">
                 Back where you left off
                 <button type="button" className="sx" aria-label="Dismiss" onClick={() => setBack(false)}>
