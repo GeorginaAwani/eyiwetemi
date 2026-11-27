@@ -175,3 +175,10 @@ span.wc-pt>span::before{content:'';position:absolute;right:calc(100% + 10px);top
 .w-ed.nomarks .w-sgd{display:none}
 .w-av.me{background:var(--tint) center/cover;box-shadow:0 0 0 1.5px var(--accent)}
 .w-rc .w-rca .w-act svg{flex-shrink:0}
+
+/* offline (2b): the save note says the draft is on this device; phone shows the icon only. The keep size fades in. */
+.k-saved.off{color:var(--ink)}
+.k-saved.off svg{color:var(--accent)}
+.k-saved.off .i svg path{stroke-dasharray:none}
+.w-keepm{animation:wFade var(--d2) var(--ease-soft) both}
+@media (max-width:600px){.wa-top .k-saved.off .t{display:none}}

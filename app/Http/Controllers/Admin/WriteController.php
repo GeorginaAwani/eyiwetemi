@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\CollectionKind;
 use App\Enums\HeadingStyle;
+use App\Enums\VersionLabel;
 use App\Enums\WorkItemType;
 use App\Enums\WorkKind;
 use App\Http\Controllers\Controller;
@@ -13,6 +14,7 @@ use App\Models\WorkItem;
 use App\Models\WritingDay;
 use App\Support\ChaptersAdmin;
 use App\Support\CommentsInbox;
+use App\Support\DeviceKind;
 use App\Support\ImageStore;
 use App\Support\PlanPage;
 use App\Support\Prose;
@@ -84,6 +86,11 @@ class WriteController extends Controller
                 ? $work->characters()->orderBy('position')->get(['id', 'name'])->map(fn ($c): array => ['id' => $c->id, 'name' => $c->name])->all()
                 : [],
             'images' => self::images($item->draft_body ?? $item->live_body),
+            'draft' => [
+                'revision' => (int) $item->draft_revision,
+                'device' => $item->draft_device,
+                'savedAt' => $item->draft_saved_at?->toIso8601String(),
+            ],
             'publish' => WritePage::state($item),
             'chapters' => $multi ? ChaptersAdmin::rows($work) : [],
             'plan' => $work->kind === WorkKind::Poem ? null : PlanPage::props($work),
@@ -94,6 +101,9 @@ class WriteController extends Controller
 
     /**
      * Autosave: the page, its title, part description, POV, heading quote or soundtrack — whichever changed.
+     *
+     * A page sent with `base` (the draft revision it was written from) is refused with a 409 "Two drafts" when the
+     * draft has moved on since, and nothing is saved.
      */
     public function save(Request $request, Work $work, WorkItem $item): JsonResponse
     {
@@ -102,6 +112,7 @@ class WriteController extends Controller
         $data = $request->validate([
             'body' => ['sometimes', 'array'],
             'body.type' => ['required_with:body', Rule::in(['doc'])],
+            'base' => ['sometimes', 'integer', 'min:0'],
             'title' => ['sometimes', 'nullable', 'string', 'max:300'],
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'pov' => ['sometimes', 'nullable', 'integer', Rule::exists('characters', 'id')->where('work_id', $work->id)],
@@ -120,9 +131,19 @@ class WriteController extends Controller
         /* validated() keeps only the keys named in the rules; the page itself comes whole and is cleaned here */
         $raw = $request->input('body');
 
-        DB::transaction(function () use ($data, $raw, $work, $item, $label): void {
-            if (array_key_exists('body', $data) && is_array($raw)) {
-                $body = Prose::clean($raw) ?? Prose::empty();
+        $stale = DB::transaction(function () use ($data, $raw, $work, &$item, $label): bool {
+            /* read under a lock, so another save can't land between the revision check and this write */
+            $item = WorkItem::query()->whereKey($item->id)->lockForUpdate()->sole();
+
+            $posted = array_key_exists('body', $data) && is_array($raw) ? (Prose::clean($raw) ?? Prose::empty()) : null;
+
+            /* a stale base whose page is already the draft (an earlier keepalive landed) is not a conflict */
+            if ($posted !== null && array_key_exists('base', $data) && (int) $data['base'] !== (int) $item->draft_revision && $posted != $item->draft_body) {
+                return true;
+            }
+
+            if ($posted !== null) {
+                $body = $posted;
                 $before = (int) $item->draft_words;
                 $words = Prose::words($body);
 
@@ -131,6 +152,7 @@ class WriteController extends Controller
                     'draft_text' => Prose::text($body),
                     'draft_words' => $words,
                     'draft_revision' => $item->draft_revision + 1,
+                    'draft_device' => DeviceKind::current(),
                 ]);
 
                 self::countDay($work, $words - $before);
@@ -160,13 +182,130 @@ class WriteController extends Controller
 
             $item->draft_saved_at = now();
             $item->save();
+
+            return false;
         });
+
+        if ($stale) {
+            return self::twoDraftsResponse($item);
+        }
 
         return response()->json([
             'savedAt' => $item->draft_saved_at->toIso8601String(),
             'words' => (int) $item->draft_words,
+            'revision' => (int) $item->draft_revision,
             'soundtrack' => $item->soundtrack_url ? ['url' => $item->soundtrack_url, 'label' => $item->soundtrack_label ?: 'Soundtrack'] : null,
         ]);
+    }
+
+    /**
+     * Two drafts: this device's page and the draft on the server both changed from the same revision. "this" keeps this
+     * device's page as the draft and the server's draft goes into Versions; "other" keeps the server's draft and this
+     * device's page goes into Versions.
+     */
+    public function twoDrafts(Request $request, Work $work, WorkItem $item): JsonResponse
+    {
+        abort_unless($item->work_id === $work->id, 404);
+
+        $request->validate([
+            'keep' => ['required', Rule::in(['this', 'other'])],
+            'body' => ['required', 'array'],
+            'body.type' => ['required', Rule::in(['doc'])],
+            'revision' => ['required', 'integer', 'min:0'],
+        ]);
+
+        if (strlen((string) $request->getContent()) > 3_000_000) {
+            abort(413);
+        }
+
+        $keep = $request->input('keep');
+        $revision = (int) $request->input('revision');
+        /* validated() keeps only the keys named in the rules; this device's page comes whole and is cleaned here */
+        $body = Prose::clean($request->input('body')) ?? Prose::empty();
+        $device = DeviceKind::current();
+        $by = $request->user()?->id;
+
+        $stale = DB::transaction(function () use ($work, &$item, $keep, $revision, $body, $device, $by): bool {
+            $item = WorkItem::query()->whereKey($item->id)->lockForUpdate()->sole();
+
+            if ($revision !== (int) $item->draft_revision) {
+                return true;
+            }
+
+            if ($keep === 'this') {
+                $current = $item->draft_body ?? $item->live_body ?? Prose::empty();
+
+                $item->versions()->create([
+                    'label' => VersionLabel::DraftFromDevice,
+                    'device' => $item->draft_device,
+                    'body' => $current,
+                    'words' => Prose::words($current),
+                    ...self::changeSinceLastVersion($item, $current),
+                    'created_by' => $by,
+                ]);
+
+                $before = (int) $item->draft_words;
+                $words = Prose::words($body);
+
+                $item->forceFill([
+                    'draft_body' => $body,
+                    'draft_text' => Prose::text($body),
+                    'draft_words' => $words,
+                    'draft_revision' => $item->draft_revision + 1,
+                    'draft_device' => $device,
+                    'draft_saved_at' => now(),
+                ]);
+
+                self::countDay($work, $words - $before);
+            } else {
+                $item->versions()->create([
+                    'label' => VersionLabel::DraftFromDevice,
+                    'device' => $device,
+                    'body' => $body,
+                    'words' => Prose::words($body),
+                    ...self::changeSinceLastVersion($item, $body),
+                    'created_by' => $by,
+                ]);
+
+                $item->forceFill([
+                    'draft_revision' => $item->draft_revision + 1,
+                    'draft_saved_at' => now(),
+                ]);
+            }
+
+            $item->save();
+
+            return false;
+        });
+
+        if ($stale) {
+            return self::twoDraftsResponse($item);
+        }
+
+        return response()->json([
+            'revision' => (int) $item->draft_revision,
+            'body' => $item->draft_body ?? $item->live_body ?? Prose::empty(),
+            'words' => (int) $item->draft_words,
+            'savedAt' => $item->draft_saved_at?->toIso8601String(),
+            'publish' => WritePage::state($item->fresh()),
+        ]);
+    }
+
+    /**
+     * The 409 for "Two drafts": the draft the server holds now, for the screen to set beside this device's page.
+     */
+    private static function twoDraftsResponse(WorkItem $item): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Two drafts',
+            'revision' => (int) $item->draft_revision,
+            'other' => [
+                'body' => $item->draft_body ?? $item->live_body ?? Prose::empty(),
+                'words' => (int) $item->draft_words,
+                'savedAt' => $item->draft_saved_at?->toIso8601String(),
+                'device' => $item->draft_device,
+            ],
+        ], 409);
     }
 
     /**
@@ -195,6 +334,20 @@ class WriteController extends Controller
             WorkKind::Collection => ($work->collection_kind ?? CollectionKind::Story)->value,
             default => $work->kind->value,
         };
+    }
+
+    /**
+     * Words added and cut since the newest version, as publishing counts them.
+     *
+     * @param  array<string, mixed>  $body
+     * @return array{words_added: int, words_cut: int}
+     */
+    private static function changeSinceLastVersion(WorkItem $item, array $body): array
+    {
+        $previous = $item->versions()->first();
+        $change = Prose::wordChange($previous ? Prose::text($previous->body) : '', Prose::text($body));
+
+        return ['words_added' => $change['added'], 'words_cut' => $change['cut']];
     }
 
     /**

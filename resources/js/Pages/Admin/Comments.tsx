@@ -6,8 +6,9 @@ import { Av, PI } from '../../Components/admin/People';
 import AdminLayout from '../../Layouts/AdminLayout';
 import { beacon, json } from '../../lib/http';
 import { prefersReducedMotion } from '../../lib/motion';
+import { isOnline, noConnection, onConnection } from '../../lib/offline';
 
-type Reply = { id: number; who: string; seed: string; me: boolean; at: string; text: string };
+type Reply = { id: number; who: string; seed: string; me: boolean; at: string; text: string; wait?: boolean };
 type RComment = { id: number; who: string; seed: string; at: string; text: string; likes: number; liked: boolean; hidden: boolean; new: boolean; replies: Reply[] };
 type GroupWork = { slug: string; title: string; cover: CoverData };
 type RGroup = { key: string; item: number; work: GroupWork; title: string; sub: string; new: number; open: string; comments: RComment[]; earlier: number };
@@ -111,7 +112,14 @@ function ReplyRow({ r, me, q }: { r: Reply; me: Props['me']; q: string }) {
                 <div className="hd">
                     <b>{r.me ? me.name.split(' ')[0] : r.who}</b>
                     {r.me && <span className="cm-at">Author</span>}
-                    <span className="tm">{r.at}</span>
+                    {r.wait ? (
+                        <span className="tm cm-wait">
+                            {PI.cloud}
+                            Waiting to send
+                        </span>
+                    ) : (
+                        <span className="tm">{r.at}</span>
+                    )}
                 </div>
                 <p>{hl(r.text, q)}</p>
             </div>
@@ -375,13 +383,30 @@ export default function Comments(props: Props) {
         seen.current.delete(id);
         setCounts((c) => ({ ...c, [t]: Math.max(0, c[t] - 1) }));
         if (t === 'r') {
-            setReaders((d) => d && { ...d, groups: d.groups.map((g) => ({ ...g, new: Math.max(0, g.new - (g.comments.some((c) => c.id === id) ? 1 : 0)), comments: g.comments.map((c) => (c.id === id ? { ...c, new: false } : c)) })) });
+            setReaders(
+                (d) =>
+                    d && {
+                        ...d,
+                        groups: d.groups.map((g) => ({
+                            ...g,
+                            new: Math.max(0, g.new - (g.comments.some((c) => c.id === id) ? 1 : 0)),
+                            comments: g.comments.map((c) => (c.id === id ? { ...c, new: false } : c)),
+                        })),
+                    },
+            );
         } else {
-            setReviewers((d) => d && { ...d, open: d.open.map((g) => ({ ...g, new: Math.max(0, g.new - (g.notes.some((n) => n.id === id) ? 1 : 0)), notes: g.notes.map((n) => (n.id === id ? { ...n, new: false } : n)) })) });
+            setReviewers(
+                (d) =>
+                    d && {
+                        ...d,
+                        open: d.open.map((g) => ({ ...g, new: Math.max(0, g.new - (g.notes.some((n) => n.id === id) ? 1 : 0)), notes: g.notes.map((n) => (n.id === id ? { ...n, new: false } : n)) })),
+                    },
+            );
         }
     }
 
-    const patchComment = (id: number, f: (c: RComment) => RComment) => setReaders((d) => d && { ...d, groups: d.groups.map((g) => ({ ...g, comments: g.comments.map((c) => (c.id === id ? f(c) : c)) })) });
+    const patchComment = (id: number, f: (c: RComment) => RComment) =>
+        setReaders((d) => d && { ...d, groups: d.groups.map((g) => ({ ...g, comments: g.comments.map((c) => (c.id === id ? f(c) : c)) })) });
 
     async function like(c: RComment, button: HTMLButtonElement) {
         const liked = !c.liked;
@@ -410,23 +435,65 @@ export default function Comments(props: Props) {
         window.setTimeout(() => {
             const el = list.current?.querySelector<HTMLElement>(`[data-id="${c.id}"]`);
             if (el && !prefersReducedMotion()) {
-                el.animate([{ opacity: 0.3, filter: 'blur(3px)' }, { opacity: 1, filter: 'none' }], { duration: 320 });
+                el.animate(
+                    [
+                        { opacity: 0.3, filter: 'blur(3px)' },
+                        { opacity: 1, filter: 'none' },
+                    ],
+                    { duration: 320 },
+                );
             }
             el?.querySelector<HTMLElement>(`[data-a="${hidden ? 'unhide' : 'hide'}"]`)?.focus();
         }, 0);
         await json('PATCH', `/comments/${c.id}/hide`, { hidden });
     }
 
+    /** Put a reply under its comment or note, or swap a waiting one for what the server kept. */
+    function placeReply(t: Tab, id: number, r: Reply, replaces?: number) {
+        const put = (list: Reply[]) => (replaces !== undefined && list.some((x) => x.id === replaces) ? list.map((x) => (x.id === replaces ? r : x)) : [...list, r]);
+        if (t === 'r') {
+            patchComment(id, (c) => ({ ...c, replies: put(c.replies) }));
+        } else {
+            setReviewers((d) => d && { ...d, open: d.open.map((g) => ({ ...g, notes: g.notes.map((n) => (n.id === id ? { ...n, replies: put(n.replies) } : n)) })) });
+        }
+    }
+
+    /* replies written with no connection wait here and go once it's back */
+    const waiting = useRef<{ t: Tab; id: number; temp: number; text: string }[]>([]);
+    useEffect(
+        () =>
+            onConnection(async (on) => {
+                if (!on) {
+                    return;
+                }
+                for (const w of [...waiting.current]) {
+                    const { status, data } = await json<{ reply: Reply }>('POST', `/comments/${w.id}/reply`, { body: w.text });
+                    if (status === 0) {
+                        break;
+                    }
+                    waiting.current = waiting.current.filter((x) => x !== w);
+                    if (status === 201 && data.reply) {
+                        placeReply(w.t, w.id, data.reply, w.temp);
+                    }
+                }
+            }),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
     async function reply(t: Tab, id: number, wasNew: boolean, text: string): Promise<boolean> {
-        const { status, data } = await json<{ reply: Reply }>('POST', `/comments/${id}/reply`, { body: text });
-        if (status !== 201 || !data.reply) {
+        const { status, data } = isOnline() ? await json<{ reply: Reply }>('POST', `/comments/${id}/reply`, { body: text }) : { status: 0, data: {} as { reply?: Reply } };
+        if (status === 0) {
+            noConnection();
+            const temp = -Date.now();
+            waiting.current.push({ t, id, temp, text });
+            placeReply(t, id, { id: temp, who: me.name, seed: '', me: true, at: '', text, wait: true });
+        } else if (status !== 201 || !data.reply) {
             return false;
         }
-        const r = data.reply;
-        if (t === 'r') {
-            patchComment(id, (c) => ({ ...c, replies: [...c.replies, r] }));
-        } else {
-            setReviewers((d) => d && { ...d, open: d.open.map((g) => ({ ...g, notes: g.notes.map((n) => (n.id === id ? { ...n, replies: [...n.replies, r] } : n)) })) });
+        const r = data.reply ?? { id: waiting.current[waiting.current.length - 1].temp };
+        if (status !== 0) {
+            placeReply(t, id, data.reply as Reply);
         }
         unNew(t, id, wasNew);
         setReplying('');
@@ -449,7 +516,13 @@ export default function Comments(props: Props) {
             const sec = list.current?.querySelector(`[data-g="${g.key}"]`);
             sec?.querySelectorAll('[data-id]').forEach((el, i) => {
                 if (!have.has(Number((el as HTMLElement).dataset.id)) && !prefersReducedMotion()) {
-                    (el as HTMLElement).animate([{ opacity: 0, filter: 'blur(4px)' }, { opacity: 1, filter: 'none' }], { duration: 380, delay: i * 30, fill: 'backwards' });
+                    (el as HTMLElement).animate(
+                        [
+                            { opacity: 0, filter: 'blur(4px)' },
+                            { opacity: 1, filter: 'none' },
+                        ],
+                        { duration: 380, delay: i * 30, fill: 'backwards' },
+                    );
                 }
             });
         }, 0);
@@ -760,7 +833,11 @@ export default function Comments(props: Props) {
         ...(wf && !works.some((w) => w.slug === wf) ? [{ value: wf, label: wf }] : []),
         ...works.map((w) => ({ value: w.slug, label: w.title, note: w.new ? `${w.new} new` : undefined })),
     ];
-    const whoSeed = reviewers?.open.concat(reviewers.done).flatMap((g) => g.notes).find((n) => n.who === who)?.seed ?? who;
+    const whoSeed =
+        reviewers?.open
+            .concat(reviewers.done)
+            .flatMap((g) => g.notes)
+            .find((n) => n.who === who)?.seed ?? who;
 
     return (
         <AdminLayout section="comments">

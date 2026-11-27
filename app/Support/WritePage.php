@@ -23,10 +23,10 @@ class WritePage
             'scheduledAt' => $item->scheduled_at?->toIso8601String(),
             'liveAt' => $item->live_updated_at?->toIso8601String(),
             'audience' => ChaptersAdmin::audience($item->work),
-            'versions' => $item->versions()->get(['id', 'label', 'words', 'words_added', 'words_cut', 'created_at'])
+            'versions' => $item->versions()->get(['id', 'label', 'device', 'words', 'words_added', 'words_cut', 'created_at'])
                 ->map(fn (Version $v): array => [
                     'id' => $v->id,
-                    'label' => self::label($v->label),
+                    'label' => self::label($v),
                     'at' => $v->created_at->toIso8601String(),
                     'words' => $v->words,
                     'added' => $v->words_added,
@@ -35,14 +35,28 @@ class WritePage
         ];
     }
 
-    private static function label(VersionLabel $label): string
+    private static function label(Version $version): string
     {
-        return match ($label) {
+        return match ($version->label) {
             VersionLabel::Published => 'Published',
             VersionLabel::Updated => 'Updated',
             VersionLabel::Unpublished => 'Unpublished',
             VersionLabel::DraftBeforeRestore => 'Draft before restore',
-            VersionLabel::DraftFromDevice => 'Draft from another device',
+            VersionLabel::DraftFromDevice => self::deviceDraftLabel($version->device),
         };
+    }
+
+    /**
+     * "Draft from this phone" when it came from the device asking, "Draft from Laptop" when it came from another.
+     */
+    private static function deviceDraftLabel(?string $device): string
+    {
+        if ($device === null) {
+            return 'Draft from another device';
+        }
+
+        return $device === DeviceKind::current()
+            ? 'Draft from this '.$device
+            : 'Draft from '.ucfirst($device);
     }
 }

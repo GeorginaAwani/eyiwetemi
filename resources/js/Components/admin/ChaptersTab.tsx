@@ -1,14 +1,15 @@
-import { Link, router } from '@inertiajs/react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { inertWhen } from '../../lib/dom';
 import { heading } from '../../lib/headings';
 import { json } from '../../lib/http';
 import { prefersReducedMotion } from '../../lib/motion';
-import { loading } from './Controls';
+import { dropWork, isKept, keepWork, keptSize, megabytes, useOnline } from '../../lib/offline';
+import { loading, Unfold } from './Controls';
 import { ChapterRow, StateFact } from './editor/chapters';
 import { FoldIcon, GripIcon, Link15, PovIcon } from './editor/icons';
-import { BoxTick, Plus, Ring, Search } from './Icons';
+import { BoxTick, CloudOff, Plus, Ring, Search } from './Icons';
 
 export type Contents = { rows: ChapterRow[]; opening: { q: string; by: string } | null; pool: { id: number; title: string; meta: string }[] };
 type Look = { slug: string; kind: string; collectionKind: string; headingStyle: string; partWord: string; partStyle: string; showPartNumbers: boolean };
@@ -23,7 +24,7 @@ const UNIT: Record<string, [string, string]> = { story: ['story', 'stories'], po
 export default function ChaptersTab({ work, contents }: { work: Look; contents: Contents }) {
     const novel = work.kind === 'novel';
     const coll = work.kind === 'collection';
-    const [unit, units] = coll ? UNIT[work.collectionKind] ?? UNIT.story : ['chapter', 'chapters'];
+    const [unit, units] = coll ? (UNIT[work.collectionKind] ?? UNIT.story) : ['chapter', 'chapters'];
     const [rows, setRows] = useState(contents.rows);
     const [reorder, setReorder] = useState(false);
     const [toast, setToast] = useState('');
@@ -137,7 +138,7 @@ export default function ChaptersTab({ work, contents }: { work: Look; contents: 
                 target = (slot.parentElement.parentElement.previousElementSibling as HTMLElement).dataset.id ?? null;
             } else if (prev?.classList.contains('w-kids')) {
                 const ks = prev.querySelectorAll<HTMLElement>('[data-id]');
-                target = ks.length ? ks[ks.length - 1].dataset.id! : (prev.previousElementSibling as HTMLElement).dataset.id ?? null;
+                target = ks.length ? ks[ks.length - 1].dataset.id! : ((prev.previousElementSibling as HTMLElement).dataset.id ?? null);
             }
             slot.remove();
             el.classList.remove('drag');
@@ -195,7 +196,15 @@ export default function ChaptersTab({ work, contents }: { work: Look; contents: 
                     <GripIcon />
                 </span>
                 <span className="no">{r.number}</span>
-                <span className="t">{r.ref && !reorder ? <Link className="w-rl" href={r.href}>{title}</Link> : title}</span>
+                <span className="t">
+                    {r.ref && !reorder ? (
+                        <Link className="w-rl" href={r.href}>
+                            {title}
+                        </Link>
+                    ) : (
+                        title
+                    )}
+                </span>
                 {novel ? (
                     <span className="k-fact pv">
                         {r.pov && (
@@ -290,6 +299,7 @@ export default function ChaptersTab({ work, contents }: { work: Look; contents: 
 
     return (
         <div id="chap" className={`w-chap${coll ? ' w-coll' : ''}`}>
+            <KeepHere slug={work.slug} rows={rows} count={`${chapters.length} ${chapters.length === 1 ? unit : units}`} />
             <div className="wa-ct">
                 <span className="k-meta">
                     {chapters.length} {chapters.length === 1 ? unit : units}
@@ -397,7 +407,15 @@ function PiecePicker({
     return createPortal(
         <>
             <div className={`w-scrim${open ? ' on' : ''}`} onClick={onClose} />
-            <div className={`w-pan w-pick${open ? ' open' : ''}`} role="dialog" aria-modal="true" aria-label={`Add a ${unit}`} tabIndex={-1} onKeyDown={(e) => e.key === 'Escape' && onClose()} {...inertWhen(!open)}>
+            <div
+                className={`w-pan w-pick${open ? ' open' : ''}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Add a ${unit}`}
+                tabIndex={-1}
+                onKeyDown={(e) => e.key === 'Escape' && onClose()}
+                {...inertWhen(!open)}
+            >
                 <div className="w-ph">
                     <h2>Add a {unit}</h2>
                 </div>
@@ -451,5 +469,70 @@ function PiecePicker({
             </div>
         </>,
         document.body,
+    );
+}
+
+/**
+ * Keep on this device: every page of the work stays on this device so writing goes on without a connection.
+ * Offline, a band says drafts save here.
+ */
+function KeepHere({ slug, rows, count }: { slug: string; rows: ChapterRow[]; count: string }) {
+    const online = useOnline();
+    const version = (usePage() as unknown as { version: string | null }).version ?? '';
+    const [on, setOn] = useState(() => isKept(slug));
+    const [bytes, setBytes] = useState<number | null>(null);
+    const paths = [`/works/${slug}`, `/works/${slug}?tab=chapters`, ...rows.filter((r) => !r.ref).map((r) => r.href)];
+    const key = paths.join('|');
+
+    /* kept: refresh the copy whenever the list changes (and we're online); otherwise just say its size */
+    useEffect(() => {
+        if (!on) {
+            setBytes(null);
+
+            return;
+        }
+        let gone = false;
+        (online ? keepWork(slug, paths, version) : keptSize(slug)).then((b) => !gone && setBytes(b));
+
+        return () => {
+            gone = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [on, key, online]);
+
+    const meta = on ? `All ${count}${bytes ? ` · ${megabytes(bytes)}` : ''}` : 'Only while online';
+
+    return (
+        <>
+            <Unfold show={!online}>
+                <div className="w-band" role="status">
+                    <CloudOff size={18} />
+                    <span>Offline. Drafts save on this device.</span>
+                </div>
+            </Unfold>
+            <div className="w-keep">
+                <label className="ad-cb">
+                    <input
+                        type="checkbox"
+                        id="keepC"
+                        checked={on}
+                        onChange={(e) => {
+                            const yes = e.target.checked;
+                            setOn(yes);
+                            if (!yes) {
+                                void dropWork(slug);
+                            }
+                        }}
+                    />
+                    <span className="ad-box">
+                        <BoxTick />
+                    </span>
+                    Keep on this device
+                </label>
+                <span className="k-meta w-keepm" key={meta}>
+                    {meta}
+                </span>
+            </div>
+        </>
     );
 }

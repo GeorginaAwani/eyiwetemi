@@ -151,6 +151,7 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::get('/works/{work:slug}/write/{item}', [WriteController::class, 'show'])->whereNumber('item')->name('works.write');
     Route::patch('/works/{work:slug}/write/{item}', [WriteController::class, 'save'])->whereNumber('item')->name('works.write.save');
     Route::post('/works/{work:slug}/write/{item}/image', [WriteController::class, 'image'])->whereNumber('item')->name('works.write.image');
+    Route::post('/works/{work:slug}/write/{item}/two-drafts', [WriteController::class, 'twoDrafts'])->whereNumber('item')->name('works.write.twoDrafts');
     Route::post('/works/{work:slug}/write/{item}/publish', [PublishController::class, 'publish'])->whereNumber('item')->name('works.publish');
     Route::post('/works/{work:slug}/write/{item}/schedule', [PublishController::class, 'schedule'])->whereNumber('item')->name('works.schedule');
     Route::delete('/works/{work:slug}/write/{item}/schedule', [PublishController::class, 'unschedule'])->whereNumber('item')->name('works.unschedule');
