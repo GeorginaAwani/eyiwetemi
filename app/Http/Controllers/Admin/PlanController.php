@@ -17,12 +17,12 @@ use App\Models\WorldEntry;
 use App\Models\WorldGroup;
 use App\Support\ImageStore;
 use App\Support\PlanPage;
+use App\Support\SafeFetch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -608,11 +608,7 @@ class PlanController extends Controller
     private function linkTitle(string $url): string
     {
         try {
-            if (! self::publicHost($url)) {
-                throw new \RuntimeException('Not a public address.');
-            }
-
-            $response = Http::timeout(4)->withoutRedirecting()->get($url);
+            $response = SafeFetch::get($url, 4);
 
             if ($response->successful() && preg_match('#<title[^>]*>(.*?)</title>#is', $response->body(), $matches) === 1) {
                 $title = trim((string) preg_replace('/\s+/u', ' ', html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8')));
@@ -625,28 +621,6 @@ class PlanController extends Controller
         }
 
         return mb_substr((string) (parse_url($url, PHP_URL_HOST) ?: $url), 0, 300);
-    }
-
-    /**
-     * Only public web addresses are asked for their titles: never this machine or a private network.
-     */
-    private static function publicHost(string $url): bool
-    {
-        $parts = parse_url($url);
-
-        if (! in_array(strtolower((string) ($parts['scheme'] ?? '')), ['http', 'https'], true) || empty($parts['host'])) {
-            return false;
-        }
-
-        $ips = gethostbynamel(trim((string) $parts['host'], '[]')) ?: [];
-
-        foreach ($ips as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                return false;
-            }
-        }
-
-        return $ips !== [];
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\SitePage;
 use App\Models\Work;
 use App\Models\WorkItem;
 use App\Support\SafeHtml;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -92,5 +93,51 @@ class FooterPagesTest extends TestCase
         $this->assertStringNotContainsString('Salt Season', $poetry);
 
         $this->get('/feed/comics')->assertNotFound();
+    }
+
+    public function test_a_change_that_matters_shows_its_line_and_marks_its_sections_for_thirty_days(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-11-26 10:00:00', 'Africa/Lagos'));
+        SitePage::factory()->privacy()->create(['live' => [
+            'updated_on' => '2026-11-26',
+            'sections' => [
+                ['id' => 'who', 'heading' => 'Who looks after it', 'html' => '<p>Me.</p>'],
+                ['id' => 'rights', 'heading' => 'Your rights', 'html' => '<p>Ask me.</p>'],
+            ],
+            'change' => ['on' => '2026-10-28', 'line' => 'I’ve added what I keep.', 'ids' => ['rights']],
+        ]]);
+
+        $this->get('/privacy')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Privacy')
+            ->where('change.line', 'I’ve added what I keep.')
+            ->where('change.ids', ['rights'])
+        );
+
+        $this->travel(3)->days();
+
+        $this->get('/privacy')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Privacy')
+            ->where('change', null)
+        );
+    }
+
+    public function test_a_change_dated_in_the_future_or_without_a_line_is_not_shown(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-11-26 10:00:00', 'Africa/Lagos'));
+        SitePage::factory()->terms()->create(['live' => [
+            'updated_on' => '2026-11-26',
+            'sections' => [['id' => 'writing', 'heading' => 'My writing', 'html' => '<p>Please don’t copy it.</p>']],
+            'change' => ['on' => '2026-11-26', 'line' => '   ', 'ids' => ['writing']],
+        ]]);
+
+        $this->get('/terms')->assertOk()->assertInertia(fn (Assert $page) => $page->where('change', null));
+
+        SitePage::query()->update(['live' => [
+            'updated_on' => '2026-11-26',
+            'sections' => [['id' => 'writing', 'heading' => 'My writing', 'html' => '<p>Please don’t copy it.</p>']],
+            'change' => ['on' => '2026-12-01', 'line' => 'Later.', 'ids' => ['writing']],
+        ]]);
+
+        $this->get('/terms')->assertOk()->assertInertia(fn (Assert $page) => $page->where('change', null));
     }
 }

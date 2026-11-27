@@ -8,12 +8,6 @@
 a.nw-dk{color:inherit;display:block;border-radius:8px;transition:opacity var(--d1)}
 a.nw-dk:hover b{color:var(--accent)}a.nw-dk b{transition:color var(--d1)}
 /* 2g site */
-.sp-dk{display:flex;flex-direction:column;padding-top:44px}
-.sp-dk h2{font-family:var(--CD);font-weight:400;font-size:28px;color:var(--ink);padding-bottom:10px;border-bottom:1px solid var(--line)}
-.sp-dkr{display:flex;align-items:center;gap:12px;min-height:52px;border-bottom:1px solid var(--line);font-size:15px;color:var(--text)}
-.sp-dkr:last-child{border-bottom:0}
-.sp-dkr svg{color:var(--accent);flex-shrink:0}.sp-dkr b{color:var(--ink);font-weight:600}.sp-dkr .k-l{margin-left:auto}
-.sp-dk .k-l{font-size:15px}
 /* 2h stats */
 .st-cv{border-radius:3px;overflow:hidden;display:block}.st-cv img{width:100%;height:100%;object-fit:cover;display:block}
 .st-f em.dn,.st-mini em.dn,.b-fig em.dn,.st-f em.eq{color:var(--muted)}

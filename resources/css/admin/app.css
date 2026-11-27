@@ -17,3 +17,4 @@
 .nw-pane{transition:opacity 160ms var(--ease-soft),filter 160ms var(--ease-soft)}
 .nw-pane.nt-out{opacity:0;filter:blur(4px)}
 @media (prefers-reduced-motion:reduce){.nw-pvb iframe.nw-frame.out,.nw-pane.nt-out{filter:none}}
+.sp-ri:not(:has(img)){background:var(--surf)}

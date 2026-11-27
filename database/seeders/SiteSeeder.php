@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\SitePageKey;
+use App\Enums\VersionLabel;
 use App\Models\LinkCheck;
 use App\Models\Media;
 use App\Models\Notice;
@@ -52,13 +53,21 @@ class SiteSeeder extends Seeder
         ];
 
         foreach ($pages as [$key, $content, $publishedAt]) {
-            SitePage::forceCreate([
+            $page = SitePage::forceCreate([
                 'key' => $key,
                 'draft' => $content,
                 'live' => $content,
                 'draft_saved_at' => now()->subDays(1),
                 'published_at' => $publishedAt,
             ]);
+
+            /* what readers see now is its first version */
+            $version = $page->versions()->forceCreate([
+                'label' => VersionLabel::Published,
+                'body' => $content,
+                'created_by' => User::query()->where('username', 'eyiwetemi')->value('id'),
+            ]);
+            $version->forceFill(['created_at' => $publishedAt, 'updated_at' => $publishedAt])->save();
         }
     }
 
