@@ -146,13 +146,14 @@ class NewsletterPlan
     }
 
     /**
-     * Fills a send with the chapters, pieces and notes published or scheduled since the last send that went out, up to
-     * this send's time. Rows she has left out keep that choice; rows that no longer qualify are removed.
+     * Fills a send with the chapters, pieces and notes published or scheduled since the last send that went out (or was
+     * skipped because she left everything out), up to this send's time. Rows she has left out keep that choice; rows that no longer qualify are removed.
      */
     public static function sync(NewsletterSend $send): void
     {
         $since = NewsletterSend::query()
-            ->where('status', SendStatus::Sent)
+            ->whereIn('status', [SendStatus::Sent, SendStatus::Skipped])
+            ->where('scheduled_for', '<', $send->scheduled_for)
             ->orderByDesc('scheduled_for')
             ->first(['id', 'scheduled_for'])?->scheduled_for;
         $until = $send->scheduled_for;
