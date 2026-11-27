@@ -128,7 +128,7 @@ class Publisher
     }
 
     /**
-     * Everything whose time has come. Returns how many came out.
+     * Everything whose time has come: chapters, pieces and notes. Returns how many came out.
      */
     public static function publishDue(): int
     {
@@ -142,7 +142,7 @@ class Publisher
             self::publish($item, null);
         }
 
-        return $due->count();
+        return $due->count() + NotePublisher::publishDue();
     }
 
     /**

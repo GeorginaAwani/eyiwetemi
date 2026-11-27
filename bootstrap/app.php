@@ -21,8 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        /* the writing screen's saves keep every space she typed (a space beside italics is part of the text) */
-        $writing = fn (Request $request): bool => $request->isMethod('PATCH') && $request->is('works/*/write/*');
+        /* the writing screen's and the diary's saves keep every space she typed (a space beside italics is part of the text) */
+        $writing = fn (Request $request): bool => $request->isMethod('PATCH') && $request->is('works/*/write/*', 'notes/*');
         /* a reviewer's quote keeps the spaces at its edges: it must match the paragraph exactly */
         $reviewing = fn (Request $request): bool => $request->is('review/marks*');
         $middleware->trimStrings(except: [$writing, $reviewing]);

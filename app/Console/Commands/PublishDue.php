@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('eyiwetemi:publish-due')]
-#[Description('Publish the chapters and pieces whose scheduled time has come')]
+#[Description('Publish the chapters, pieces and notes whose scheduled time has come')]
 class PublishDue extends Command
 {
     /**
