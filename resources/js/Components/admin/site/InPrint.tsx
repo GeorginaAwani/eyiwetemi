@@ -6,8 +6,20 @@ import type { SiteCtx } from '../../../Pages/Admin/Site';
 import { bareUrl, Book, Card, Coming, Cov, CURS, Field, fromPrice, fullUrl, I, InPrint, isLink, Money, newId, pad, plural, priceOf, priceText, Reading, Row, same, Store, Work } from './kit';
 
 const FMTS = ['Paperback', 'Hardback', 'Ebook', 'Audiobook', 'Signed'];
-const KIND: Record<string, string> = { novel: 'A novel', poem: 'Poems', story: 'Short stories', essay: 'Essays', collection: 'A collection' };
-const WKIND: Record<string, string> = { novel: 'Novel', poem: 'Poem', story: 'Story', essay: 'Essay', collection: 'Collection' };
+const KIND: Record<string, string> = {
+    novel: 'A novel',
+    poem: 'Poems',
+    story: 'Short stories',
+    essay: 'Essays',
+    collection: 'A collection',
+};
+const WKIND: Record<string, string> = {
+    novel: 'Novel',
+    poem: 'Poem',
+    story: 'Story',
+    essay: 'Essay',
+    collection: 'Collection',
+};
 
 /* West Africa Time is UTC+1 all year */
 const watNow = () => new Date(Date.now() + 3600e3).toISOString();
@@ -46,7 +58,11 @@ export function outOf(b: Coming): NonNullable<Coming['out']> {
     const mi = MONTH.findIndex((m) => new RegExp('\\b' + m.slice(0, 3), 'i').test(t));
     const d = t.replace(y, '').match(/\b(\d{1,2})\b/)?.[1] ?? '';
 
-    return { d: mi >= 0 && d && +d <= 31 ? pad(+d) : '', m: mi >= 0 ? pad(mi + 1) : '', y };
+    return {
+        d: mi >= 0 && d && +d <= 31 ? pad(+d) : '',
+        m: mi >= 0 ? pad(mi + 1) : '',
+        y,
+    };
 }
 
 /** Coming books' typed dates become real ones, in the draft and what readers see alike (so it isn't an edit). */
@@ -70,7 +86,10 @@ export default function InPrintTab({ s }: { s: SiteCtx }) {
     const subPane = useRef<HTMLDivElement>(null);
     const upd = (fn: (d: InPrint) => void) => s.update<InPrint>('in_print', fn);
     const work = (slug: string) => s.works.find((w) => w.slug === slug);
-    const look = (b: { slug: string; cover: string }) => ({ image: work(b.slug)?.image ?? null, color: b.cover });
+    const look = (b: { slug: string; cover: string }) => ({
+        image: work(b.slug)?.image ?? null,
+        color: b.cover,
+    });
 
     function edited(k: string) {
         const f = (x: InPrint | null) => x?.books.find((b) => b.slug === k) ?? x?.coming.find((b) => b.slug === k) ?? x?.events.find((e) => e.id === k);
@@ -149,10 +168,23 @@ export default function InPrintTab({ s }: { s: SiteCtx }) {
                     works={opts}
                     onPick={(w) => {
                         s.popClose();
-                        const base = { slug: w.slug, title: w.title, kind: KIND[w.kind] ?? '', cover: w.color ?? '#C46F8A' };
+                        const base = {
+                            slug: w.slug,
+                            title: w.title,
+                            kind: KIND[w.kind] ?? '',
+                            cover: w.color ?? '#C46F8A',
+                        };
                         upd((d) => {
                             if (coming) {
-                                d.coming.push({ ...base, when: '', out: null, mode: 'follow', store: '', price: null, url: null });
+                                d.coming.push({
+                                    ...base,
+                                    when: '',
+                                    out: null,
+                                    mode: 'follow',
+                                    store: '',
+                                    price: null,
+                                    url: null,
+                                });
                             } else {
                                 d.books.push({ ...base, formats: [] });
                             }
@@ -213,7 +245,17 @@ export default function InPrintTab({ s }: { s: SiteCtx }) {
         const x = pd(T);
         x.setDate(x.getDate() + 14);
         const d = `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`;
-        upd((dd) => dd.events.push({ id, title: '', starts_at: utcOf(d, '16:00'), place: '', online: false, url: null, cancelled: false }));
+        upd((dd) =>
+            dd.events.push({
+                id,
+                title: '',
+                starts_at: utcOf(d, '16:00'),
+                place: '',
+                online: false,
+                url: null,
+                cancelled: false,
+            }),
+        );
         s.after(() => s.openCard(id));
     }
     const item = (k: string, node: () => React.ReactNode) => (k === s.open ? <PrintCard key={'o' + k} k={k} s={s} p={p} upd={upd} /> : node());
@@ -420,7 +462,13 @@ function PrintCard({ k, s, p, upd }: { k: string; s: SiteCtx; p: InPrint; upd: (
 
 const head = (s: SiteCtx, b: { slug: string; title: string; cover: string }) => (
     <span className="sp-ot">
-        <Cov w={{ image: s.works.find((w) => w.slug === b.slug)?.image ?? null, color: b.cover }} width={30} />
+        <Cov
+            w={{
+                image: s.works.find((w) => w.slug === b.slug)?.image ?? null,
+                color: b.cover,
+            }}
+            width={30}
+        />
         <b>{b.title}</b>
     </span>
 );
@@ -454,7 +502,10 @@ function StoreRow({ st, s, onChange, onRemove, removable = true }: { st: Store; 
 
                 return;
             }
-            const { status, data } = await json<{ ok: boolean; checkedOn: string }>('POST', '/site/link-check', { url: u });
+            const { status, data } = await json<{
+                ok: boolean;
+                checkedOn: string;
+            }>('POST', '/site/link-check', { url: u });
             setChecking(false);
             if (status === 200 && typeof data.ok === 'boolean') {
                 s.setLink(u, { ok: data.ok, checkedOn: data.checkedOn ?? '' });
@@ -574,7 +625,17 @@ function BookCard({ b, s, upd }: { b: Book; s: SiteCtx; upd: (fn: (d: InPrint) =
                     onPick={(f) => {
                         s.popClose();
                         restructure((x) => {
-                            x.formats.push({ format: f, stores: [{ store: '', price: null, url: null, ok: true }] });
+                            x.formats.push({
+                                format: f,
+                                stores: [
+                                    {
+                                        store: '',
+                                        price: null,
+                                        url: null,
+                                        ok: true,
+                                    },
+                                ],
+                            });
                             x.formats.sort((a, c) => FMTS.indexOf(a.format) - FMTS.indexOf(c.format));
                         }, `.sp-fb[data-f="${f}"] input`);
                     }}
@@ -667,7 +728,22 @@ function BookCard({ b, s, upd }: { b: Book; s: SiteCtx; upd: (fn: (d: InPrint) =
                                     onRemove={(el) => bye(el, () => restructure((x) => x.formats[fi].stores.splice(si, 1), null))}
                                 />
                             ))}
-                            <button className="w-act sp-add" type="button" onClick={() => restructure((x) => x.formats[fi].stores.push({ store: '', price: null, url: null, ok: true }), `.sp-fb[data-f="${f.format}"] .sp-sr:last-of-type input`)}>
+                            <button
+                                className="w-act sp-add"
+                                type="button"
+                                onClick={() =>
+                                    restructure(
+                                        (x) =>
+                                            x.formats[fi].stores.push({
+                                                store: '',
+                                                price: null,
+                                                url: null,
+                                                ok: true,
+                                            }),
+                                        `.sp-fb[data-f="${f.format}"] .sp-sr:last-of-type input`,
+                                    )
+                                }
+                            >
                                 {I.plus15}
                                 <span>Add a store</span>
                             </button>
@@ -771,7 +847,27 @@ function ComingCard({ b, s, upd }: { b: Coming; s: SiteCtx; upd: (fn: (d: InPrin
                             onClick={() => {
                                 upd((d) => {
                                     d.coming = d.coming.filter((x) => x.slug !== b.slug);
-                                    d.books.push({ slug: b.slug, title: b.title, kind: b.kind, cover: b.cover, formats: b.store ? [{ format: 'Paperback', stores: [{ store: b.store, price: b.price, url: b.url, ok: true }] }] : [] });
+                                    d.books.push({
+                                        slug: b.slug,
+                                        title: b.title,
+                                        kind: b.kind,
+                                        cover: b.cover,
+                                        formats: b.store
+                                            ? [
+                                                  {
+                                                      format: 'Paperback',
+                                                      stores: [
+                                                          {
+                                                              store: b.store,
+                                                              price: b.price,
+                                                              url: b.url,
+                                                              ok: true,
+                                                          },
+                                                      ],
+                                                  },
+                                              ]
+                                            : [],
+                                    });
                                 });
                                 s.setOpen(b.slug);
                                 s.after(() => inA(document.getElementById('spO')));
@@ -850,7 +946,11 @@ function ComingCard({ b, s, upd }: { b: Coming; s: SiteCtx; upd: (fn: (d: InPrin
                             label="Day"
                             disabled={!o.m}
                             value={o.d}
-                            options={['', ...[...Array(31)].map((_, i) => pad(i + 1))].map((v) => ({ value: v, label: v ? String(+v) : 'Any day', disabled: !!v && (+v > len || (o.y === T0y && o.m === T0m && v < T0d)) }))}
+                            options={['', ...[...Array(31)].map((_, i) => pad(i + 1))].map((v) => ({
+                                value: v,
+                                label: v ? String(+v) : 'Any day',
+                                disabled: !!v && (+v > len || (o.y === T0y && o.m === T0m && v < T0d)),
+                            }))}
                             onPick={(v) => setOut({ ...o, d: v })}
                         />
                         <KSelect
@@ -858,10 +958,21 @@ function ComingCard({ b, s, upd }: { b: Coming; s: SiteCtx; upd: (fn: (d: InPrin
                             buttonClassName="k-sbtn sp-sel sm"
                             label="Month"
                             value={o.m}
-                            options={['', ...MON.map((_, i) => pad(i + 1))].map((v) => ({ value: v, label: v ? MONTH[+v - 1] : 'Any month', disabled: !!v && o.y === T0y && v < T0m }))}
+                            options={['', ...MON.map((_, i) => pad(i + 1))].map((v) => ({
+                                value: v,
+                                label: v ? MONTH[+v - 1] : 'Any month',
+                                disabled: !!v && o.y === T0y && v < T0m,
+                            }))}
                             onPick={(v) => setOut({ ...o, m: v })}
                         />
-                        <KSelect className="sp-ks" buttonClassName="k-sbtn sp-sel sm" label="Year" value={o.y} options={years.map((v) => ({ value: v, label: v }))} onPick={(v) => setOut({ ...o, y: v })} />
+                        <KSelect
+                            className="sp-ks"
+                            buttonClassName="k-sbtn sp-sel sm"
+                            label="Year"
+                            value={o.y}
+                            options={years.map((v) => ({ value: v, label: v }))}
+                            onPick={(v) => setOut({ ...o, y: v })}
+                        />
                     </div>
                     <p className="k-err sp-oerr" id="spOE" hidden={!past}>
                         That date has passed.
@@ -875,7 +986,12 @@ function ComingCard({ b, s, upd }: { b: Coming; s: SiteCtx; upd: (fn: (d: InPrin
                     <span>Link</span>
                 </div>
                 <StoreRow
-                    st={{ store: b.store, price: b.price, url: b.url, ok: true }}
+                    st={{
+                        store: b.store,
+                        price: b.price,
+                        url: b.url,
+                        ok: true,
+                    }}
                     s={s}
                     removable={false}
                     onChange={(n) =>
@@ -1004,7 +1120,13 @@ function ReadingCard({ e, s, upd }: { e: Reading; s: SiteCtx; upd: (fn: (d: InPr
                             buttonClassName="k-sbtn sp-sel sm"
                             label="Day"
                             value={dd}
-                            options={[...Array(31)].map((_, i) => pad(i + 1)).map((v) => ({ value: v, label: String(+v), disabled: +v > len || (fut && y === Ty && m === Tm && v < Td) }))}
+                            options={[...Array(31)]
+                                .map((_, i) => pad(i + 1))
+                                .map((v) => ({
+                                    value: v,
+                                    label: String(+v),
+                                    disabled: +v > len || (fut && y === Ty && m === Tm && v < Td),
+                                }))}
                             onPick={(v) => setDate(y, m, v)}
                         />
                         <KSelect
@@ -1012,7 +1134,11 @@ function ReadingCard({ e, s, upd }: { e: Reading; s: SiteCtx; upd: (fn: (d: InPr
                             buttonClassName="k-sbtn sp-sel sm"
                             label="Month"
                             value={m}
-                            options={MON.map((mm, i) => ({ value: pad(i + 1), label: mm, disabled: fut && y === Ty && pad(i + 1) < Tm }))}
+                            options={MON.map((mm, i) => ({
+                                value: pad(i + 1),
+                                label: mm,
+                                disabled: fut && y === Ty && pad(i + 1) < Tm,
+                            }))}
                             onPick={(v) => setDate(y, v, dd)}
                         />
                         <KSelect className="sp-ks" buttonClassName="k-sbtn sp-sel sm" label="Year" value={y} options={yrs.map((v) => ({ value: v, label: v }))} onPick={(v) => setDate(v, m, dd)} />
@@ -1022,7 +1148,17 @@ function ReadingCard({ e, s, upd }: { e: Reading; s: SiteCtx; upd: (fn: (d: InPr
                     <span className="k-fl" id="spEtmL">
                         Time, WAT
                     </span>
-                    <KSelect className="sp-ks" buttonClassName="k-sbtn sp-sel" labelledBy="spEtmL" value={tm} options={TIMES.map((v) => ({ value: v, label: tFmt(v) }))} onPick={(v) => ue((x) => (x.starts_at = utcOf(d, v)))} />
+                    <KSelect
+                        className="sp-ks"
+                        buttonClassName="k-sbtn sp-sel"
+                        labelledBy="spEtmL"
+                        value={tm}
+                        options={TIMES.map((v) => ({
+                            value: v,
+                            label: tFmt(v),
+                        }))}
+                        onPick={(v) => ue((x) => (x.starts_at = utcOf(d, v)))}
+                    />
                 </div>
                 <div className="k-f sp-f">
                     <span className="k-fl">Where</span>

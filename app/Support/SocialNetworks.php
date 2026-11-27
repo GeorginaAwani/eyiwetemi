@@ -22,6 +22,16 @@ class SocialNetworks
     ];
 
     /**
+     * The networks she can link to, in the order her contact page lists them.
+     *
+     * @return list<string>
+     */
+    public static function names(): array
+    {
+        return array_keys(self::PREFIXES);
+    }
+
+    /**
      * Turn the stored links into network, handle and address, dropping empty handles.
      *
      * @param  array<int, array{network?: string, handle?: string}>  $links

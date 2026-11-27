@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\SitePageKey;
 use App\Http\Controllers\Controller;
 use App\Models\SitePage;
+use App\Support\ContactAdmin;
+use App\Support\HomePage;
 use App\Support\ImageStore;
+use App\Support\NoticeAdmin;
 use App\Support\SafeFetch;
 use App\Support\SitePageDraft;
 use App\Support\SitePages;
 use App\Support\SitePublisher;
+use App\Support\SiteSharing;
 use App\Support\WorkPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,7 +36,13 @@ class SiteController extends Controller
 
     public function index(): InertiaResponse
     {
-        return Inertia::render('Admin/Site', SitePages::props());
+        return Inertia::render('Admin/Site', [
+            ...SitePages::props(),
+            'home' => (new HomePage)->preview(),
+            'notice' => NoticeAdmin::props(),
+            ...ContactAdmin::props(),
+            'sharing' => SiteSharing::props(),
+        ]);
     }
 
     /**

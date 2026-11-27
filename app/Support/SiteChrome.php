@@ -28,11 +28,37 @@ class SiteChrome
     public static function site(): array
     {
         return [
-            'email' => (string) (SiteSetting::get('contact')['email'] ?? 'hello@eyiwetemi.com'),
-            'line' => (string) (SiteSetting::get('footer')['line'] ?? 'Everything here is free to read.'),
+            'email' => self::email(),
+            'line' => self::line(),
             'links' => SocialNetworks::links((array) SiteSetting::get('links', [])),
             'library' => LibraryCounts::get(),
         ];
+    }
+
+    /**
+     * The address the footer and contact show.
+     */
+    public static function email(): string
+    {
+        return (string) (SiteSetting::get('contact')['email'] ?? 'hello@eyiwetemi.com');
+    }
+
+    /**
+     * The line under the footer's links.
+     */
+    public static function line(): string
+    {
+        return (string) (SiteSetting::get('footer')['line'] ?? 'Everything here is free to read.');
+    }
+
+    /**
+     * The targets a notice's link can go to.
+     *
+     * @return list<string>
+     */
+    public static function noticeTargets(): array
+    {
+        return array_keys(self::NOTICE_LINKS);
     }
 
     /**

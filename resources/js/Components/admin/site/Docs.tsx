@@ -8,11 +8,13 @@ const dLong = (d: string) => `${pd(d).getDate()} ${MONTH[pd(d).getMonth()]} ${pd
 
 /** The sections she has changed since the page went out (new ones included). */
 export function editedIds(d: Doc, live: Doc | null): string[] {
-    return d.sections.filter((x) => {
-        const l = live?.sections.find((y) => y.id === x.id);
+    return d.sections
+        .filter((x) => {
+            const l = live?.sections.find((y) => y.id === x.id);
 
-        return !l || l.heading !== x.heading || l.html !== x.html;
-    }).map((x) => x.id);
+            return !l || l.heading !== x.heading || l.html !== x.html;
+        })
+        .map((x) => x.id);
 }
 
 /**
@@ -48,7 +50,13 @@ export default function DocTab({ s, k, mattersBox }: { s: SiteCtx; k: 'privacy' 
 
     function add() {
         const id = newId('x');
-        upd((d) => d.sections.splice(Math.max(0, d.sections.length - 1), 0, { id, heading: '', html: '' }));
+        upd((d) =>
+            d.sections.splice(Math.max(0, d.sections.length - 1), 0, {
+                id,
+                heading: '',
+                html: '',
+            }),
+        );
         s.after(() => {
             const r = document.querySelector<HTMLElement>(`.sp-pv[data-id="${id}"]`);
             inA(r);
@@ -72,7 +80,15 @@ export default function DocTab({ s, k, mattersBox }: { s: SiteCtx; k: 'privacy' 
                         <div>
                             <div className="row">
                                 <span className="k-in sp-in">
-                                    <input id="spWi" maxLength={120} autoComplete="off" placeholder="One line readers will see" value={s.line} tabIndex={s.matters ? 0 : -1} onChange={(e) => s.setLine(e.target.value)} />
+                                    <input
+                                        id="spWi"
+                                        maxLength={120}
+                                        autoComplete="off"
+                                        placeholder="One line readers will see"
+                                        value={s.line}
+                                        tabIndex={s.matters ? 0 : -1}
+                                        onChange={(e) => s.setLine(e.target.value)}
+                                    />
                                 </span>
                                 <span className="sp-cnt" id="spWn">
                                     {s.line.length} / 120
@@ -88,7 +104,18 @@ export default function DocTab({ s, k, mattersBox }: { s: SiteCtx; k: 'privacy' 
             </div>
             <div className="sp-pvs" id="spPvs" ref={box}>
                 {v.sections.map((sec) => (
-                    <Section key={sec.id} sec={sec} edited={!same(sec, live?.sections.find((x) => x.id === sec.id))} s={s} upd={upd} />
+                    <Section
+                        key={sec.id}
+                        sec={sec}
+                        edited={
+                            !same(
+                                sec,
+                                live?.sections.find((x) => x.id === sec.id),
+                            )
+                        }
+                        s={s}
+                        upd={upd}
+                    />
                 ))}
             </div>
             <p className="sp-pv0" id="spPv0" hidden={!none}>
@@ -166,7 +193,11 @@ function Section({ sec, edited, s, upd }: { sec: DocSection; edited: boolean; s:
                 onKeyDown={(e) => {
                     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                         e.preventDefault();
-                        window.dispatchEvent(new CustomEvent('sp:link', { detail: e.currentTarget }));
+                        window.dispatchEvent(
+                            new CustomEvent('sp:link', {
+                                detail: e.currentTarget,
+                            }),
+                        );
                     }
                 }}
                 onFocus={() => setFocus(true)}
@@ -250,7 +281,18 @@ function useLinkBubble() {
             b.style.left = Math.max(12, Math.min(window.innerWidth - w - 12, R.left + R.width / 2 - w / 2)) + window.scrollX + 'px';
             b.style.top = (R.top - h - 10 < 8 ? R.bottom + 10 : R.top - h - 10) + window.scrollY + 'px';
             if (fresh) {
-                b.animate(RM() ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateY(4px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: RM() ? 120 : 180, easing: EASE });
+                b.animate(
+                    RM()
+                        ? [{ opacity: 0 }, { opacity: 1 }]
+                        : [
+                              {
+                                  opacity: 0,
+                                  transform: 'translateY(4px) scale(.97)',
+                              },
+                              { opacity: 1, transform: 'none' },
+                          ],
+                    { duration: RM() ? 120 : 180, easing: EASE },
+                );
             }
             if (edit) {
                 const ip = b.querySelector('input')!;
@@ -406,4 +448,3 @@ function useLinkBubble() {
         };
     }, []);
 }
-

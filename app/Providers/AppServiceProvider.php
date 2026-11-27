@@ -13,12 +13,15 @@ use App\Models\Work;
 use App\Models\WorkItem;
 use App\Models\WorldEntry;
 use App\Support\ReviewerInvites;
+use App\Support\ShareMeta;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View as ViewInstance;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        /* the reading site's page shell carries the link preview: the work's own, or the site's */
+        View::composer('app', fn (ViewInstance $view) => $view->with('shareMeta', ShareMeta::for(request())));
 
         /* a guest who opened a reviewer invite and then signed in or made an account is a reviewer now */
         Event::listen(Login::class, function (Login $login): void {

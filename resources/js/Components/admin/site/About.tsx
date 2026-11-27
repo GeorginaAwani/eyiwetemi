@@ -14,7 +14,10 @@ export default function AboutTab({ s }: { s: SiteCtx }) {
     const a = page.draft;
     const live = page.live;
     const rows = useRef<HTMLDivElement>(null);
-    const [crop, setCrop] = useState<{ src: string; back: HTMLElement | null } | null>(null);
+    const [crop, setCrop] = useState<{
+        src: string;
+        back: HTMLElement | null;
+    } | null>(null);
     const upd = (fn: (d: About) => void) => s.update<About>('about', fn);
     const keys = ['portrait', 'hello', ...a.sections.map((x) => x.id), 'books', 'home'];
 
@@ -35,10 +38,12 @@ export default function AboutTab({ s }: { s: SiteCtx }) {
             return !same(a.home, live.home);
         }
 
-        return !same(
-            a.sections.find((x) => x.id === k),
-            live.sections.find((x) => x.id === k),
-        ) || a.sections.findIndex((x) => x.id === k) !== live.sections.findIndex((x) => x.id === k);
+        return (
+            !same(
+                a.sections.find((x) => x.id === k),
+                live.sections.find((x) => x.id === k),
+            ) || a.sections.findIndex((x) => x.id === k) !== live.sections.findIndex((x) => x.id === k)
+        );
     }
 
     /* sections move by the grip (pointer) or the arrow keys */
@@ -64,9 +69,7 @@ export default function AboutTab({ s }: { s: SiteCtx }) {
                 <Row
                     key={k}
                     k={k}
-                    icon={
-                        <span className="sp-ri">{s.portrait.draft && <img src={s.portrait.draft} alt="" />}</span>
-                    }
+                    icon={<span className="sp-ri">{s.portrait.draft && <img src={s.portrait.draft} alt="" />}</span>}
                     title="Portrait"
                     sub="Cropped round"
                     edited={edited(k)}
@@ -75,7 +78,18 @@ export default function AboutTab({ s }: { s: SiteCtx }) {
             );
         }
         if (k === 'hello') {
-            return <Row key={k} k={k} icon={I.pen17} title={a.hello.heading} sub={a.hello.paragraphs[0] ?? ''} meta={plural(a.hello.paragraphs.filter((p) => p.trim()).length, 'paragraph')} edited={edited(k)} onOpen={() => s.openCard(k)} />;
+            return (
+                <Row
+                    key={k}
+                    k={k}
+                    icon={I.pen17}
+                    title={a.hello.heading}
+                    sub={a.hello.paragraphs[0] ?? ''}
+                    meta={plural(a.hello.paragraphs.filter((p) => p.trim()).length, 'paragraph')}
+                    edited={edited(k)}
+                    onOpen={() => s.openCard(k)}
+                />
+            );
         }
         if (k === 'books') {
             return <Row key={k} k={k} icon={I.book17} title="Books that made me" sub={a.books} meta="Margin note" edited={edited(k)} onOpen={() => s.openCard(k)} />;
@@ -105,7 +119,12 @@ export default function AboutTab({ s }: { s: SiteCtx }) {
                     }
                     e.preventDefault();
                     const r = (e.target as Element).closest<HTMLElement>('.sp-rw')!;
-                    dragSort(e, r, () => [...rows.current!.querySelectorAll<HTMLElement>(':scope>.sp-rw[data-drag]')], (from, to) => from !== to && moveSection(k, to, false));
+                    dragSort(
+                        e,
+                        r,
+                        () => [...rows.current!.querySelectorAll<HTMLElement>(':scope>.sp-rw[data-drag]')],
+                        (from, to) => from !== to && moveSection(k, to, false),
+                    );
                 }}
                 onGripKey={(e) => {
                     if (/^Arrow(Up|Down)$/.test(e.key)) {
@@ -119,7 +138,13 @@ export default function AboutTab({ s }: { s: SiteCtx }) {
 
     function addSection() {
         const id = newId('s');
-        upd((d) => d.sections.push({ id, heading: '', paragraphs: [{ text: '', margin_note: '', pull_quote: false }] }));
+        upd((d) =>
+            d.sections.push({
+                id,
+                heading: '',
+                paragraphs: [{ text: '', margin_note: '', pull_quote: false }],
+            }),
+        );
         s.after(() => {
             inA(document.querySelector(`.sp-rw[data-k="${id}"]`));
             s.openCard(id);
@@ -250,7 +275,13 @@ function ParasCard({ k, s, a, upd }: { k: string; s: SiteCtx; a: About; upd: (fn
     const [gen, setGen] = useState(0);
     const pl = useRef<HTMLDivElement>(null);
     const focusAt = useRef<{ i: number; grip?: boolean } | null>(null);
-    const list: Para[] = hello ? a.hello.paragraphs.map((t) => ({ text: t, margin_note: null, pull_quote: false })) : (sec?.paragraphs ?? []);
+    const list: Para[] = hello
+        ? a.hello.paragraphs.map((t) => ({
+              text: t,
+              margin_note: null,
+              pull_quote: false,
+          }))
+        : (sec?.paragraphs ?? []);
 
     useEffect(() => {
         const f = focusAt.current;
@@ -283,7 +314,13 @@ function ParasCard({ k, s, a, upd }: { k: string; s: SiteCtx; a: About; upd: (fn
     const setList = (fn: (l: Para[]) => Para[]) =>
         upd((d) => {
             if (hello) {
-                d.hello.paragraphs = fn(d.hello.paragraphs.map((t) => ({ text: t, margin_note: null, pull_quote: false }))).map((p) => p.text);
+                d.hello.paragraphs = fn(
+                    d.hello.paragraphs.map((t) => ({
+                        text: t,
+                        margin_note: null,
+                        pull_quote: false,
+                    })),
+                ).map((p) => p.text);
             } else {
                 const x = d.sections.find((y) => y.id === k)!;
                 x.paragraphs = fn(x.paragraphs);
@@ -338,7 +375,12 @@ function ParasCard({ k, s, a, upd }: { k: string; s: SiteCtx; a: About; upd: (fn
                 }
                 e.preventDefault();
                 const r = (e.target as Element).closest<HTMLElement>('.sp-bp')!;
-                dragSort(e, r, () => [...pl.current!.querySelectorAll<HTMLElement>(':scope>.sp-bp')], (from, to) => from !== to && moveP(from, to, false));
+                dragSort(
+                    e,
+                    r,
+                    () => [...pl.current!.querySelectorAll<HTMLElement>(':scope>.sp-bp')],
+                    (from, to) => from !== to && moveP(from, to, false),
+                );
             }}
         >
             {I.grip15}
@@ -459,9 +501,7 @@ function ParasCard({ k, s, a, upd }: { k: string; s: SiteCtx; a: About; upd: (fn
                                 {pgrip(i)}
                                 <div className="sp-pbd">
                                     <Area value={p.text} placeholder="A line to stand out" cls="q" label="Pull quote" onText={(t) => setText(i, t)} onKeyDown={keys(i)} />
-                                    <span className="sp-qt">
-                                        {I.quote15}Pull quote
-                                    </span>
+                                    <span className="sp-qt">{I.quote15}Pull quote</span>
                                 </div>
                                 {rm(i, 'this pull quote')}
                             </div>
@@ -480,7 +520,16 @@ function ParasCard({ k, s, a, upd }: { k: string; s: SiteCtx; a: About; upd: (fn
                                                     aria-label={`Margin note for paragraph ${i + 1}`}
                                                     onChange={(e) => {
                                                         const v = e.target.value;
-                                                        setList((l) => l.map((x, j) => (j === i ? { ...x, margin_note: v } : x)));
+                                                        setList((l) =>
+                                                            l.map((x, j) =>
+                                                                j === i
+                                                                    ? {
+                                                                          ...x,
+                                                                          margin_note: v,
+                                                                      }
+                                                                    : x,
+                                                            ),
+                                                        );
                                                     }}
                                                 />
                                             </span>
@@ -533,7 +582,10 @@ function Crop({ src, onClose, onDone }: { src: string; onClose: () => void; onDo
     const clamp = (x: number, y: number, zz: number) => {
         const { w, h } = fit();
 
-        return { x: Math.min(0, Math.max(S - w * zz, x)), y: Math.min(0, Math.max(S - h * zz, y)) };
+        return {
+            x: Math.min(0, Math.max(S - w * zz, x)),
+            y: Math.min(0, Math.max(S - h * zz, y)),
+        };
     };
     function close() {
         setOn(false);
@@ -561,10 +613,17 @@ function Crop({ src, onClose, onDone }: { src: string; onClose: () => void; onDo
             const res = await fetch('/site/portrait', {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrf() },
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': xsrf(),
+                },
                 body,
             });
-            const data = (await res.json().catch(() => ({}))) as { id?: number; src?: string };
+            const data = (await res.json().catch(() => ({}))) as {
+                id?: number;
+                src?: string;
+            };
             setBusy(false);
             if (!res.ok || !data.id || !data.src) {
                 setErr('That didn’t upload. Try again.');
@@ -611,7 +670,14 @@ function Crop({ src, onClose, onDone }: { src: string; onClose: () => void; onDo
                         el.addEventListener('pointerup', up);
                     }}
                     onKeyDown={(e) => {
-                        const d = ({ ArrowLeft: [8, 0], ArrowRight: [-8, 0], ArrowUp: [0, 8], ArrowDown: [0, -8] } as Record<string, number[]>)[e.key];
+                        const d = (
+                            {
+                                ArrowLeft: [8, 0],
+                                ArrowRight: [-8, 0],
+                                ArrowUp: [0, 8],
+                                ArrowDown: [0, -8],
+                            } as Record<string, number[]>
+                        )[e.key];
                         if (d) {
                             e.preventDefault();
                             setXy(clamp(xy.x + d[0], xy.y + d[1], z));
@@ -629,7 +695,11 @@ function Crop({ src, onClose, onDone }: { src: string; onClose: () => void; onDo
                             setXy({ x: (S - f.w) / 2, y: (S - f.h) / 2 });
                             setZ(1);
                         }}
-                        style={{ width: w * z, height: h * z, transform: `translate(${xy.x}px,${xy.y}px)` }}
+                        style={{
+                            width: w * z,
+                            height: h * z,
+                            transform: `translate(${xy.x}px,${xy.y}px)`,
+                        }}
                     />
                 </div>
                 <div className="sp-zm">

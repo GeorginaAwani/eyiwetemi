@@ -5,6 +5,18 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        @isset($shareMeta)
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Eyiwetemi">
+        <meta property="og:title" content="{{ $shareMeta['title'] }}">
+        <meta property="og:description" content="{{ $shareMeta['description'] }}">
+        <meta property="og:url" content="{{ $shareMeta['url'] }}">
+        <meta property="og:image" content="{{ $shareMeta['image'] }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        @endisset
+
         <title inertia>eyiwetemi</title>
 
         <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -14,6 +14,7 @@ use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\LikeController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\ProfileController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\ReviewMarkController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShareCardController;
 use App\Http\Controllers\TermsController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +46,11 @@ Route::get('/rss', [FeedController::class, 'index'])->name('rss');
 Route::get('/feed/{kind?}', [FeedController::class, 'show'])->whereIn('kind', ['novels', 'stories', 'poetry', 'essays', 'notes'])->name('feed');
 Route::get('/series/{slug}', [SeriesController::class, 'show'])->name('series.show');
 Route::get('/search', SearchController::class)->middleware('throttle:60,1')->name('search');
+
+/* the notice line's close, and the share cards link previews pick up */
+Route::post('/notice/{notice}/closed', [NoticeController::class, 'closed'])->whereNumber('notice')->middleware('throttle:30,1')->name('notice.closed');
+Route::get('/share/site.jpg', [ShareCardController::class, 'site'])->name('share.site');
+Route::get('/share/{slug}.jpg', [ShareCardController::class, 'work'])->where('slug', '[a-z0-9-]+')->name('share.work');
 
 /* yours: private pages, and likes and follows */
 Route::middleware('auth')->group(function () {

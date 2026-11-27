@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ReactNode, useState } from 'react';
+import { beacon } from '@/lib/http';
 import { prefersReducedMotion } from '@/lib/motion';
 import { NoticeDot } from './Icons';
 
@@ -30,6 +31,7 @@ export default function NoticeLine({ fallback }: { fallback?: ReactNode }) {
         } catch {
             /* remembered for this visit only */
         }
+        beacon('/notice/' + notice.id + '/closed', {});
         setGoing(true);
         window.setTimeout(() => setClosed(notice.text), prefersReducedMotion() ? 0 : 420);
     };

@@ -10,7 +10,11 @@ use App\Http\Controllers\Admin\ReviewerController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SeriesController;
 use App\Http\Controllers\Admin\SignInController;
+use App\Http\Controllers\Admin\SiteContactController;
 use App\Http\Controllers\Admin\SiteController;
+use App\Http\Controllers\Admin\SiteNoticeController;
+use App\Http\Controllers\Admin\SitePinController;
+use App\Http\Controllers\Admin\SiteSharingController;
 use App\Http\Controllers\Admin\SweepController;
 use App\Http\Controllers\Admin\WorkController;
 use App\Http\Controllers\Admin\WorkCoverController;
@@ -96,6 +100,16 @@ Route::middleware(EnsureAdmin::class)->group(function () {
         ->whereIn('key', ['about', 'in_print', 'privacy', 'terms'])->whereNumber('version')->name('site.pages.restore');
     Route::post('/site/portrait', [SiteController::class, 'portrait'])->name('site.portrait');
     Route::post('/site/link-check', [SiteController::class, 'linkCheck'])->middleware('throttle:30,1')->name('site.link-check');
+
+    Route::put('/site/home-pin', [SitePinController::class, 'update'])->name('site.pin.update');
+    Route::patch('/site/home-pin', [SitePinController::class, 'date'])->name('site.pin.date');
+    Route::delete('/site/home-pin', [SitePinController::class, 'destroy'])->name('site.pin.destroy');
+    Route::post('/site/notice', [SiteNoticeController::class, 'store'])->name('site.notice.store');
+    Route::patch('/site/notice/{notice}', [SiteNoticeController::class, 'update'])->whereNumber('notice')->name('site.notice.update');
+    Route::post('/site/notice/{notice}/down', [SiteNoticeController::class, 'down'])->whereNumber('notice')->name('site.notice.down');
+    Route::patch('/site/contact', [SiteContactController::class, 'update'])->name('site.contact');
+    Route::patch('/site/sharing', [SiteSharingController::class, 'update'])->name('site.sharing');
+    Route::post('/site/sharing/picture', [SiteSharingController::class, 'picture'])->name('site.sharing.picture');
 
     Route::get('/{section}', [SectionController::class, 'show'])
         ->whereIn('section', ['stats'])
