@@ -955,9 +955,10 @@ export default function Write({ work, item: fromServer, draft, characters: chars
                 }
                 sweepCount={unswept}
                 commentsNode={
-                    notes.length ? (
+                    !part ? (
                         <CommentsPanel
                             notes={notes}
+                            unit={kind === 'novel' ? 'chapter' : work.multi ? 'piece' : kind}
                             slug={work.slug}
                             hide={hideMarks}
                             setHide={setHideMarks}
@@ -1606,7 +1607,7 @@ function NewPov({ show, onCreate, onCancel }: { show: boolean; onCreate: (name: 
     }, [show]);
 
     return (
-        <div className="wc-sndw">
+        <div className="wc-sndw wc-povw">
             <div className={`w-sndp w-povp${show ? ' open' : ''}`} role="dialog" aria-label="Add a name">
                 <div className="k-f">
                     <label className="k-fl" htmlFor="povN">

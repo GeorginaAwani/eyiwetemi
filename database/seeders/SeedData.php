@@ -865,7 +865,7 @@ before the morning
             [
                 'id' => 'changes',
                 'h' => 'Changes',
-                'html' => '<p>If this page changes in a way that matters, I’ll say so in a note.</p>',
+                'html' => '<p>If this page changes in a way that matters, I’ll say so in a note, and everyone with an account will hear about it.</p>',
             ],
         ],
     ];

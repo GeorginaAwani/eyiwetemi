@@ -56,10 +56,24 @@ const STATUSES: [string, string][] = [
 const STYLES = ['chapter_word', 'chapter_word_lower', 'chapter_number', 'chapter_roman', 'word', 'number'];
 const PART_WORDS = ['Part', 'Book', 'Volume', 'Act'];
 const BREAKS: [string, string, ReactNode][] = [
-    ['line_dot', 'Line and dot', <span className="sbp"><i /><b /><i /></span>],
+    [
+        'line_dot',
+        'Line and dot',
+        <span className="sbp">
+            <i />
+            <b />
+            <i />
+        </span>,
+    ],
     ['asterisks', 'Three asterisks', <>*&nbsp; *&nbsp; *</>],
     ['asterism', 'Asterism', <>⁂</>],
-    ['short_line', 'A short line', <span className="sbp"><i /></span>],
+    [
+        'short_line',
+        'A short line',
+        <span className="sbp">
+            <i />
+        </span>,
+    ],
     ['space', 'Space only', <small>Space</small>],
 ];
 const VIS: ['private' | 'reviewers' | 'public', string, string, string][] = [
@@ -86,6 +100,8 @@ export default function Work({ tab: firstTab, work: initial, choices, contents, 
     const [w, setW] = useState(initial);
     const [tab, setTab] = useState<Tab>(firstTab);
     const [save, setSave] = useState<SaveState>('saved');
+    /* on the Plan tab the note shows only once something there has been saved (prototype) */
+    const [planSaved, setPlanSaved] = useState(false);
     const [title, setTitle] = useState(initial.title);
     const [titleError, setTitleError] = useState('');
     const [series, setSeries] = useState(choices.series);
@@ -98,7 +114,7 @@ export default function Work({ tab: firstTab, work: initial, choices, contents, 
 
     const single = w.kind === 'story' || w.kind === 'poem' || w.kind === 'essay';
     const novel = w.kind === 'novel';
-    const unit = w.kind === 'collection' ? ({ poem: 'Poems', essay: 'Essays' } as Record<string, string>)[w.collectionKind] ?? 'Stories' : single ? 'Writing' : 'Chapters';
+    const unit = w.kind === 'collection' ? (({ poem: 'Poems', essay: 'Essays' } as Record<string, string>)[w.collectionKind] ?? 'Stories') : single ? 'Writing' : 'Chapters';
     const hasPlan = w.kind !== 'poem';
 
     /* ---------- saving ---------- */
@@ -160,6 +176,7 @@ export default function Work({ tab: firstTab, work: initial, choices, contents, 
             return;
         }
         setTab(t);
+        setPlanSaved(false);
         router.replace({ url: `/works/${slug.current}?tab=${t}`, preserveScroll: true, preserveState: true });
     }
 
@@ -212,13 +229,7 @@ export default function Work({ tab: firstTab, work: initial, choices, contents, 
                     <h1 id="wT">{shownTitle}</h1>
                     <div className="row">
                         <nav className="k-wtabs" role="tablist">
-                            {(
-                                [
-                                    ['chapters', unit],
-                                    ...(hasPlan ? [['plan', 'Plan']] : []),
-                                    ['settings', 'Settings'],
-                                ] as [Tab, string][]
-                            ).map(([t, label]) => (
+                            {([['chapters', unit], ...(hasPlan ? [['plan', 'Plan']] : []), ['settings', 'Settings']] as [Tab, string][]).map(([t, label]) => (
                                 <a
                                     key={t}
                                     href={`/works/${slug.current}?tab=${t}`}
@@ -234,21 +245,37 @@ export default function Work({ tab: firstTab, work: initial, choices, contents, 
                                 </a>
                             ))}
                         </nav>
-                        <SavedNote state={save} hidden={tab === 'chapters'} />
+                        <SavedNote state={save} hidden={tab === 'chapters' || (tab === 'plan' && !planSaved)} />
                     </div>
                 </div>
             </div>
             <section className={`wpan${tab === 'chapters' ? ' on' : ''}`} id="p-chapters" role="tabpanel" ref={tab === 'chapters' ? panel : undefined}>
                 {contents && (
                     <ChaptersTab
-                        work={{ slug: slug.current, kind: w.kind, collectionKind: w.collectionKind, headingStyle: w.headingStyle, partWord: w.partWord, partStyle: w.partStyle, showPartNumbers: w.showPartNumbers }}
+                        work={{
+                            slug: slug.current,
+                            kind: w.kind,
+                            collectionKind: w.collectionKind,
+                            headingStyle: w.headingStyle,
+                            partWord: w.partWord,
+                            partStyle: w.partStyle,
+                            showPartNumbers: w.showPartNumbers,
+                        }}
                         contents={contents}
                     />
                 )}
             </section>
             {hasPlan && (
                 <section className={`wpan${tab === 'plan' ? ' on' : ''}`} id="p-plan" role="tabpanel" ref={tab === 'plan' ? panel : undefined}>
-                    {plan && <PlanTab slug={slug.current} kind={w.kind === 'collection' ? 'collection' : w.kind} initial={plan} setSave={setSave} parts={{ word: w.partWord, style: w.partStyle, show: w.showPartNumbers }} />}
+                    {plan && (
+                        <PlanTab
+                            slug={slug.current}
+                            kind={w.kind === 'collection' ? 'collection' : w.kind}
+                            initial={plan}
+                            setSave={(s: SaveState) => (setPlanSaved(true), setSave(s))}
+                            parts={{ word: w.partWord, style: w.partStyle, show: w.showPartNumbers }}
+                        />
+                    )}
                 </section>
             )}
             <section className={`wpan${tab === 'settings' ? ' on' : ''}`} id="p-settings" role="tabpanel" ref={tab === 'settings' ? panel : undefined}>
@@ -387,7 +414,12 @@ function SettingsForm({ w, set, later, patch, title, titleError, typedTitle, ser
                                         name="kind"
                                         value={v}
                                         checked={w.kind === v}
-                                        onChange={() => set({ kind: v, ...(v === 'story' || v === 'poem' || v === 'essay' ? { seriesId: null } : { collectionId: null }) }, { kind: v, collection_kind: v === 'collection' ? w.collectionKind : null })}
+                                        onChange={() =>
+                                            set(
+                                                { kind: v, ...(v === 'story' || v === 'poem' || v === 'essay' ? { seriesId: null } : { collectionId: null }) },
+                                                { kind: v, collection_kind: v === 'collection' ? w.collectionKind : null },
+                                            )
+                                        }
                                     />
                                     <span>{label}</span>
                                 </label>
@@ -726,7 +758,7 @@ function WhoCanSee({
     const [busy, setBusy] = useState(false);
     const shown = asking || w.visibility;
     const single = w.kind === 'story' || w.kind === 'poem' || w.kind === 'essay';
-    const unitWord = w.kind === 'collection' ? ({ poem: 'poem', essay: 'essay' } as Record<string, string>)[w.collectionKind] ?? 'story' : 'chapter';
+    const unitWord = w.kind === 'collection' ? (({ poem: 'poem', essay: 'essay' } as Record<string, string>)[w.collectionKind] ?? 'story') : 'chapter';
     const plural = (n: number) => (n === 1 ? unitWord : unitWord === 'story' ? 'stories' : unitWord + 's');
 
     function publicText(): string {
@@ -1002,7 +1034,15 @@ function ReviewersField({
                             </span>
                             <div className="k-lb" role="listbox" id="rvLB" onMouseDown={(e) => e.preventDefault()}>
                                 {options.map((p, i) => (
-                                    <div key={'invite' in p ? 'inv' : p.id} role="option" id={`rvO${i}`} className={`rv-o${i === act ? ' act' : ''}`} aria-selected={false} onMouseMove={() => setAct(i)} onClick={() => pick(p)}>
+                                    <div
+                                        key={'invite' in p ? 'inv' : p.id}
+                                        role="option"
+                                        id={`rvO${i}`}
+                                        className={`rv-o${i === act ? ' act' : ''}`}
+                                        aria-selected={false}
+                                        onMouseMove={() => setAct(i)}
+                                        onClick={() => pick(p)}
+                                    >
                                         {'invite' in p ? PI.mail : <span className="cv" style={{ ...bloomStyle(p.seed, 24) }} aria-hidden="true" />}
                                         <span>{'invite' in p ? `Invite ${p.invite}` : p.name}</span>
                                     </div>
@@ -1079,7 +1119,7 @@ function SeriesField({ w, set, series, setSeries, setSave }: { w: Settings; set:
             <NameField
                 show={naming !== ''}
                 placeholder={naming === 'rename' ? 'New name' : 'Series name'}
-                initial={naming === 'rename' ? current?.name ?? '' : ''}
+                initial={naming === 'rename' ? (current?.name ?? '') : ''}
                 action={naming === 'rename' ? 'Save' : 'Create'}
                 onCancel={() => {
                     setNaming('');
@@ -1088,7 +1128,9 @@ function SeriesField({ w, set, series, setSeries, setSave }: { w: Settings; set:
                 onCreate={async (name) => {
                     const renaming = naming === 'rename' && current;
                     setSave('saving');
-                    const { status, data } = await json<{ series: SeriesChoice; errors: Record<string, string[]> }>(renaming ? 'PATCH' : 'POST', renaming ? `/series/${current.id}` : '/series', { name });
+                    const { status, data } = await json<{ series: SeriesChoice; errors: Record<string, string[]> }>(renaming ? 'PATCH' : 'POST', renaming ? `/series/${current.id}` : '/series', {
+                        name,
+                    });
                     if ((status !== 200 && status !== 201) || !data.series) {
                         setSave('saved');
 

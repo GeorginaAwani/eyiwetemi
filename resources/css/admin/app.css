@@ -20,3 +20,17 @@
 .sp-ri:not(:has(img)){background:var(--surf)}
 .sc-por0{display:block;width:9.5em;height:9.5em;border-radius:50%;background:#E9DFD3;box-shadow:0 0 0 .5em #F5F0E6,0 0 0 .58em #9A4762}
 .sp-hb{white-space:nowrap}
+
+/* Sweep (step 13): the sign-in page keeps its own phone spacing (prototype index.html), not the desk's. */
+@media (max-width:600px){.ad-page:has(>.ad-form){padding:28px 24px}.ad-page:has(>.ad-form) .ad-tr{gap:10px}}
+@media (max-width:360px){.ad-page:has(>.ad-form){padding:24px 20px}.ad-page:has(>.ad-form) .ad-tr{gap:2px}}
+/* the closed "Add a name" box takes no room in the heading column (prototype: its unfold sits in the gap) */
+.wc-open>.wc-povw{margin-top:-10px}
+/* the "Saved" note fades away on tabs that don't save (Chapters, an untouched Plan) instead of blinking out */
+.k-saved{transition:opacity var(--d1) var(--ease-soft),visibility 0s}
+.k-saved.gone{opacity:0;visibility:hidden;transition:opacity var(--d1) var(--ease-soft),visibility 0s var(--d1)}
+/* 320px: the phone menu sheet stays inside the screen (the page edge is 16px there, not 20px) and the Home preview's lead stacks so its button fits */
+@media (max-width:360px){
+  .b-swf{left:-16px;right:-16px;padding-left:16px;padding-right:16px}
+  .sp-hl{flex-direction:column;align-items:flex-start;gap:16px}
+}
