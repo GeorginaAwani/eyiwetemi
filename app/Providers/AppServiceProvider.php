@@ -12,8 +12,11 @@ use App\Models\User;
 use App\Models\Work;
 use App\Models\WorkItem;
 use App\Models\WorldEntry;
+use App\Support\ReviewerInvites;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,6 +36,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        /* a guest who opened a reviewer invite and then signed in or made an account is a reviewer now */
+        Event::listen(Login::class, function (Login $login): void {
+            if ($login->user instanceof User) {
+                ReviewerInvites::acceptFromSession($login->user, request());
+            }
+        });
 
         Model::shouldBeStrict(! $this->app->isProduction());
 

@@ -139,6 +139,11 @@ class Prose
             return (string) ($node['text'] ?? '');
         }
 
+        /* a line break counts as one character, as the reader counts it */
+        if (($node['type'] ?? null) === 'hardBreak') {
+            return "\n";
+        }
+
         $text = '';
 
         foreach ($node['content'] ?? [] as $child) {

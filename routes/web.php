@@ -17,6 +17,8 @@ use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewInviteController;
+use App\Http\Controllers\ReviewMarkController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeriesController;
 use App\Http\Controllers\SettingsController;
@@ -62,7 +64,14 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/comments', [CommentController::class, 'store'])->middleware('throttle:10,1')->name('comments.store');
+
+    /* a reviewer's marks on a draft, and replies to their own marks */
+    Route::post('/review/marks', [ReviewMarkController::class, 'store'])->middleware('throttle:20,1')->name('review.marks.store');
+    Route::post('/review/marks/{comment}/reply', [ReviewMarkController::class, 'reply'])->whereNumber('comment')->middleware('throttle:20,1')->name('review.marks.reply');
 });
+
+/* the link in a reviewer's invite email: opened from an inbox, signed in or not */
+Route::get('/review/{token}', [ReviewInviteController::class, 'join'])->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:20,1')->name('review.join');
 
 Route::post('/newsletter', [NewsletterController::class, 'store'])
     ->middleware('throttle:6,1')
