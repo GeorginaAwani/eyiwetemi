@@ -592,8 +592,10 @@ class AdminNewsletterTest extends TestCase
 
         $this->assertCount(1, $email['items']);
         $this->assertSame('A note', $email['items'][0]['kind']);
+        $this->assertStringEndsWith('/notes?from=newsletter', $email['items'][0]['link']);
         $this->assertSame('Notes', $email['kinds']);
         $this->assertStringEndsWith('/emails/'.$notesOnly->manage_token, $email['manage']);
+        $this->assertStringNotContainsString('from=newsletter', $email['manage']);
         $this->assertSame($email['manage'], $email['stop']);
         $this->assertNull(NewsletterEmail::send($send, $poemsOnly));
     }

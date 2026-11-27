@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SiteNoticeController;
 use App\Http\Controllers\Admin\SitePinController;
 use App\Http\Controllers\Admin\SiteSharingController;
+use App\Http\Controllers\Admin\StatsController;
 use App\Http\Controllers\Admin\SweepController;
 use App\Http\Controllers\Admin\WorkController;
 use App\Http\Controllers\Admin\WorkCoverController;
@@ -111,9 +112,8 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::patch('/site/sharing', [SiteSharingController::class, 'update'])->name('site.sharing');
     Route::post('/site/sharing/picture', [SiteSharingController::class, 'picture'])->name('site.sharing.picture');
 
-    Route::get('/{section}', [SectionController::class, 'show'])
-        ->whereIn('section', ['stats'])
-        ->name('section');
+    Route::get('/stats', [StatsController::class, 'show'])->name('stats');
+    Route::get('/stats/range', [StatsController::class, 'range'])->name('stats.range');
 
     Route::get('/works', [WorkController::class, 'index'])->name('works.index');
     Route::post('/works', [WorkController::class, 'store'])->name('works.store');

@@ -109,7 +109,7 @@ class NewsletterEmail
             'poem' => $item['poem'],
             'excerpt' => $item['excerpt'],
             'cover' => $showCover ? self::cover($item['cover']) : null,
-            'link' => self::siteUrl($item['href']),
+            'link' => self::siteUrl(self::fromNewsletter($item['href'])),
             'linkText' => $item['linkText'],
         ];
     }
@@ -196,6 +196,14 @@ class NewsletterEmail
     private static function siteUrl(string $path): string
     {
         return rtrim((string) config('app.url'), '/').$path;
+    }
+
+    /**
+     * A path on the public site, marked as opened from the newsletter so the visit is counted as Newsletter.
+     */
+    private static function fromNewsletter(string $path): string
+    {
+        return $path.(str_contains($path, '?') ? '&' : '?').'from=newsletter';
     }
 
     private static function zone(): string
