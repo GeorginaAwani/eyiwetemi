@@ -5,6 +5,7 @@ import SendButton, { SendState } from '@/Components/site/SendButton';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { inertWhen } from '@/lib/dom';
 import { fieldErrors, json } from '@/lib/http';
+import { forgetReading } from '@/Components/site/Offline';
 import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEMES, Theme } from '@/lib/motion';
 
 type Account = {
@@ -52,7 +53,10 @@ const EYE_OFF = (
 );
 const G = (
     <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
-        <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+        <path
+            fill="#FFC107"
+            d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
+        />
         <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
         <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
         <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
@@ -335,9 +339,7 @@ function DeleteCard({ open, onClose, username, comments }: { open: boolean; onCl
                 </button>
                 <div className="au-st">
                     <h2 id="delT">Delete your account?</h2>
-                    <p>
-                        Your likes, follows and {comments === 1 ? '1 comment' : `${comments} comments`} are deleted. Replies from others stay, under “Comment deleted”.
-                    </p>
+                    <p>Your likes, follows and {comments === 1 ? '1 comment' : `${comments} comments`} are deleted. Replies from others stay, under “Comment deleted”.</p>
                     <div className="au-f">
                         <label className="au-l" htmlFor="delIn">
                             Type <b style={{ color: 'var(--ink)' }}>{username}</b> to confirm
@@ -368,10 +370,40 @@ const NOTIFY: { key: string; label: string }[] = [
     { key: 'new', label: 'New work I haven’t followed yet' },
 ];
 const SEGS: { k: 'size' | 'font' | 'width' | 'lines'; label: string; options: [string | number, string][] }[] = [
-    { k: 'size', label: 'Text size', options: [[1, 'S'], [2, 'M'], [3, 'L'], [4, 'XL']] },
-    { k: 'font', label: 'Font', options: [['serif', 'Serif'], ['sans', 'Sans']] },
-    { k: 'width', label: 'Line width', options: [['narrow', 'Narrow'], ['wide', 'Wide']] },
-    { k: 'lines', label: 'Spacing', options: [['close', 'Close'], ['airy', 'Airy']] },
+    {
+        k: 'size',
+        label: 'Text size',
+        options: [
+            [1, 'S'],
+            [2, 'M'],
+            [3, 'L'],
+            [4, 'XL'],
+        ],
+    },
+    {
+        k: 'font',
+        label: 'Font',
+        options: [
+            ['serif', 'Serif'],
+            ['sans', 'Sans'],
+        ],
+    },
+    {
+        k: 'width',
+        label: 'Line width',
+        options: [
+            ['narrow', 'Narrow'],
+            ['wide', 'Wide'],
+        ],
+    },
+    {
+        k: 'lines',
+        label: 'Spacing',
+        options: [
+            ['close', 'Close'],
+            ['airy', 'Airy'],
+        ],
+    },
 ];
 
 /** Settings: your account, notifications, how chapters read, and deleting the account. */
@@ -828,7 +860,13 @@ export default function Settings({ account, notifications, reading, status }: Pr
                                 onSubmit={savePw}
                                 view={
                                     <div className="pf-vin">
-                                        {me.hasPassword ? <span className="pf-val pf-dots">••••••••••</span> : <span className="pf-val" style={{ color: 'var(--muted)' }}>None yet</span>}
+                                        {me.hasPassword ? (
+                                            <span className="pf-val pf-dots">••••••••••</span>
+                                        ) : (
+                                            <span className="pf-val" style={{ color: 'var(--muted)' }}>
+                                                None yet
+                                            </span>
+                                        )}
                                         <Saved on={pwSaved} />
                                     </div>
                                 }
@@ -930,7 +968,13 @@ export default function Settings({ account, notifications, reading, status }: Pr
                                     <span className="pf-sv">
                                         <span className="pf-seg" role="group" aria-label={seg.label}>
                                             {seg.options.map(([value, label]) => (
-                                                <button key={value} type="button" className={read[seg.k] === value ? 'on' : undefined} aria-pressed={read[seg.k] === value} onClick={() => pick(seg.k, value)}>
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    className={read[seg.k] === value ? 'on' : undefined}
+                                                    aria-pressed={read[seg.k] === value}
+                                                    onClick={() => pick(seg.k, value)}
+                                                >
                                                     {label}
                                                 </button>
                                             ))}
@@ -950,7 +994,7 @@ export default function Settings({ account, notifications, reading, status }: Pr
                                 </button>
                             </div>
                             <div className="pf-out">
-                                <Link className="link" href="/logout" method="post" as="button">
+                                <Link className="link" href="/logout" method="post" as="button" onClick={forgetReading}>
                                     Sign out
                                 </Link>
                             </div>

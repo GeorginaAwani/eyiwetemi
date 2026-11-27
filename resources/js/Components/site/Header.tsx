@@ -11,6 +11,7 @@ import { NotificationPicture, NotificationT, openNotification } from './Notifica
 import { BellIcon, ChevronDown, GearIcon, MenuIcon, SearchIcon, SignOutIcon, ThemeIcon } from './Icons';
 import PhoneMenu from './PhoneMenu';
 import Wordmark from './Wordmark';
+import { forgetReading } from './Offline';
 
 type MenuName = 'library' | 'theme' | 'account' | 'bell' | null;
 
@@ -96,6 +97,7 @@ export default function Header({ current }: { current?: Section }) {
     };
     const signOut = () => {
         close();
+        forgetReading();
         router.post('/logout');
     };
     const rows: { href: string; label: string; count: number }[] = [
@@ -156,7 +158,15 @@ export default function Header({ current }: { current?: Section }) {
                                 </button>
                             )}
                             {me !== null && (
-                                <button className="icon" id="nBtn" type="button" aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'} aria-expanded={open === 'bell'} aria-controls="nMenu" onClick={openBell}>
+                                <button
+                                    className="icon"
+                                    id="nBtn"
+                                    type="button"
+                                    aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}
+                                    aria-expanded={open === 'bell'}
+                                    aria-controls="nMenu"
+                                    onClick={openBell}
+                                >
                                     <BellIcon />
                                     <span className={`ndot${unread ? '' : ' gone'}`} />
                                 </button>
