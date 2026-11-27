@@ -6,7 +6,12 @@ import AboutTab from '../../Components/admin/site/About';
 import DocTab, { editedIds } from '../../Components/admin/site/Docs';
 import InPrintTab, { withOut } from '../../Components/admin/site/InPrint';
 import { clone, Doc, I, InPrint, Page, PageKey, same, SaveMark, Work } from '../../Components/admin/site/kit';
+import ContactTab, { ContactData } from '../../Components/admin/site/Contact';
+import HomeTab, { HomeData } from '../../Components/admin/site/Home';
+import NoticeTab, { NoticeData } from '../../Components/admin/site/Notice';
+import SharingTab, { SharingData } from '../../Components/admin/site/Sharing';
 import AdminLayout from '../../Layouts/AdminLayout';
+import { usePage } from '@inertiajs/react';
 import { json } from '../../lib/http';
 import { prefersReducedMotion as RM } from '../../lib/motion';
 
@@ -15,20 +20,39 @@ type Props = {
     works: Work[];
     links: Record<string, { ok: boolean; checkedOn: string }>;
     portrait: { draft: string | null; live: string | null };
+    home: HomeData;
+    notice: NoticeData;
+    contact: ContactData;
+    networks: string[];
+    sharing: SharingData;
 };
-type Tab = 'about' | 'print' | 'privacy' | 'terms';
+type Tab = 'about' | 'print' | 'privacy' | 'terms' | 'home' | 'notice' | 'share' | 'contact';
 const TABS: [Tab, string][] = [
     ['about', 'About'],
     ['print', 'In print'],
     ['privacy', 'Privacy'],
     ['terms', 'Terms'],
+    ['home', 'Home'],
+    ['notice', 'Notice'],
+    ['share', 'Sharing'],
+    ['contact', 'Contact'],
 ];
-const KEY: Record<Tab, PageKey> = { about: 'about', print: 'in_print', privacy: 'privacy', terms: 'terms' };
+const KEY: Partial<Record<Tab, PageKey>> = {
+    about: 'about',
+    print: 'in_print',
+    privacy: 'privacy',
+    terms: 'terms',
+};
 const DOC: Partial<Record<Tab, true>> = { privacy: true, terms: true };
 const BACKUP = (k: PageKey) => 'eyiAdmSiteDraft:' + k;
 
 /** A popover: what it shows and which button opened it. One at a time; on the phone, a sheet from the bottom. */
-export type PopSpec = { id: string; btn: HTMLElement; side: 'left' | 'right' | 'above'; render: (cls: string, style: CSSProperties, ref: RefObject<HTMLDivElement>) => ReactNode };
+export type PopSpec = {
+    id: string;
+    btn: HTMLElement;
+    side: 'left' | 'right' | 'above';
+    render: (cls: string, style: CSSProperties, ref: RefObject<HTMLDivElement>) => ReactNode;
+};
 
 /** What every tab gets from the page. */
 export type SiteCtx = {
@@ -49,6 +73,8 @@ export type SiteCtx = {
     popClose: (back?: boolean) => void;
     confirm: (btn: HTMLElement, title: string, line: string, yes: string, fn: () => void) => void;
     after: (fn: () => void) => void;
+    /** the pane fades out, changes, and settles back in */
+    swap: (fn: () => void) => void;
     sub: 'b' | 'r';
     setSub: (s: 'b' | 'r') => void;
     matters: boolean;
@@ -97,8 +123,19 @@ export default function Site(props: Props) {
     const [busy, setBusy] = useState(false);
     const [matters, setMattersState] = useState(false);
     const [line, setLine] = useState('');
-    const [toast, setToast] = useState<{ msg: string; href?: string; label?: string; on: boolean } | null>(null);
+    const [home, setHome] = useState(props.home);
+    const [notice, setNotice] = useState(props.notice);
+    const [contact, setContact] = useState(props.contact);
+    const [sharing, setSharing] = useState(props.sharing);
+    const siteUrl = (usePage().props as { siteUrl?: string }).siteUrl ?? 'https://eyiwetemi.com';
+    const [toast, setToast] = useState<{
+        msg: string;
+        href?: string;
+        label?: string;
+        on: boolean;
+    } | null>(null);
     const ref = useRef(pages);
+    const popRef = useRef<PopSpec | null>(null);
     const main = useRef<HTMLDivElement>(null);
     const pane = useRef<HTMLDivElement>(null);
     const popBox = useRef<HTMLDivElement>(null);
@@ -126,7 +163,9 @@ export default function Site(props: Props) {
 
     /* ---------- saving: every change, 600 ms after she stops ---------- */
     async function save(k: PageKey) {
-        const { status } = await json('PATCH', `/site/pages/${k}`, { draft: ref.current[k].draft as Record<string, unknown> });
+        const { status } = await json('PATCH', `/site/pages/${k}`, {
+            draft: ref.current[k].draft as Record<string, unknown>,
+        });
         if (status === 200) {
             window.localStorage.removeItem(BACKUP(k));
             setSaved('saved');
@@ -169,7 +208,11 @@ export default function Site(props: Props) {
         }
         popClose();
         url(t, sub);
-        a.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: RM() ? 'auto' : 'smooth' });
+        a.scrollIntoView({
+            block: 'nearest',
+            inline: 'nearest',
+            behavior: RM() ? 'auto' : 'smooth',
+        });
         setMattersState(false);
         setLine('');
         after(() => inA(document.getElementById('spPB')));
@@ -204,12 +247,15 @@ export default function Site(props: Props) {
             const c = document.getElementById('spO');
             if (c) {
                 grow(c, from);
-                window.setTimeout(() => {
-                    const f = c.querySelector<HTMLElement>('input,[contenteditable="true"]');
-                    if (f && !phone()) {
-                        f.focus({ preventScroll: true });
-                    }
-                }, RM() ? 0 : 200);
+                window.setTimeout(
+                    () => {
+                        const f = c.querySelector<HTMLElement>('input,[contenteditable="true"]');
+                        if (f && !phone()) {
+                            f.focus({ preventScroll: true });
+                        }
+                    },
+                    RM() ? 0 : 200,
+                );
             }
         });
     }
@@ -236,6 +282,7 @@ export default function Site(props: Props) {
 
     /* ---------- popovers ---------- */
     function popShow(p: PopSpec) {
+        const pop = popRef.current;
         if (pop && pop.btn === p.btn) {
             popClose(true);
 
@@ -243,6 +290,7 @@ export default function Site(props: Props) {
         }
         pop?.btn.setAttribute('aria-expanded', 'false');
         pop?.btn.classList.remove('on');
+        popRef.current = p;
         setPop(p);
         setPopOn(false);
         setSheet(phone());
@@ -250,9 +298,12 @@ export default function Site(props: Props) {
         p.btn.classList.add('on');
     }
     function popClose(back = false) {
+        /* the popover's own buttons were made with the page as it was when it opened: read the one open now */
+        const pop = popRef.current;
         if (!pop) {
             return;
         }
+        popRef.current = null;
         const b = pop.btn;
         b.setAttribute('aria-expanded', 'false');
         b.classList.remove('on');
@@ -350,9 +401,10 @@ export default function Site(props: Props) {
     }
 
     /* ---------- the header: status, This change matters, Versions, Publish ---------- */
-    const k = KEY[tab];
+    const k = KEY[tab] ?? 'about';
+    const isPage = !!KEY[tab];
     const cur = pages[k];
-    const dirty = !same(cur.draft, cur.live);
+    const dirty = isPage && !same(cur.draft, cur.live);
     const none = !!DOC[tab] && !(cur.draft as Doc).sections?.length;
     const stRef = useRef<HTMLSpanElement>(null);
     const [stShown, setStShown] = useState<'ed' | 'live'>(dirty ? 'ed' : 'live');
@@ -363,6 +415,21 @@ export default function Site(props: Props) {
         }
     }, [dirty]);
     useEffect(() => setStShown(dirty ? 'ed' : 'live'), [tab]);
+
+    function swap(fn: () => void) {
+        const p = pane.current;
+        if (RM() || !p) {
+            fn();
+
+            return;
+        }
+        setOut(true);
+        window.setTimeout(() => {
+            fn();
+            setOut(false);
+            after(() => settle(p));
+        }, 160);
+    }
 
     function setMatters(on: boolean) {
         setMattersState(on);
@@ -385,7 +452,10 @@ export default function Site(props: Props) {
         btn.classList.add('busy');
         await save(k);
         const mt = !!DOC[tab] && matters;
-        const { status, data } = await json<{ page: Page; noteId: number | null }>('POST', `/site/pages/${k}/publish`, mt ? { matters: true, line: line.trim() } : {});
+        const { status, data } = await json<{
+            page: Page;
+            noteId: number | null;
+        }>('POST', `/site/pages/${k}/publish`, mt ? { matters: true, line: line.trim() } : {});
         btn.classList.remove('busy');
         setBusy(false);
         if (status !== 200 || !data.page) {
@@ -528,6 +598,7 @@ export default function Site(props: Props) {
         popClose,
         confirm,
         after,
+        swap,
         sub,
         setSub,
         matters,
@@ -551,36 +622,38 @@ export default function Site(props: Props) {
                     <h1 className="b-h" id="sT">
                         Site
                     </h1>
-                    <div className="sp-pb" id="spPB">
-                        {done && done.k === k ? (
-                            <span className="nt-sv ok">
-                                {I.tick15}
-                                <span>
-                                    Published ·{' '}
-                                    <button className="w-act sp-undo" type="button" onClick={() => void undo()}>
-                                        Undo
-                                    </button>
+                    {isPage && (
+                        <div className="sp-pb" id="spPB">
+                            {done && done.k === k ? (
+                                <span className="nt-sv ok">
+                                    {I.tick15}
+                                    <span>
+                                        Published ·{' '}
+                                        <button className="w-act sp-undo" type="button" onClick={() => void undo()}>
+                                            Undo
+                                        </button>
+                                    </span>
                                 </span>
-                            </span>
-                        ) : (
-                            stEl
-                        )}
-                        {DOC[tab] && mattersBox('', 'spMt')}
-                        <button className="w-act sp-vs" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Versions" onClick={(e) => versions(e.currentTarget)}>
-                            {I.hist17}
-                            <span>Versions</span>
-                        </button>
-                        <button
-                            className={`k-btn sm sp-pub${pop && pop.id !== 'vers' && pop.id !== 'confirm' ? ' line' : ''}`}
-                            type="button"
-                            disabled={!dirty || none}
-                            title={none ? (tab === 'terms' ? 'Terms need at least one section' : 'Privacy needs at least one section') : undefined}
-                            onClick={(e) => void publish(e.currentTarget)}
-                        >
-                            <span>Publish</span>
-                            <Ring />
-                        </button>
-                    </div>
+                            ) : (
+                                stEl
+                            )}
+                            {DOC[tab] && mattersBox('', 'spMt')}
+                            <button className="w-act sp-vs" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Versions" onClick={(e) => versions(e.currentTarget)}>
+                                {I.hist17}
+                                <span>Versions</span>
+                            </button>
+                            <button
+                                className={`k-btn sm sp-pub${pop && pop.id !== 'vers' && pop.id !== 'confirm' ? ' line' : ''}`}
+                                type="button"
+                                disabled={!dirty || none}
+                                title={none ? (tab === 'terms' ? 'Terms need at least one section' : 'Privacy needs at least one section') : undefined}
+                                onClick={(e) => void publish(e.currentTarget)}
+                            >
+                                <span>Publish</span>
+                                <Ring />
+                            </button>
+                        </div>
+                    )}
                 </div>
                 <div className="sp-main" ref={main} style={{ position: 'relative' }}>
                     <div className="nw-tools sp-tools">
@@ -606,6 +679,10 @@ export default function Site(props: Props) {
                         {tab === 'about' && <AboutTab s={ctx} />}
                         {tab === 'print' && <InPrintTab s={ctx} />}
                         {DOC[tab] && <DocTab s={ctx} k={k as 'privacy' | 'terms'} key={k} mattersBox={mattersBox(' phx', 'spMt2')} />}
+                        {tab === 'home' && <HomeTab s={ctx} home={home} setHome={setHome} />}
+                        {tab === 'notice' && <NoticeTab s={ctx} notice={notice} setNotice={setNotice} key={notice.current ? `${notice.current.id}` : 'none'} />}
+                        {tab === 'share' && <SharingTab s={ctx} sharing={sharing} setSharing={setSharing} host={siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')} />}
+                        {tab === 'contact' && <ContactTab s={ctx} contact={contact} networks={props.networks} setContact={setContact} />}
                     </div>
                     {pop && !sheet && popover()}
                 </div>
@@ -634,4 +711,3 @@ export default function Site(props: Props) {
         </AdminLayout>
     );
 }
-

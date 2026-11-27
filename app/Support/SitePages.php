@@ -8,6 +8,7 @@ use App\Models\Media;
 use App\Models\SitePage;
 use App\Models\Version;
 use App\Models\Work;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Arr;
 use Throwable;
@@ -230,9 +231,18 @@ class SitePages
     }
 
     /**
-     * Every work, by title: its kind, its colour and picture as the cover shows them, and whether readers can see it.
+     * A moment she typed in West Africa Time ("2026-12-01 18:00"), as UTC to the minute.
+     */
+    public static function fromWat(string $local): CarbonImmutable
+    {
+        return CarbonImmutable::createFromFormat('Y-m-d H:i', $local, self::zone())->startOfMinute()->utc();
+    }
+
+    /**
+     * Every work, by title: its kind, its colour and picture as the cover shows them, whether readers can see it, and its
+     * description as plain text for a share card.
      *
-     * @return list<array{slug: string, title: string, kind: string, color: string|null, image: string|null, public: bool}>
+     * @return list<array{slug: string, title: string, kind: string, color: string|null, image: string|null, public: bool, desc: string}>
      */
     private static function works(): array
     {
@@ -241,7 +251,7 @@ class SitePages
         return Work::query()
             ->with('cover:id,disk,path')
             ->orderBy('title')
-            ->get(['id', 'title', 'slug', 'kind', 'cover_color', 'cover_media_id'])
+            ->get(['id', 'title', 'slug', 'kind', 'cover_color', 'cover_media_id', 'description'])
             ->map(fn (Work $work): array => [
                 'slug' => $work->slug,
                 'title' => $work->title,
@@ -249,6 +259,7 @@ class SitePages
                 'color' => $work->cover_color ?: null,
                 'image' => WorkPresenter::cover($work)['src'],
                 'public' => $listed->has($work->id),
+                'desc' => SiteSharing::description($work),
             ])
             ->values()
             ->all();

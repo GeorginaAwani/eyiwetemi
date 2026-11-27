@@ -18,3 +18,5 @@
 .nw-pane.nt-out{opacity:0;filter:blur(4px)}
 @media (prefers-reduced-motion:reduce){.nw-pvb iframe.nw-frame.out,.nw-pane.nt-out{filter:none}}
 .sp-ri:not(:has(img)){background:var(--surf)}
+.sc-por0{display:block;width:9.5em;height:9.5em;border-radius:50%;background:#E9DFD3;box-shadow:0 0 0 .5em #F5F0E6,0 0 0 .58em #9A4762}
+.sp-hb{white-space:nowrap}

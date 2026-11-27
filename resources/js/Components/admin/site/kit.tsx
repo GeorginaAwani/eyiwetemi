@@ -8,25 +8,86 @@ import { prefersReducedMotion as RM } from '../../../lib/motion';
 
 /* ------------------------------------------------------------------ data */
 export type PageKey = 'about' | 'in_print' | 'privacy' | 'terms';
-export type Version = { id: number; at: string; changes: string; matters: boolean };
-export type Page<T = Record<string, unknown>> = { draft: T; live: T | null; savedAt: string | null; publishedAt: string | null; versions: Version[] };
-export type Work = { slug: string; title: string; kind: string; color: string | null; image: string | null; public: boolean };
+export type Version = {
+    id: number;
+    at: string;
+    changes: string;
+    matters: boolean;
+};
+export type Page<T = Record<string, unknown>> = {
+    draft: T;
+    live: T | null;
+    savedAt: string | null;
+    publishedAt: string | null;
+    versions: Version[];
+};
+export type Work = {
+    slug: string;
+    title: string;
+    kind: string;
+    color: string | null;
+    image: string | null;
+    public: boolean;
+    desc?: string;
+};
 export type Money = { amount: number; currency: string } | null;
 
 export type About = {
     image: number | null;
     hello: { heading: string; paragraphs: string[] };
-    sections: { id: string; heading: string; paragraphs: { text: string; margin_note: string | null; pull_quote: boolean }[] }[];
+    sections: {
+        id: string;
+        heading: string;
+        paragraphs: {
+            text: string;
+            margin_note: string | null;
+            pull_quote: boolean;
+        }[];
+    }[];
     books: string;
     home: { quote: string; line: string };
 };
-export type Store = { store: string; price: Money; url: string | null; ok: boolean };
-export type Book = { slug: string; title: string; kind: string; cover: string; formats: { format: string; stores: Store[] }[] };
-export type Coming = { slug: string; title: string; kind: string; cover: string; when: string; out: { d: string; m: string; y: string } | null; mode: 'pre' | 'follow'; store: string; price: Money; url: string | null };
-export type Reading = { id: string; title: string; starts_at: string; place: string; online: boolean; url: string | null; cancelled: boolean };
+export type Store = {
+    store: string;
+    price: Money;
+    url: string | null;
+    ok: boolean;
+};
+export type Book = {
+    slug: string;
+    title: string;
+    kind: string;
+    cover: string;
+    formats: { format: string; stores: Store[] }[];
+};
+export type Coming = {
+    slug: string;
+    title: string;
+    kind: string;
+    cover: string;
+    when: string;
+    out: { d: string; m: string; y: string } | null;
+    mode: 'pre' | 'follow';
+    store: string;
+    price: Money;
+    url: string | null;
+};
+export type Reading = {
+    id: string;
+    title: string;
+    starts_at: string;
+    place: string;
+    online: boolean;
+    url: string | null;
+    cancelled: boolean;
+};
 export type InPrint = { books: Book[]; coming: Coming[]; events: Reading[] };
 export type DocSection = { id: string; heading: string; html: string };
-export type Doc = { updated_on: string; sections: DocSection[]; change: { on: string; line: string; ids: string[] } | null };
+export type Doc = {
+    updated_on: string;
+    sections: DocSection[];
+    change: { on: string; line: string; ids: string[] } | null;
+};
 
 export const clone = <T,>(o: T): T => JSON.parse(JSON.stringify(o)) as T;
 export const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -36,7 +97,11 @@ export const plural = (n: number, one: string, many = one + 's') => `${n} ${n ==
 
 /** A work's cover for a row: its picture, else its colour. */
 export function coverOf(w: { image?: string | null; color?: string | null; cover?: string }): CoverData {
-    return { src: w.image ?? null, color: w.color ?? w.cover ?? '#C46F8A', dark: true };
+    return {
+        src: w.image ?? null,
+        color: w.color ?? w.cover ?? '#C46F8A',
+        dark: true,
+    };
 }
 export function Cov({ w, width, ratio = 1.5 }: { w: { image?: string | null; color?: string | null; cover?: string }; width: number; ratio?: number }) {
     const st: CSSProperties = { width, height: Math.round(width * ratio) };
@@ -64,7 +129,12 @@ export function priceText(p: Money): string {
         return '';
     }
 
-    return p.currency === 'NGN' ? Math.round(p.amount / 100).toLocaleString('en-US') : (p.amount / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return p.currency === 'NGN'
+        ? Math.round(p.amount / 100).toLocaleString('en-US')
+        : (p.amount / 100).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+          });
 }
 export function priceOf(text: string, currency: string): Money {
     const v = parseFloat(text.replace(/,/g, ''));
@@ -90,7 +160,12 @@ export const fullUrl = (v: string) => (v.trim() === '' ? null : /^https?:\/\//i.
 export const bareUrl = (v: string | null) => (v ?? '').replace(/^https?:\/\//i, '');
 
 /* ------------------------------------------------------------------ icons (the prototype's set) */
-const stroke = { fill: 'none', stroke: 'currentColor', strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
+const stroke = {
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+} as const;
 const ic = (size: number, width: number, d: ReactNode, cls?: string) => (
     <svg width={size} height={size} viewBox="0 0 24 24" {...stroke} strokeWidth={width} aria-hidden="true" className={cls}>
         {d}
@@ -470,7 +545,29 @@ export function Area({
 }
 
 /** A labelled one-line field. */
-export function Field({ id, label, value, placeholder, onChange, type = 'text', bad, inputMode, after: tail, big }: { id: string; label: string; value: string; placeholder?: string; onChange: (v: string) => void; type?: string; bad?: boolean; inputMode?: 'url' | 'email' | 'decimal'; after?: ReactNode; big?: boolean }) {
+export function Field({
+    id,
+    label,
+    value,
+    placeholder,
+    onChange,
+    type = 'text',
+    bad,
+    inputMode,
+    after: tail,
+    big,
+}: {
+    id: string;
+    label: string;
+    value: string;
+    placeholder?: string;
+    onChange: (v: string) => void;
+    type?: string;
+    bad?: boolean;
+    inputMode?: 'url' | 'email' | 'decimal';
+    after?: ReactNode;
+    big?: boolean;
+}) {
     return (
         <div className="k-f sp-f">
             <label className="k-fl" htmlFor={id}>
@@ -501,7 +598,15 @@ export function dragSort(e: React.PointerEvent, r: HTMLElement, peers: () => HTM
     r.classList.add('drag');
     const sr = slot.getBoundingClientRect();
     const pr = pl.getBoundingClientRect();
-    Object.assign(r.style, { position: 'absolute', top: top0 + 'px', left: sr.left - pr.left + 'px', width: sr.width + 'px', margin: '0', boxSizing: 'border-box', zIndex: '3' });
+    Object.assign(r.style, {
+        position: 'absolute',
+        top: top0 + 'px',
+        left: sr.left - pr.left + 'px',
+        width: sr.width + 'px',
+        margin: '0',
+        boxSizing: 'border-box',
+        zIndex: '3',
+    });
     const flipMove = (fn: () => void) => {
         const os = peers().filter((x) => x !== r);
         const t0 = new Map(os.map((x) => [x, x.offsetTop]));
@@ -557,7 +662,16 @@ export function dragSort(e: React.PointerEvent, r: HTMLElement, peers: () => HTM
                 }
             }
             r.classList.remove('drag');
-            Object.assign(r.style, { position: '', top: '', left: '', width: '', margin: '', transform: '', boxSizing: '', zIndex: '' });
+            Object.assign(r.style, {
+                position: '',
+                top: '',
+                left: '',
+                width: '',
+                margin: '',
+                transform: '',
+                boxSizing: '',
+                zIndex: '',
+            });
             /* the new order lands in the same frame, so nothing jumps */
             flushSync(() => onDrop(from, to));
         };
@@ -566,7 +680,15 @@ export function dragSort(e: React.PointerEvent, r: HTMLElement, peers: () => HTM
 
             return;
         }
-        after(r.animate([{ top: r.style.top }, { top: slot.offsetTop + 'px' }], { duration: 200, easing: EASE, fill: 'forwards' }), 200, fin);
+        after(
+            r.animate([{ top: r.style.top }, { top: slot.offsetTop + 'px' }], {
+                duration: 200,
+                easing: EASE,
+                fill: 'forwards',
+            }),
+            200,
+            fin,
+        );
     };
     g.addEventListener('pointermove', mv);
     g.addEventListener('pointerup', up);

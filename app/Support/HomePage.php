@@ -7,7 +7,6 @@ use App\Enums\WorkKind;
 use App\Enums\WorkStatus;
 use App\Models\Note;
 use App\Models\SitePage;
-use App\Models\SiteSetting;
 use App\Models\Work;
 use Illuminate\Support\Collection;
 
@@ -54,14 +53,32 @@ class HomePage
     }
 
     /**
+     * What Home leads with and shows beside it right now, and the pin that decides it: the admin's Home tab shows these.
+     *
+     * @return array{pin: array{slug: string, title: string, until: string|null}|null, lead: array<string, mixed>|null, side: list<array{label: string, title: string}>, next: string|null}
+     */
+    public function preview(): array
+    {
+        $hero = $this->heroWork();
+        $pin = HomePin::current();
+        $pinned = $pin !== null ? $this->works->firstWhere('slug', $pin['slug']) : null;
+
+        return [
+            'pin' => $pinned !== null ? ['slug' => $pinned->slug, 'title' => $pinned->title, 'until' => SitePages::wat($pin['until'])] : null,
+            'lead' => $hero !== null ? $this->lead($hero) : null,
+            'side' => $this->side($hero),
+            'next' => $pinned !== null ? $this->upNext() : null,
+        ];
+    }
+
+    /**
      * The pinned work while its pin lasts, otherwise whatever came out last.
      */
     private function heroWork(): ?Work
     {
-        $pin = SiteSetting::get('home_pin');
-        $until = isset($pin['until']) ? now()->parse($pin['until']) : null;
+        $pin = HomePin::current();
 
-        if (isset($pin['slug']) && ($until === null || $until->isFuture())) {
+        if ($pin !== null) {
             $pinned = $this->works->firstWhere('slug', $pin['slug']);
 
             if ($pinned !== null) {
@@ -70,6 +87,55 @@ class HomePage
         }
 
         return $this->released()->first();
+    }
+
+    /**
+     * What the hero shows, as the admin's preview reads it: its label, title, picture or colour, and its first button.
+     *
+     * @return array{label: string, title: string, image: string|null, color: string|null, button: string}
+     */
+    private function lead(Work $work): array
+    {
+        $hero = $this->hero($work);
+
+        return [
+            'label' => $hero['label'],
+            'title' => $hero['title'],
+            'image' => $hero['cover']['src'],
+            'color' => $hero['cover']['src'] === null ? $hero['cover']['color'] : null,
+            'button' => $hero['actions'][0]['label'],
+        ];
+    }
+
+    /**
+     * The two spines beside the hero: the kind and day of each, then its title.
+     *
+     * @return list<array{label: string, title: string}>
+     */
+    private function side(?Work $hero): array
+    {
+        return $this->pileWorks($hero)->take(2)->map(fn (Work $work): array => [
+            'label' => ucfirst(self::kindWord($work)).' · '.Reading::day(WorkPresenter::updatedAt($work)),
+            'title' => $work->title,
+        ])->values()->all();
+    }
+
+    /**
+     * What would lead Home once the pin ends: the newest work, with the chapter or piece it has out.
+     */
+    private function upNext(): ?string
+    {
+        $work = $this->released()->first();
+
+        if ($work === null) {
+            return null;
+        }
+
+        if (! in_array($work->kind, [WorkKind::Novel, WorkKind::Collection], true)) {
+            return $work->title;
+        }
+
+        return $work->title.', '.WorkPresenter::unit($work).' '.WorkPresenter::numbered($work)->last()['number'];
     }
 
     /**
@@ -113,18 +179,12 @@ class HomePage
      */
     private function pile(?Work $hero): array
     {
-        return $this->released()
-            ->reject(fn (Work $work): bool => $work->is($hero)
-                || $work->kind === WorkKind::Collection
-                || ($work->kind === WorkKind::Novel && $work->status !== WorkStatus::Finished))
+        return $this->pileWorks($hero)
             ->take(self::PILE)
             ->map(function (Work $work): array {
                 $card = WorkPresenter::card($work);
                 $hasUnits = in_array($work->kind, [WorkKind::Novel, WorkKind::Collection], true);
-                $kindWord = match ($work->kind) {
-                    WorkKind::Story => 'story',
-                    default => $work->kind->value,
-                };
+                $kindWord = self::kindWord($work);
                 $updated = WorkPresenter::updatedAt($work);
                 $seed = crc32($work->slug);
                 $width = 66 + $seed % 25;
@@ -148,6 +208,32 @@ class HomePage
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * The works the pile and its side column draw from: released works other than the hero, minus collections and novels
+     * still being written (they have their own sections with chapters), as in the prototype's pile.
+     *
+     * @return Collection<int, Work>
+     */
+    private function pileWorks(?Work $hero): Collection
+    {
+        return $this->released()
+            ->reject(fn (Work $work): bool => $work->is($hero)
+                || $work->kind === WorkKind::Collection
+                || ($work->kind === WorkKind::Novel && $work->status !== WorkStatus::Finished))
+            ->values();
+    }
+
+    /**
+     * A work's kind as a word for the pile: story, novel, poem or essay.
+     */
+    private static function kindWord(Work $work): string
+    {
+        return match ($work->kind) {
+            WorkKind::Story => 'story',
+            default => $work->kind->value,
+        };
     }
 
     /**
