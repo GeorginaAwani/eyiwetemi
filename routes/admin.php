@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ChapterController;
 use App\Http\Controllers\Admin\CommentController;
+use App\Http\Controllers\Admin\NoteController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PublishController;
 use App\Http\Controllers\Admin\ReviewerController;
@@ -64,8 +65,19 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::patch('/reviewers/{user}/works', [ReviewerController::class, 'userWorks'])->whereNumber('user')->name('reviewers.works.user');
     Route::delete('/reviewers/{user}', [ReviewerController::class, 'remove'])->whereNumber('user')->name('reviewers.remove');
 
+    Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
+    Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
+    Route::post('/notes/seen', [NoteController::class, 'seen'])->name('notes.seen');
+    Route::patch('/notes/{note}', [NoteController::class, 'update'])->whereNumber('note')->name('notes.update');
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->whereNumber('note')->name('notes.destroy');
+    Route::post('/notes/{note}/photo', [NoteController::class, 'photo'])->whereNumber('note')->name('notes.photo');
+    Route::post('/notes/{note}/publish', [NoteController::class, 'publish'])->whereNumber('note')->name('notes.publish');
+    Route::post('/notes/{note}/undo', [NoteController::class, 'undo'])->whereNumber('note')->name('notes.undo');
+    Route::post('/notes/{note}/schedule', [NoteController::class, 'schedule'])->whereNumber('note')->name('notes.schedule');
+    Route::delete('/notes/{note}/schedule', [NoteController::class, 'unschedule'])->whereNumber('note')->name('notes.unschedule');
+
     Route::get('/{section}', [SectionController::class, 'show'])
-        ->whereIn('section', ['notes', 'stats', 'newsletter', 'site'])
+        ->whereIn('section', ['stats', 'newsletter', 'site'])
         ->name('section');
 
     Route::get('/works', [WorkController::class, 'index'])->name('works.index');

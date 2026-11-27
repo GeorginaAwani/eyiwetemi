@@ -38,6 +38,9 @@ class NoteSeeder extends Seeder
     /** Hearts a note can carry from readers; each one needs an account, so the count is capped. */
     private const MAX_LIKES = 20;
 
+    /** Hearts that came in since she last looked, by the note's day (the admin prototype's "+3", "+5", "+2"). */
+    private const NEW_HEARTS = ['21 Nov' => 3, '20 Nov' => 5, '17 Nov' => 2];
+
     public function run(): void
     {
         $readers = User::query()->where('role', UserRole::Reader)->orderBy('id')->get();
@@ -68,7 +71,7 @@ class NoteSeeder extends Seeder
                 'likes_count' => 0,
             ]);
 
-            $this->likes($note, min($likes, self::MAX_LIKES), $readers);
+            $this->likes($note, min($likes, self::MAX_LIKES), $readers, self::NEW_HEARTS[$day] ?? 0);
         }
 
         $this->scheduledAndDraft($works);
@@ -140,13 +143,19 @@ class NoteSeeder extends Seeder
 
     /**
      * @param  Collection<int, User>  $readers
+     * @param  int  $new  how many of them came in since she last looked
      */
-    private function likes(Note $note, int $count, $readers): void
+    private function likes(Note $note, int $count, $readers, int $new): void
     {
-        $likers = $readers->take($count);
+        $likers = $readers->take($count)->values();
 
-        foreach ($likers as $liker) {
-            $note->likes()->forceCreate(['user_id' => $liker->id]);
+        /* hearts come in over the hours after the note; the newest few came in just now */
+        foreach ($likers as $i => $liker) {
+            $at = $i >= $count - $new
+                ? now()->subMinutes($count - $i)
+                : $note->published_at->copy()->addMinutes(20 * ($i + 1));
+
+            $note->likes()->forceCreate(['user_id' => $liker->id, 'created_at' => $at, 'updated_at' => $at]);
         }
 
         $note->forceFill(['likes_count' => $likers->count()])->save();

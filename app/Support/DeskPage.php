@@ -595,13 +595,20 @@ class DeskPage
      */
     private static function hearts(): int
     {
-        $seenAt = SiteSetting::get('desk.hearts_seen_at');
-        $since = is_string($seenAt) && $seenAt !== '' ? Carbon::parse($seenAt) : now()->subDays(7);
-
         return Like::query()
             ->where('likeable_type', (new Note)->getMorphClass())
-            ->where('created_at', '>', $since->utc())
+            ->where('created_at', '>', self::heartsSince())
             ->count();
+    }
+
+    /**
+     * When the desk last looked at the hearts (UTC), or seven days back when it never has.
+     */
+    public static function heartsSince(): CarbonInterface
+    {
+        $seenAt = SiteSetting::get('desk.hearts_seen_at');
+
+        return is_string($seenAt) && $seenAt !== '' ? Carbon::parse($seenAt)->utc() : now()->utc()->subDays(7);
     }
 
     /**
