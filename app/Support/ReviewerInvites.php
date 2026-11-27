@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Work;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Accepting a reviewer invite: the person reads the invite's works as a reviewer, and the invite is used up.
@@ -41,6 +42,14 @@ class ReviewerInvites
     }
 
     /**
+     * Whether this account is the one the invite was sent to (the same email address).
+     */
+    public static function isFor(ReviewerInvite $invite, User $user): bool
+    {
+        return Str::lower(trim((string) $invite->email)) === Str::lower(trim((string) $user->email));
+    }
+
+    /**
      * The work an invite opens on: the first one it was given, in the order they were given.
      */
     public static function firstWork(ReviewerInvite $invite): ?Work
@@ -64,7 +73,7 @@ class ReviewerInvites
         $inviteId = $request->session()->pull('review.invite');
         $invite = $inviteId === null ? null : ReviewerInvite::query()->find($inviteId);
 
-        if ($invite === null || ! $invite->isPending() || $user->isAuthor()) {
+        if ($invite === null || ! $invite->isPending() || $user->isAuthor() || ! self::isFor($invite, $user)) {
             return;
         }
 

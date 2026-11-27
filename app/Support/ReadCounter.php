@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Models\WorkItem;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -85,15 +84,11 @@ class ReadCounter
     }
 
     /**
-     * The day's secret. It lives in the cache only, and expires just after the West Africa day ends.
+     * The day's secret, made from the app's own key and the day, so it is never stored and changes every day.
      */
     private function salt(string $day): string
     {
-        return Cache::remember(
-            'stats:salt:'.$day,
-            now(config('eyiwetemi.timezone'))->endOfDay()->addMinutes(5),
-            fn (): string => bin2hex(random_bytes(32)),
-        );
+        return hash_hmac('sha256', 'stats-salt|'.$day, (string) config('app.key'));
     }
 
     /**

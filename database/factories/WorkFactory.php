@@ -52,9 +52,6 @@ class WorkFactory extends Factory
             'content_notes' => null,
             'plan_notes' => null,
             'mark_names' => false,
-            'share_line' => null,
-            'share_media_id' => null,
-            'share_uses_own' => false,
             'first_published_at' => null,
             'last_published_at' => null,
         ];

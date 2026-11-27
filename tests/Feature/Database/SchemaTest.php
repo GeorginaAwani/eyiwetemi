@@ -36,7 +36,7 @@ class SchemaTest extends TestCase
 
         $this->assertTrue(Schema::hasColumns('works', [
             'kind', 'collection_kind', 'title', 'title_key', 'slug', 'status', 'visibility', 'series_id',
-            'collection_id', 'cover_media_id', 'share_media_id', 'likes_count', 'last_published_at', 'free_chapters', 'search',
+            'collection_id', 'cover_media_id', 'likes_count', 'last_published_at', 'free_chapters', 'search',
         ]));
 
         $this->assertTrue(Schema::hasColumns('work_items', [

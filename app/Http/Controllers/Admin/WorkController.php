@@ -222,7 +222,7 @@ class WorkController extends Controller
                 $this->moveIntoCollection($work, null);
             }
 
-            $media = array_filter([$work->cover_media_id, $work->share_media_id]);
+            $media = array_filter([$work->cover_media_id]);
             /* the plan's uploaded pictures and PDFs go with the work too */
             $research = Media::query()
                 ->whereIn('id', ResearchItem::query()->where('work_id', $work->id)->whereNotNull('media_id')->pluck('media_id'))

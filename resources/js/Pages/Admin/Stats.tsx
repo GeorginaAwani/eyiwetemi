@@ -55,7 +55,7 @@ const METRICS: [Metric, string][] = [
     ['readers', 'Readers'],
     ['finished', 'Finished'],
 ];
-const FLAG = (cc: string) => `https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${cc}.svg`;
+const FLAG = (cc: string) => `/flags/4x3/${cc}.svg`;
 
 /* ------------------------------------------------------------------ icons (the prototype's set) */
 const ic = (size: number, d: ReactNode) => (
