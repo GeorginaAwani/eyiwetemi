@@ -248,6 +248,31 @@ class CommentsInbox
     }
 
     /**
+     * The open reviewer notes on one chapter or piece, oldest first, as the writing screen marks them: each note as the
+     * inbox draws it, with the block and character its words start at.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function itemNotes(WorkItem $item): array
+    {
+        return self::fromOthers(Comment::query())
+            ->where('audience', CommentAudience::Review)
+            ->whereNull('parent_id')
+            ->where('work_item_id', $item->id)
+            ->where('status', CommentStatus::Open)
+            ->oldest()
+            ->oldest('id')
+            ->get()
+            ->map(fn (Comment $note): array => [
+                ...self::note($note),
+                'block' => $note->anchor['block_id'] ?? null,
+                'start' => (int) ($note->anchor['start'] ?? 0),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * One reply as the inbox draws it.
      *
      * @return array{id: int, who: string, seed: string, me: bool, at: string, text: string}

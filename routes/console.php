@@ -12,6 +12,10 @@ Artisan::command('inspire', function () {
 Schedule::command('eyiwetemi:publish-due')->everyMinute()->withoutOverlapping();
 Schedule::command('eyiwetemi:announce')->everyMinute()->withoutOverlapping();
 
+/* the writer's mail about comments: a daily digest of readers', and reviewers' notes once a visit has ended */
+Schedule::command('eyiwetemi:comments-digest')->dailyAt('20:00')->timezone(config('eyiwetemi.timezone'));
+Schedule::command('eyiwetemi:review-mail')->everyFiveMinutes()->withoutOverlapping();
+
 /*
 | Nightly clean-up (approved pruning plan). Times are WAT.
 */

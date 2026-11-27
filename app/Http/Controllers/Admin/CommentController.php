@@ -192,7 +192,9 @@ class CommentController extends Controller
     {
         abort_unless($comment->audience === CommentAudience::Review && $comment->parent_id === null, 404);
 
-        $data = $request->validate(['status' => ['required', Rule::in(['open', 'accepted', 'rejected', 'resolved'])]]);
+        $data = $request->validate(['status' => ['required', Rule::in(['open', 'accepted', 'rejected', 'resolved'])], 'apply' => ['sometimes', 'boolean']]);
+        /* the writing screen changes its own text and only says so */
+        $apply = $request->boolean('apply', true);
         $target = CommentStatus::from($data['status']);
         $current = $comment->status;
 
@@ -214,10 +216,10 @@ class CommentController extends Controller
             throw ValidationException::withMessages(['status' => 'Only a resolved note can be reopened.']);
         }
 
-        $changed = DB::transaction(function () use ($comment, $target): bool {
+        $changed = DB::transaction(function () use ($comment, $target, $apply): bool {
             $comment->loadMissing('workItem');
 
-            if ($target === CommentStatus::Accepted && ! $this->applyEdit($comment)) {
+            if ($target === CommentStatus::Accepted && $apply && ! $this->applyEdit($comment)) {
                 return false;
             }
 

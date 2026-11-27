@@ -12,6 +12,7 @@ use App\Models\Work;
 use App\Models\WorkItem;
 use App\Models\WritingDay;
 use App\Support\ChaptersAdmin;
+use App\Support\CommentsInbox;
 use App\Support\ImageStore;
 use App\Support\PlanPage;
 use App\Support\Prose;
@@ -87,6 +88,7 @@ class WriteController extends Controller
             'chapters' => $multi ? ChaptersAdmin::rows($work) : [],
             'plan' => $work->kind === WorkKind::Poem ? null : PlanPage::props($work),
             'sweep' => ['names' => SweepNames::list($work), 'mark' => $work->mark_names],
+            'notes' => CommentsInbox::itemNotes($item),
         ]);
     }
 
