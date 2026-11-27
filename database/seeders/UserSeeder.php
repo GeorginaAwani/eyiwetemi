@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class UserSeeder extends Seeder
 {
@@ -56,6 +57,11 @@ class UserSeeder extends Seeder
 
     public function run(): void
     {
+        /* these accounts have known passwords: never on a live site, even when this seeder is run on its own */
+        if (app()->isProduction()) {
+            throw new RuntimeException('Refusing to seed sample accounts: this is a production environment.');
+        }
+
         $verifiedAt = now();
 
         User::forceCreate([

@@ -45,8 +45,8 @@ class LikeAndFollowTest extends TestCase
     public function test_following_a_work_or_series(): void
     {
         $user = User::factory()->create();
-        $work = Work::factory()->novel()->public()->published()->create();
         $series = Series::factory()->create();
+        $work = Work::factory()->novel()->public()->published()->create(['series_id' => $series->id, 'series_position' => 1]);
 
         $this->actingAs($user)->putJson('/follows/work/'.$work->id)->assertOk()->assertExactJson(['following' => true]);
         $this->actingAs($user)->putJson('/follows/series/'.$series->id)->assertOk();
@@ -56,6 +56,16 @@ class LikeAndFollowTest extends TestCase
         $this->assertSame(1, $user->follows()->count());
 
         $this->actingAs($user)->putJson('/follows/work/'.Work::factory()->novel()->create()->id)->assertNotFound();
+    }
+
+    public function test_a_series_with_no_book_out_cannot_be_followed(): void
+    {
+        $user = User::factory()->create();
+        $hidden = Series::factory()->create();
+        Work::factory()->novel()->create(['series_id' => $hidden->id, 'series_position' => 1]);
+
+        $this->actingAs($user)->putJson('/follows/series/'.$hidden->id)->assertNotFound();
+        $this->assertSame(0, $user->follows()->count());
     }
 
     public function test_the_series_page_shows_the_series_and_each_book_the_reader_follows(): void

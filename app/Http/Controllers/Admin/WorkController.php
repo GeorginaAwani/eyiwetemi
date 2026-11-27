@@ -13,6 +13,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreWorkRequest;
 use App\Http\Requests\Admin\UpdateWorkRequest;
 use App\Models\Genre;
+use App\Models\Media;
+use App\Models\ResearchItem;
 use App\Models\Series;
 use App\Models\SlugHistory;
 use App\Models\Work;
@@ -24,6 +26,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -220,11 +223,21 @@ class WorkController extends Controller
             }
 
             $media = array_filter([$work->cover_media_id, $work->share_media_id]);
+            /* the plan's uploaded pictures and PDFs go with the work too */
+            $research = Media::query()
+                ->whereIn('id', ResearchItem::query()->where('work_id', $work->id)->whereNotNull('media_id')->pluck('media_id'))
+                ->where('path', 'like', PlanController::RESEARCH_FOLDER.'/%')
+                ->get();
             SlugHistory::query()->where('sluggable_type', $work->getMorphClass())->where('sluggable_id', $work->id)->delete();
             $work->delete();
 
             foreach ($media as $id) {
                 WorkCoverController::forget((int) $id);
+            }
+
+            foreach ($research as $upload) {
+                $upload->delete();
+                DB::afterCommit(fn () => Storage::disk($upload->disk)->delete($upload->path));
             }
         });
 

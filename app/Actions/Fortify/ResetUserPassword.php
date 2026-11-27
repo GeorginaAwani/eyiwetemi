@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Support\OtherSessions;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
@@ -23,5 +24,6 @@ class ResetUserPassword implements ResetsUserPasswords
         Validator::make($input, ['password' => $this->passwordRules()], $this->passwordMessages())->validate();
 
         $user->forceFill(['password' => $input['password']])->save();
+        OtherSessions::end($user);
     }
 }

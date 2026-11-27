@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Rules\Username;
+use App\Support\OtherSessions;
 use App\Support\Usernames;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -52,6 +53,16 @@ class GoogleController extends Controller
         if (! $user && $email !== '' && ($google->user['email_verified'] ?? false)) {
             $user = User::query()->where('email', $email)->first();
             $user?->socialAccounts()->create(['provider' => 'google', 'provider_user_id' => $google->getId()]);
+
+            /* Google has now proved this address. A password set on it before anyone proved it may not be the owner's
+               (someone could have signed up with her address first), so it stops working, with any session it opened. */
+            if ($user && $user->email_verified_at === null && ! $user->isAuthor()) {
+                if ($user->password !== null) {
+                    $user->forceFill(['password' => null])->save();
+                    OtherSessions::end($user);
+                }
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
         }
 
         if ($user) {
@@ -62,7 +73,7 @@ class GoogleController extends Controller
         }
 
         $name = trim((string) ($google->getName() ?: Str::before($email, '@')));
-        $request->session()->put('google.pending', ['id' => (string) $google->getId(), 'name' => $name, 'email' => $email]);
+        $request->session()->put('google.pending', ['id' => (string) $google->getId(), 'name' => $name, 'email' => $email, 'verified' => (bool) ($google->user['email_verified'] ?? false)]);
 
         return $this->back($request, ['view' => 'google', 'google' => ['name' => $name, 'email' => $email, 'username' => Usernames::offerFor($name)]]);
     }
@@ -84,7 +95,10 @@ class GoogleController extends Controller
                 'username' => $request->string('username')->toString(),
                 'email' => $pending['email'],
             ]);
-            $user->forceFill(['email_verified_at' => now()])->save();
+            /* only an address Google says is proved counts as proved here */
+            if ($pending['verified'] ?? false) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
             $user->socialAccounts()->create(['provider' => 'google', 'provider_user_id' => $pending['id']]);
 
             return $user;

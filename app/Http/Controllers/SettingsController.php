@@ -7,6 +7,7 @@ use App\Models\Comment;
 use App\Models\User;
 use App\Models\UsernameHold;
 use App\Rules\Username;
+use App\Support\OtherSessions;
 use App\Support\Preferences;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
@@ -183,6 +184,7 @@ class SettingsController extends Controller
         $request->validate($rules, $messages);
 
         $user->forceFill(['password' => $request->input('password')])->save();
+        OtherSessions::end($user, $request->session()->getId());
 
         return response()->json(['ok' => true]);
     }

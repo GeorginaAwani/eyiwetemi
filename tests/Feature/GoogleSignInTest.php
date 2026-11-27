@@ -54,6 +54,28 @@ class GoogleSignInTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_a_password_nobody_proved_stops_working_once_google_proves_the_address(): void
+    {
+        $squatter = User::factory()->create(['email' => 'ada@example.com', 'password' => 'squatter-pass', 'email_verified_at' => null]);
+        $this->googleReturns('g-9', 'Ada', 'ada@example.com');
+
+        $this->get('/auth/google/callback');
+
+        $this->assertAuthenticatedAs($squatter);
+        $this->assertNull($squatter->fresh()->password);
+        $this->assertNotNull($squatter->fresh()->email_verified_at);
+    }
+
+    public function test_an_address_google_has_not_proved_is_not_marked_proved(): void
+    {
+        $this->googleReturns('g-8', 'Ife', 'ife@example.com', verified: false);
+        $this->get('/auth/google/callback');
+
+        $this->postJson('/auth/google/finish', ['username' => 'ife'])->assertOk();
+
+        $this->assertNull(User::query()->where('email', 'ife@example.com')->value('email_verified_at'));
+    }
+
     public function test_a_verified_email_we_know_is_linked_to_google(): void
     {
         $user = User::factory()->create(['email' => 'ada@example.com']);

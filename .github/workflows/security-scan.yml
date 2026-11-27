@@ -31,6 +31,11 @@ jobs:
           set -o pipefail
           # composer audit exits non-zero whenever advisories exist; the blocking decision is made below.
           composer audit --locked --format=json --no-interaction > composer-audit.json || true
+          # a scan that didn't run (registry down, bad output) fails the build rather than passing as "no advisories"
+          if ! jq -e '.advisories' composer-audit.json > /dev/null 2>&1; then
+            echo "::error::composer audit produced no report"
+            exit 1
+          fi
 
           echo "Advisories (severity, advisory, CVE, package, title):"
           jq -r '.advisories // {} | to_entries[] | .key as $p | .value[]
@@ -61,6 +66,11 @@ jobs:
           # yarn 1 exits with a severity bitmask that includes moderate even with --level high,
           # so the blocking decision is made from the summary counts instead.
           yarn audit --json > yarn-audit.json || true
+          # a scan that didn't run (registry down, bad output) fails the build rather than passing as "no advisories"
+          if ! jq -s -e 'any(.[]; .type == "auditSummary")' yarn-audit.json > /dev/null 2>&1; then
+            echo "::error::yarn audit produced no summary"
+            exit 1
+          fi
           blocking=$(jq -s '[.[] | select(.type == "auditSummary") | .data.vulnerabilities | (.high // 0) + (.critical // 0)] | add // 0' yarn-audit.json)
           if [ "$blocking" -gt 0 ]; then
             echo "::error::$blocking yarn advisory(ies) at high or critical severity"

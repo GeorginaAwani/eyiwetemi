@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\Admin\ResetPassword;
 use App\Notifications\Admin\SignInLink;
 use App\Support\AdminSignIn;
+use App\Support\OtherSessions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -188,7 +189,12 @@ class SignInController extends Controller
         $status = Password::broker()->reset(
             ['email' => $reset['email'], 'token' => $reset['token'], 'password' => $request->string('password')->toString()],
             function (User $resetting, string $password) use (&$user): void {
-                $resetting->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
+                /* only her account is changed from the admin host */
+                if (! $resetting->isAuthor()) {
+                    return;
+                }
+                $resetting->forceFill(['password' => $password])->save();
+                OtherSessions::end($resetting);
                 $user = $resetting;
             },
         );
