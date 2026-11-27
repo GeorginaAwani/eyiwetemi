@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SubscribeRequest;
+use App\Mail\NewsletterWelcome;
 use App\Models\NewsletterStop;
 use App\Models\Subscriber;
+use App\Support\NewsletterEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,7 +21,7 @@ use Inertia\Response;
 class EmailsController extends Controller
 {
     /**
-     * The link in the confirmation email: the address is on the list from now on.
+     * The link in the confirmation email: the address is on the list from now on, and gets the welcome letter once.
      */
     public function confirm(string $token): RedirectResponse
     {
@@ -26,7 +29,12 @@ class EmailsController extends Controller
 
         abort_if($subscriber === null, 404);
 
+        $firstConfirmation = $subscriber->confirmed_at === null;
         $subscriber->update(['confirmed_at' => now(), 'confirm_token_hash' => null]);
+
+        if ($firstConfirmation) {
+            Mail::to($subscriber->email)->queue(new NewsletterWelcome(NewsletterEmail::welcome($subscriber)));
+        }
 
         return redirect()->route('emails.show', $subscriber->manage_token);
     }

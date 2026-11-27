@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -24,6 +25,14 @@ class NewsletterWelcome extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(subject: 'Welcome');
+    }
+
+    /**
+     * The reader's manage page is the unsubscribe link their mail client offers.
+     */
+    public function headers(): Headers
+    {
+        return new Headers(text: ['List-Unsubscribe' => '<'.$this->letter['manage'].'>']);
     }
 
     public function content(): Content
