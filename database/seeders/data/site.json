@@ -110,7 +110,7 @@
    {
     "id": "changes",
     "h": "Changes",
-    "html": "<p>If this page changes in a way that matters, I’ll say so in a note.</p>"
+    "html": "<p>If this page changes in a way that matters, I’ll say so in a note, and everyone with an account will hear about it.</p>"
    }
   ]
  },
@@ -473,7 +473,7 @@
    {
     "id": "changes",
     "h": "Changes",
-    "html": "<p>If these terms change in a way that matters, I’ll say so in a note. Anything unclear? Write to <a class=\"link\" href=\"mailto:hello@eyiwetemi.com\">hello@eyiwetemi.com</a>.</p>"
+    "html": "<p>If these terms change in a way that matters, I’ll say so in a note, and everyone with an account will hear about it. Anything unclear? Write to <a class=\"link\" href=\"mailto:hello@eyiwetemi.com\">hello@eyiwetemi.com</a>.</p>"
    }
   ]
  }

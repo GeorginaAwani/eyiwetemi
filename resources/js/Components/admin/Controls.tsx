@@ -103,7 +103,10 @@ export function KSelect({
     const button = useRef<HTMLButtonElement>(null);
     const [open, setOpen] = useState(false);
     const [act, setAct] = useState(0);
-    const current = Math.max(0, options.findIndex((o) => o.value === value));
+    const current = Math.max(
+        0,
+        options.findIndex((o) => o.value === value),
+    );
 
     useEffect(() => {
         if (!open) {
@@ -190,7 +193,12 @@ export function KSelect({
         } else if (k === 'Tab') {
             show(false);
         } else if (k.length === 1) {
-            const m = (o: Option) => o.label.trim().toLowerCase().split(/\s+/).some((w) => w.startsWith(k.toLowerCase()));
+            const m = (o: Option) =>
+                o.label
+                    .trim()
+                    .toLowerCase()
+                    .split(/\s+/)
+                    .some((w) => w.startsWith(k.toLowerCase()));
             const after = options.findIndex((o, i) => i > act && m(o));
             const j = after >= 0 ? after : options.findIndex(m);
             if (j >= 0) {
@@ -282,7 +290,7 @@ export type SaveState = 'saved' | 'saving' | 'bad';
 /** "Saving…", "Saved", or "Not saved" while a field is wrong. */
 export function SavedNote({ state, hidden }: { state: SaveState; hidden?: boolean }) {
     return (
-        <span className="k-saved" id="sv" aria-live="polite" data-s={state} style={{ visibility: hidden ? 'hidden' : 'visible' }}>
+        <span className={`k-saved${hidden ? ' gone' : ''}`} id="sv" aria-live="polite" data-s={state}>
             <span className="i">{state === 'bad' ? <Alert /> : <SavedIcon />}</span>
             <span className="t">{state === 'bad' ? 'Not saved' : state === 'saving' ? 'Saving…' : 'Saved'}</span>
         </span>

@@ -173,7 +173,9 @@ export function MarkCard({
         setBusy(false);
     }
 
-    const av = (seed: string, mine: boolean) => <span className={`w-av${mine ? ' me' : ''}`} style={mine ? (me.photo ? { backgroundImage: `url(${me.photo})` } : bloomStyle('me', 22)) : bloomStyle(seed, 22)} aria-hidden="true" />;
+    const av = (seed: string, mine: boolean) => (
+        <span className={`w-av${mine ? ' me' : ''}`} style={mine ? (me.photo ? { backgroundImage: `url(${me.photo})` } : bloomStyle('me', 22)) : bloomStyle(seed, 22)} aria-hidden="true" />
+    );
 
     return (
         <>
@@ -241,7 +243,7 @@ export function MarkCard({
 }
 
 /** The bar's Comments panel: every open note on this page; a note with words opens on them. */
-export function CommentsPanel({ notes, slug, hide, setHide, onOpen }: { notes: Note[]; slug: string; hide: boolean; setHide: (on: boolean) => void; onOpen: (n: Note) => void }) {
+export function CommentsPanel({ notes, unit, slug, hide, setHide, onOpen }: { notes: Note[]; unit: string; slug: string; hide: boolean; setHide: (on: boolean) => void; onOpen: (n: Note) => void }) {
     useEffect(() => localStorage.setItem('eyiAdmHideMarks', hide ? '1' : '0'), [hide]);
 
     return (
@@ -257,6 +259,7 @@ export function CommentsPanel({ notes, slug, hide, setHide, onOpen }: { notes: N
                     <span>Hide marks</span>
                 </label>
             </div>
+            {!notes.length && <p className="w-empty">No open comments on this {unit}.</p>}
             <div className="w-cms">
                 {notes.map((n) => (
                     <button className="w-cm" type="button" key={n.id} onClick={() => onOpen(n)}>

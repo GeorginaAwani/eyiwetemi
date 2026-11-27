@@ -152,6 +152,11 @@ export default function Site(props: Props) {
     });
     const after = (fn: () => void) => fx.current.push(fn);
 
+    /* a page opened on a later tab shows that tab in the row (phones scroll the row sideways) */
+    useEffect(() => {
+        document.querySelector('#spT a.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }, []);
+
     /* drafts kept on this device go up again when the connection is back */
     useEffect(() => {
         const back = () => (Object.keys(ref.current) as PageKey[]).forEach((k) => window.localStorage.getItem(BACKUP(k)) && void save(k));
