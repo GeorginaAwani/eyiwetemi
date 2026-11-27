@@ -1,6 +1,6 @@
 New sign-in
 
-{{ $device }} signed in to the admin on {{ $date }} at {{ $time }} WAT.
+{!! $device !!} signed in to the admin on {!! $date !!} at {!! $time !!} WAT.
 
 If it wasn’t you, change your password and sign out everywhere.
 

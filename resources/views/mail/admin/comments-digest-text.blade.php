@@ -1,17 +1,17 @@
-{{ $count === 1 ? '1 new comment' : $count.' new comments' }}
+{!! $count === 1 ? '1 new comment' : $count.' new comments' !!}
 @foreach ($places as $place)
 
-{{ $place['title'] }}
+{!! $place['title'] !!}
 @foreach ($place['lines'] as $line)
-{{ $line }}
+{!! $line !!}
 @endforeach
 @endforeach
 @if ($more > 0)
 
-and {{ $more }} more
+and {!! $more !!} more
 @endif
 
 Open comments:
-{{ $url }}
+{!! $url !!}
 
 You can turn these emails off on the Comments page.

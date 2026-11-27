@@ -1,9 +1,9 @@
-{{ $title }}
+{!! $title !!}
 
-{{ $small }}
+{!! $small !!}
 
-{{ $buttonText }}:
-{{ url($href) }}
+{!! $buttonText !!}:
+{!! url($href) !!}
 
 You get this because of your notification settings. Change them:
-{{ url('/settings#notifications') }}
+{!! url('/settings#notifications') !!}

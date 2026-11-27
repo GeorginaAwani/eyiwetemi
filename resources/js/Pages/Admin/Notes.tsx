@@ -5,6 +5,7 @@ import { EditorView } from 'prosemirror-view';
 import { KSelect, wait } from '../../Components/admin/Controls';
 import { Ring } from '../../Components/admin/Icons';
 import { isEmptyDoc, Json, markActive, noteDoc, notePlugins, setLink, toggleBold, toggleItalic } from '../../Components/admin/notes/editor';
+import { ago, atFmt, bye, dDay, dShort, EASE, grow, inA, MONTH, pd, phone, settle, shrink, tFmt, TIMES, xsrf, ymd } from '../../Components/admin/notes/lines';
 import AdminLayout from '../../Layouts/AdminLayout';
 import { beacon, json } from '../../lib/http';
 import { prefersReducedMotion as RM } from '../../lib/motion';
@@ -149,112 +150,6 @@ const I = {
     ),
 };
 
-/* ------------------------------------------------------------------ dates (all West Africa Time, as the server sends them) */
-const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const pd = (d: string) => {
-    const [y, m, dd] = d.split('-').map(Number);
-
-    return new Date(y, m - 1, dd);
-};
-const ymd = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
-const dShort = (d: string) => `${pd(d).getDate()} ${MON[pd(d).getMonth()]}`;
-const dDay = (d: string) => {
-    const x = pd(d);
-
-    return `${DAY[x.getDay()]} ${x.getDate()} ${MON[x.getMonth()]}`;
-};
-const tFmt = (hm: string) => {
-    const [h, m] = hm.split(':').map(Number);
-
-    return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
-};
-const atFmt = (at: string) => `${dDay(at.slice(0, 10))}, ${tFmt(at.slice(11, 16))}`;
-function ago(iso: string) {
-    const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-    if (m < 1) {
-        return 'just now';
-    }
-    if (m < 60) {
-        return m + ' min ago';
-    }
-    if (m < 1440) {
-        return Math.round(m / 60) + ' h ago';
-    }
-
-    return m < 2880 ? 'yesterday' : Math.round(m / 1440) + ' d ago';
-}
-const TIMES = [...Array(48)].map((_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
-
-/* ------------------------------------------------------------------ motion (as the prototype) */
-const EASE = 'cubic-bezier(.22,.8,.2,1)';
-function after(an: Animation, ms: number, fn: () => void) {
-    let done = false;
-    const f = () => {
-        if (!done) {
-            done = true;
-            fn();
-        }
-    };
-    an.onfinish = f;
-    window.setTimeout(f, ms + 60);
-}
-function grow(el: HTMLElement, from: number) {
-    if (RM()) {
-        el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
-
-        return;
-    }
-    const h = el.offsetHeight;
-    el.style.overflow = 'hidden';
-    after(el.animate([{ height: from + 'px', opacity: 0.6 }, { height: h + 'px', opacity: 1 }], { duration: 380, easing: EASE }), 380, () => (el.style.overflow = ''));
-    [...el.children].forEach((c, i) =>
-        c.animate([{ opacity: 0, filter: 'blur(4px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 420, delay: 60 + i * 40, easing: EASE, fill: 'backwards' }),
-    );
-}
-function shrink(el: HTMLElement, to: number, done: () => void) {
-    if (RM()) {
-        done();
-
-        return;
-    }
-    const h = el.offsetHeight;
-    el.style.overflow = 'hidden';
-    after(el.animate([{ height: h + 'px', opacity: 1 }, { height: to + 'px', opacity: 0.4 }], { duration: 300, easing: EASE, fill: 'forwards' }), 300, done);
-}
-function bye(el: HTMLElement, done: () => void) {
-    if (RM()) {
-        after(el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: 'forwards' }), 160, done);
-
-        return;
-    }
-    const h = el.offsetHeight;
-    el.style.overflow = 'hidden';
-    after(el.animate([{ height: h + 'px', opacity: 1, filter: 'none' }, { height: '0px', opacity: 0, filter: 'blur(4px)' }], { duration: 320, easing: EASE, fill: 'forwards' }), 320, done);
-}
-function inA(el: Element | null) {
-    if (!el) {
-        return;
-    }
-    if (RM()) {
-        el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
-
-        return;
-    }
-    el.animate([{ opacity: 0, filter: 'blur(4px)', transform: 'translateY(4px)' }, { opacity: 1, filter: 'none', transform: 'none' }], { duration: 420, easing: EASE });
-}
-function settle(el: Element | null) {
-    if (!el) {
-        return;
-    }
-    [...el.children].forEach((c, i) => (c as HTMLElement).style.setProperty('--k', String(i)));
-    el.classList.remove('settle');
-    void (el as HTMLElement).offsetWidth;
-    el.classList.add('settle');
-}
-const phone = () => window.innerWidth <= 600;
-const xsrf = (): string => decodeURIComponent(document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)?.[1] ?? '');
 const offline = () => !navigator.onLine;
 const KINDS: Record<string, string> = { novel: 'Novel', poem: 'Poem', story: 'Story', essay: 'Essay', collection: 'Collection' };
 const KEEP = 'eyiAdmNoteDraft:';

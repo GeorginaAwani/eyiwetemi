@@ -9,3 +9,11 @@
   @keyframes ppViFade{from{opacity:0}}
   .cm-wk.on .pp-vi{animation:ppViFade 200ms ease both}
 }
+
+/* Newsletter (step 9a): the preview shows the real email in a frame, wide or phone width; changes fade. */
+.nw-pvb iframe.nw-frame{display:block;border:0;width:600px;max-width:100%;background:#fff;box-shadow:0 0 0 1px var(--line);transition:opacity 160ms var(--ease-soft),filter 160ms var(--ease-soft)}
+.nw-pvb.ph iframe.nw-frame{width:360px;border-radius:12px}
+.nw-pvb iframe.nw-frame.out{opacity:0;filter:blur(4px)}
+.nw-pane{transition:opacity 160ms var(--ease-soft),filter 160ms var(--ease-soft)}
+.nw-pane.nt-out{opacity:0;filter:blur(4px)}
+@media (prefers-reduced-motion:reduce){.nw-pvb iframe.nw-frame.out,.nw-pane.nt-out{filter:none}}

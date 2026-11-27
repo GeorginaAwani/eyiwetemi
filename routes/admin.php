@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ChapterController;
 use App\Http\Controllers\Admin\CommentController;
+use App\Http\Controllers\Admin\NewsletterController;
 use App\Http\Controllers\Admin\NoteController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PublishController;
@@ -76,8 +77,18 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::post('/notes/{note}/schedule', [NoteController::class, 'schedule'])->whereNumber('note')->name('notes.schedule');
     Route::delete('/notes/{note}/schedule', [NoteController::class, 'unschedule'])->whereNumber('note')->name('notes.unschedule');
 
+    Route::get('/newsletter', [NewsletterController::class, 'index'])->name('newsletter.index');
+    Route::put('/newsletter/weekly', [NewsletterController::class, 'weekly'])->name('newsletter.weekly');
+    Route::patch('/newsletter/next', [NewsletterController::class, 'updateNext'])->name('newsletter.next');
+    Route::patch('/newsletter/next/items/{key}', [NewsletterController::class, 'updateItem'])->where('key', 'i[0-9]+')->name('newsletter.items');
+    Route::get('/newsletter/subscribers', [NewsletterController::class, 'subscribers'])->name('newsletter.subscribers');
+    Route::delete('/newsletter/subscribers/{subscriber}', [NewsletterController::class, 'removeSubscriber'])->whereNumber('subscriber')->name('newsletter.subscribers.destroy');
+    Route::patch('/newsletter/welcome', [NewsletterController::class, 'welcome'])->name('newsletter.welcome');
+    Route::get('/newsletter/preview', [NewsletterController::class, 'preview'])->name('newsletter.preview');
+    Route::post('/newsletter/test', [NewsletterController::class, 'test'])->name('newsletter.test');
+
     Route::get('/{section}', [SectionController::class, 'show'])
-        ->whereIn('section', ['stats', 'newsletter', 'site'])
+        ->whereIn('section', ['stats', 'site'])
         ->name('section');
 
     Route::get('/works', [WorkController::class, 'index'])->name('works.index');
