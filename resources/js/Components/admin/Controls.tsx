@@ -64,7 +64,7 @@ export function FieldError({ message, children }: { message: string; children?: 
     );
 }
 
-export type Option = { value: string; label: string; add?: boolean };
+export type Option = { value: string; label: string; add?: boolean; note?: string };
 
 /**
  * Our select: a button and a listbox. Arrows, Home and End move; Enter or Space picks; Esc closes; a letter jumps.
@@ -250,6 +250,7 @@ export function KSelect({
                         role="option"
                         id={`${base}-o${i}`}
                         aria-selected={i === current}
+                        data-n={o.note}
                         className={`${o.add ? 'add' : ''}${i === act && open ? ' act' : ''}`.trim() || undefined}
                         onMouseMove={() => act !== i && setAct(i)}
                         onClick={(e) => {

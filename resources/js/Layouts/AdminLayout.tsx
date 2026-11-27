@@ -3,6 +3,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import AdminTop from '../Components/admin/AdminTop';
 import { Chevron, NAV_ICONS, Plus } from '../Components/admin/Icons';
 import NewWork, { openNewWork } from '../Components/admin/NewWork';
+import { InviteDialog } from '../Components/admin/People';
 import { json } from '../lib/http';
 
 export type AdminSection = 'desk' | 'works' | 'notes' | 'comments' | 'reviewers' | 'stats' | 'newsletter' | 'site';
@@ -18,22 +19,39 @@ export const SECTIONS: { key: AdminSection; name: string; href: string }[] = [
     { key: 'site', name: 'Site', href: '/site' },
 ];
 
+/** The margin's sections; Comments carries how many comments are new. */
 function Nav({ section }: { section: AdminSection }) {
+    const { commentsNew = 0 } = usePage().props as unknown as { commentsNew?: number };
+    const [fresh, setFresh] = useState(commentsNew);
+
+    /* the inbox tells the margin when she has seen or acted on comments */
+    useEffect(() => setFresh(commentsNew), [commentsNew]);
+    useEffect(() => {
+        const set = (e: Event) => setFresh((e as CustomEvent<number>).detail);
+        window.addEventListener('admin:comments-new', set);
+
+        return () => window.removeEventListener('admin:comments-new', set);
+    }, []);
+
     return (
         <nav className="b-mn k-mn" aria-label="Admin">
-            {SECTIONS.map((s) =>
-                s.key === section ? (
+            {SECTIONS.map((s) => {
+                const badge = s.key === 'comments' && fresh > 0 ? <small>{fresh}</small> : null;
+
+                return s.key === section ? (
                     <Link key={s.key} href={s.href} className="on" aria-current="page">
                         {NAV_ICONS[s.key]}
                         {s.name}
+                        {badge}
                     </Link>
                 ) : (
                     <Link key={s.key} href={s.href}>
                         {NAV_ICONS[s.key]}
                         {s.name}
+                        {badge}
                     </Link>
-                ),
-            )}
+                );
+            })}
         </nav>
     );
 }
@@ -207,6 +225,7 @@ export default function AdminLayout({ section, title, children }: { section: Adm
                 <div className={`b-dim${switcher ? ' on' : ''}`} onClick={() => setSwitcher(false)} />
             </main>
             <NewWork />
+            <InviteDialog />
         </>
     );
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\CommentsInbox;
 use App\Support\DeskPage;
 use App\Support\Preferences;
 use App\Support\SiteChrome;
@@ -55,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                 'siteUrl' => rtrim((string) config('app.url'), '/').'/',
                 'writingNow' => fn (): array => $request->session()->get('admin.verified') && $request->user()?->isAuthor() ? DeskPage::writingNow() : [],
                 'newWork' => fn (): ?array => $request->session()->get('admin.verified') && $request->user()?->isAuthor() ? WorksAdmin::newWorkChoices() : null,
+                'commentsNew' => fn (): int => $request->session()->get('admin.verified') && $request->user()?->isAuthor() ? array_sum(CommentsInbox::counts()) : 0,
             ];
         }
 

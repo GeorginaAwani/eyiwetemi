@@ -261,7 +261,7 @@ class DeskPageTest extends TestCase
         $this->assertSame($expected, DeskPage::writingNow()[0]['meta']);
     }
 
-    public function test_comments_count_only_unseen_reader_comments_and_show_the_newest_three_with_their_place(): void
+    public function test_comments_count_unseen_reader_threads_and_show_the_newest_three_with_their_place(): void
     {
         $author = User::factory()->author()->create();
         $reader = User::factory()->create();
@@ -295,7 +295,7 @@ class DeskPageTest extends TestCase
 
         $comments = DeskPage::props()['comments'];
 
-        $this->assertSame(3, $comments['count']);
+        $this->assertSame(2, $comments['count'], 'a thread with a new reply counts once');
         $this->assertSame(['Chapter two is wild', 'Agreed', 'Lovely'], array_column($comments['rows'], 'text'));
         $this->assertSame(['The Ember Gate · Chapter 2', 'The Ember Gate · Chapter 2', 'Harmattan'], array_column($comments['rows'], 'on'));
         $this->assertSame($reader->username, $comments['rows'][0]['who']);

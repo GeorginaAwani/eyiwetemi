@@ -1,1 +1,11 @@
 /* Admin build additions to the ported prototype CSS (kept apart so base.css stays verbatim). */
+
+/* Comments + Reviewers (step 7a): a private work's lock turns into reviewers when ticked; "Sent" fades in and out. */
+@keyframes ppViIn{from{opacity:0;transform:scale(.7) rotate(20deg)}}
+.cm-wk.on .pp-vi{animation:ppViIn 260ms cubic-bezier(.34,1.45,.64,1) both}
+.pp-sent{opacity:0;transition:opacity 300ms var(--ease-soft)}
+.pp-sent.on{opacity:1}
+@media (prefers-reduced-motion:reduce){
+  @keyframes ppViFade{from{opacity:0}}
+  .cm-wk.on .pp-vi{animation:ppViFade 200ms ease both}
+}

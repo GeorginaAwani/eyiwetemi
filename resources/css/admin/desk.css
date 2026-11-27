@@ -1,8 +1,5 @@
 /* Desk rules that live in the later parts' prototype styles (desk.html styles 2-6), ported verbatim. Each part's full file arrives with its own step. */
 /* 2d comments */
-a.pp-dc{display:block;text-decoration:none;color:inherit}
-a.pp-dc p{transition:color var(--d1)}
-a.pp-dc:hover p{color:var(--accent)}
 /* 2e notes */
 .nt-dsch{color:var(--accent)!important}
 .nt-dh{display:inline-flex;align-items:center;gap:5px}

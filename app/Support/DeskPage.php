@@ -165,7 +165,7 @@ class DeskPage
         $items = self::itemsByWork($newest->pluck('work_id')->all());
 
         return [
-            'count' => (clone $readers)->whereNull('seen_at')->count(),
+            'count' => self::newReaderThreads()->count(),
             'rows' => $newest->map(function (Comment $comment) use ($items): array {
                 $work = $comment->work;
 
@@ -187,12 +187,7 @@ class DeskPage
      */
     private static function reviewers(): array
     {
-        $marks = Comment::query()
-            ->where('audience', CommentAudience::Review)
-            ->where('status', CommentStatus::Open)
-            ->whereNull('parent_id')
-            ->whereNotNull('user_id')
-            ->whereNotIn('user_id', self::authorsQuery())
+        $marks = self::reviewerMarks()
             ->with([
                 'user' => fn (Relation $query) => $query->select(['id', 'name']),
                 'work' => fn (Relation $query) => $query->select(self::WORK_COLUMNS),
@@ -234,9 +229,24 @@ class DeskPage
         })->values()->all();
 
         return [
-            'count' => $marks->whereNull('seen_at')->count(),
+            'count' => self::reviewerMarks()->whereNull('seen_at')->count(),
             'rows' => $rows,
         ];
+    }
+
+    /**
+     * Reviewers' open top-level notes and marks on the drafts, from anyone but the writer.
+     *
+     * @return Builder<Comment>
+     */
+    public static function reviewerMarks(): Builder
+    {
+        return Comment::query()
+            ->where('audience', CommentAudience::Review)
+            ->where('status', CommentStatus::Open)
+            ->whereNull('parent_id')
+            ->whereNotNull('user_id')
+            ->whereNotIn('user_id', self::authorsQuery());
     }
 
     /**
@@ -497,11 +507,26 @@ class DeskPage
     }
 
     /**
+     * Readers' comments that count as new: top-level comments not yet seen, or with a reader's reply not yet seen.
+     * Seeing a comment sees its replies too, so a thread is new once, however many replies come in.
+     *
+     * @return Builder<Comment>
+     */
+    public static function newReaderThreads(): Builder
+    {
+        return self::readerComments()
+            ->whereNull('parent_id')
+            ->where(fn (Builder $query) => $query->whereNull('seen_at')
+                ->orWhereHas('replies', fn (Builder $reply) => $reply->whereNull('seen_at')->whereNull('hidden_at')
+                    ->where(fn (Builder $who) => $who->whereNull('user_id')->orWhereNotIn('user_id', self::authorsQuery()))));
+    }
+
+    /**
      * Public comments that are not hidden and not the writer's own.
      *
      * @return Builder<Comment>
      */
-    private static function readerComments(): Builder
+    public static function readerComments(): Builder
     {
         return Comment::query()
             ->where('audience', CommentAudience::Public)
@@ -620,7 +645,7 @@ class DeskPage
      *
      * @param  Collection<int, WorkItem>  $items
      */
-    private static function unitNumber(Work $work, WorkItem $item, Collection $items): ?string
+    public static function unitNumber(Work $work, WorkItem $item, Collection $items): ?string
     {
         if (! in_array($work->kind, [WorkKind::Novel, WorkKind::Collection], true) || $item->type === WorkItemType::Part) {
             return null;
