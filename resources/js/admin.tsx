@@ -4,6 +4,7 @@ import { createInertiaApp } from "@inertiajs/react";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createRoot } from "react-dom/client";
 import { wirePageChange } from "./lib/motion";
+import { startOffline } from "./lib/offline";
 
 createInertiaApp({
     title: (title) => (title ? `${title} · eyiwetemi admin` : "eyiwetemi · admin"),
@@ -20,3 +21,4 @@ createInertiaApp({
 });
 
 wirePageChange();
+startOffline();

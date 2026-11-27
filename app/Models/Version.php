@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-#[Fillable(['versionable_type', 'versionable_id', 'label', 'body', 'words', 'words_added', 'words_cut', 'created_by'])]
+#[Fillable(['versionable_type', 'versionable_id', 'label', 'body', 'words', 'words_added', 'words_cut', 'created_by', 'device'])]
 class Version extends Model
 {
     /** @use HasFactory<VersionFactory> */

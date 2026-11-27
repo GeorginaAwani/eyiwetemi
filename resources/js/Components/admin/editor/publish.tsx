@@ -13,7 +13,7 @@ import { ChaptersIcon, Clock15, Clock18, PlanIcon, SweepIcon, VersionsIcon } fro
 export type VersionRow = { id: number; label: string; at: string; words: number; added: number; cut: number };
 export type PublishState = { state: 'draft' | 'sch' | 'pub' | 'chg' | 'unpub'; scheduledAt: string | null; liveAt: string | null; audience: string; versions: VersionRow[] };
 export type Flash = 'pub' | 'upd' | 'sch' | 'unpub' | null;
-export type Panel = '' | 'chap' | 'plan' | 'com' | 'sweep' | 'ver';
+export type Panel = '' | 'chap' | 'plan' | 'com' | 'sweep' | 'ver' | 'clash';
 type Json = { type: string; attrs?: Record<string, unknown>; content?: Json[]; text?: string };
 
 /* ---------------------------------------------------------------- changes between two pages, word by word (as the prototype) */
@@ -161,6 +161,7 @@ export function PublishControls({
     pub,
     setPub,
     flush,
+    online = true,
     flash,
     say,
     label,
@@ -172,14 +173,18 @@ export function PublishControls({
     words: number;
     pub: PublishState;
     setPub: (p: PublishState) => void;
-    flush: () => Promise<void>;
+    /** false: the draft didn't reach the server (no connection, or two drafts waiting for her) */
+    flush: () => Promise<boolean | void>;
+    online?: boolean;
     flash: (f: Flash) => void;
     say: (t: string) => void;
     label: string;
     unswept?: number;
     openSweep?: () => void;
 }) {
-    const [kind, setKind] = useState<'' | 'pub' | 'sch' | 'chk'>('');
+    const [kind, setKind] = useState<'' | 'pub' | 'sch' | 'chk' | 'off'>('');
+    /* with no connection, Publish and Schedule explain instead */
+    const [offFor, setOffFor] = useState<'pub' | 'sch'>('pub');
     const [busy, setBusy] = useState('');
     const [unpubAsk, setUnpubAsk] = useState(false);
     const [day, setDay] = useState('');
@@ -188,6 +193,13 @@ export function PublishControls({
     const pop = useRef<HTMLDivElement>(null);
     const s = pub.state;
     const days = DAYS();
+
+    useEffect(() => {
+        if (online && kind === 'off') {
+            setKind('');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [online]);
 
     useEffect(() => {
         if (!kind) {
@@ -226,7 +238,13 @@ export function PublishControls({
     async function act(key: string, method: 'POST' | 'DELETE', path: string, body?: Record<string, unknown>) {
         setBusy(key);
         loading(true);
-        await flush();
+        if ((await flush()) === false) {
+            loading(false);
+            setBusy('');
+            setKind('');
+
+            return null;
+        }
         const { status, data } = await json<PublishState & { errors: Record<string, string[]> }>(method, `${url}/${path}`, body);
         loading(false);
         setBusy('');
@@ -270,26 +288,57 @@ export function PublishControls({
                     aria-haspopup="dialog"
                     aria-expanded={kind === 'sch'}
                     aria-label={s === 'sch' ? `Scheduled for ${schText} WAT` : 'Schedule'}
-                    onClick={() => setKind(kind === 'sch' ? '' : 'sch')}
+                    onClick={() => (!online ? (setOffFor('sch'), setKind(kind === 'off' && offFor === 'sch' ? '' : 'off')) : setKind(kind === 'sch' ? '' : 'sch'))}
                 >
                     <Clock15 />
                     <span>{schText}</span>
                 </button>
             )}
             <button
-                className={`k-btn sm${s === 'pub' && !part || kind === 'sch' ? ' line' : ''}${busy === 'pub' ? ' busy' : ''}`}
+                className={`k-btn sm${(s === 'pub' && !part) || kind === 'sch' || kind === 'off' ? ' line' : ''}${busy === 'pub' ? ' busy' : ''}`}
                 id="pubB"
                 type="button"
-                aria-expanded={kind === 'pub'}
+                aria-expanded={kind === 'pub' || (kind === 'off' && offFor === 'pub')}
                 aria-busy={busy === 'pub'}
                 disabled={!part && (s === 'draft' || s === 'unpub') && !words}
-                onClick={() => (s === 'pub' && !part ? setKind(kind === 'pub' ? '' : 'pub') : !part && unswept > 0 && kind !== 'chk' ? setKind('chk') : kind === 'chk' ? setKind('') : publish())}
+                onClick={() =>
+                    !online
+                        ? (setOffFor('pub'), setKind(kind === 'off' && offFor === 'pub' ? '' : 'off'))
+                        : s === 'pub' && !part
+                          ? setKind(kind === 'pub' ? '' : 'pub')
+                          : !part && unswept > 0 && kind !== 'chk'
+                            ? setKind('chk')
+                            : kind === 'chk'
+                              ? setKind('')
+                              : publish()
+                }
             >
                 <span>{pubLabel}</span>
                 <Ring />
             </button>
             <div className={`w-scrim clear${kind ? ' on' : ''}`} />
-            <div ref={pop} className={`w-pan wa-pop${kind ? ' open' : ''}`} id="pop" role="dialog" tabIndex={-1} aria-label={kind === 'sch' ? 'Schedule' : 'Published'} {...inertWhen(!kind)}>
+            <div
+                ref={pop}
+                className={`w-pan wa-pop${kind ? ' open' : ''}`}
+                id="pop"
+                role="dialog"
+                tabIndex={-1}
+                aria-label={kind === 'off' ? 'No connection' : kind === 'sch' ? 'Schedule' : 'Published'}
+                {...inertWhen(!kind)}
+            >
+                {kind === 'off' && (
+                    <>
+                        <div className="w-ph" style={{ margin: 0 }}>
+                            <h2>No connection</h2>
+                        </div>
+                        <p className="w-pp">{offFor === 'sch' ? 'Schedule' : s === 'chg' ? 'Update' : 'Publish'} when you’re back online. Your draft is safe on this device.</p>
+                        <div className="acts">
+                            <button className="k-btn sm line" type="button" onClick={() => setKind('')}>
+                                <span>OK</span>
+                            </button>
+                        </div>
+                    </>
+                )}
                 {kind === 'chk' && (
                     <>
                         <div className="w-ph" style={{ margin: 0 }}>
@@ -445,6 +494,7 @@ export function BarPanels({
     sweepCount,
     commentsNode = null,
     commentsCount = 0,
+    clashNode = null,
 }: {
     work: Look;
     itemId: number;
@@ -462,11 +512,12 @@ export function BarPanels({
     sweepCount: number;
     commentsNode?: ReactNode | null;
     commentsCount?: number;
+    clashNode?: ReactNode | null;
 }) {
     const [draftDiff, setDraftDiff] = useState<{ add: number; del: number } | null>(null);
     const pan = useRef<HTMLDivElement>(null);
-    const unitWord = work.collection ? ({ poem: 'poem', essay: 'essay' } as Record<string, string>)[work.kind] ?? 'story' : 'chapter';
-    const Units = work.collection ? ({ poem: 'Poems', essay: 'Essays' } as Record<string, string>)[work.kind] ?? 'Stories' : 'Chapters';
+    const unitWord = work.collection ? (({ poem: 'poem', essay: 'essay' } as Record<string, string>)[work.kind] ?? 'story') : 'chapter';
+    const Units = work.collection ? (({ poem: 'Poems', essay: 'Essays' } as Record<string, string>)[work.kind] ?? 'Stories') : 'Chapters';
     const kick = (r: ChapterRow) => (work.collection ? `${unitWord.charAt(0).toUpperCase() + unitWord.slice(1)} ${r.number}` : heading(r.number, 'Chapter', work.headingStyle));
 
     useEffect(() => {
@@ -539,20 +590,22 @@ export function BarPanels({
                             </Link>
                         </div>
                         <div className="w-cl">
-                            {rows.map((r) => (r.id === itemId ? { ...r, state: pub.state, scheduledAt: pub.scheduledAt } : r)).map((r) =>
-                                r.type === 'part' ? (
-                                    <Link key={r.id} className={`w-cp${r.id === itemId ? ' here' : ''}`} href={r.href}>
-                                        {work.showPartNumbers && <span className="n">{heading(r.number, work.partWord || 'Part', work.partStyle)}</span>}
-                                        {r.title}
-                                    </Link>
-                                ) : (
-                                    <Link key={r.id} className={`w-crow${r.id === itemId ? ' here' : ''}`} href={r.href} aria-current={r.id === itemId ? 'page' : undefined}>
-                                        <span className="no">{r.number}</span>
-                                        <span className="t">{r.title ? r.title : <i className="w-phx">{kick(r)}</i>}</span>
-                                        <StateFact row={r} short />
-                                    </Link>
-                                ),
-                            )}
+                            {rows
+                                .map((r) => (r.id === itemId ? { ...r, state: pub.state, scheduledAt: pub.scheduledAt } : r))
+                                .map((r) =>
+                                    r.type === 'part' ? (
+                                        <Link key={r.id} className={`w-cp${r.id === itemId ? ' here' : ''}`} href={r.href}>
+                                            {work.showPartNumbers && <span className="n">{heading(r.number, work.partWord || 'Part', work.partStyle)}</span>}
+                                            {r.title}
+                                        </Link>
+                                    ) : (
+                                        <Link key={r.id} className={`w-crow${r.id === itemId ? ' here' : ''}`} href={r.href} aria-current={r.id === itemId ? 'page' : undefined}>
+                                            <span className="no">{r.number}</span>
+                                            <span className="t">{r.title ? r.title : <i className="w-phx">{kick(r)}</i>}</span>
+                                            <StateFact row={r} short />
+                                        </Link>
+                                    ),
+                                )}
                         </div>
                         <div className="w-pf">
                             <button className="k-l" type="button" onClick={() => newItem('chapter')}>
@@ -571,6 +624,7 @@ export function BarPanels({
                 {panel === 'plan' && planNode}
                 {panel === 'com' && commentsNode}
                 {panel === 'sweep' && sweepNode}
+                {panel === 'clash' && clashNode}
                 {panel === 'ver' && (
                     <>
                         <div className="w-ph">

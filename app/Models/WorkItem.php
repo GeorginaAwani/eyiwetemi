@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 #[Fillable([
     'work_id', 'type', 'position', 'piece_work_id', 'title', 'description',
     'draft_body', 'live_body', 'draft_text', 'live_text', 'draft_words', 'live_words',
-    'draft_revision', 'draft_saved_at', 'status', 'scheduled_at', 'published_at', 'live_updated_at',
+    'draft_revision', 'draft_saved_at', 'draft_device', 'status', 'scheduled_at', 'published_at', 'live_updated_at',
     'pov_character_id', 'epigraph', 'epigraph_by', 'soundtrack_url', 'soundtrack_label',
 ])]
 #[Hidden(['search'])]

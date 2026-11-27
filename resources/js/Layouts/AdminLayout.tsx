@@ -5,6 +5,7 @@ import { Chevron, NAV_ICONS, Plus } from '../Components/admin/Icons';
 import NewWork, { openNewWork } from '../Components/admin/NewWork';
 import { InviteDialog } from '../Components/admin/People';
 import { json } from '../lib/http';
+import { forgetKept } from '../lib/offline';
 
 export type AdminSection = 'desk' | 'works' | 'notes' | 'comments' | 'reviewers' | 'stats' | 'newsletter' | 'site';
 
@@ -78,7 +79,10 @@ function ForgetDevice() {
     );
 }
 
-const signOut = () => router.post('/sign-out');
+const signOut = async () => {
+    await forgetKept();
+    router.post('/sign-out');
+};
 
 type NowRow = { href: string; title: string; meta: string };
 

@@ -6,19 +6,36 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Brand, ThemeMenu, ViewSite } from '../../Components/admin/AdminTop';
 import { KSelect, Unfold } from '../../Components/admin/Controls';
 import { BreakIcon, FootnoteIcon, FullIcon, ImageIcon, KeyboardDown, LinkIcon, ListIcon, MusicIcon, QuoteIcon } from '../../Components/admin/editor/icons';
-import { addFootnote, asPoem, bulletList, closeFootnote, editorPlugins, inQuote, insertImage, Kind, sceneBreak, setLink, toggleBold, toggleItalic, toggleQuote, topBlock } from '../../Components/admin/editor/plugins';
+import {
+    addFootnote,
+    asPoem,
+    bulletList,
+    closeFootnote,
+    editorPlugins,
+    inQuote,
+    insertImage,
+    Kind,
+    sceneBreak,
+    setLink,
+    toggleBold,
+    toggleItalic,
+    toggleQuote,
+    topBlock,
+} from '../../Components/admin/editor/plugins';
 import { ChapterRow } from '../../Components/admin/editor/chapters';
-import { BarPanels, Flash, Panel, PublishControls, PublishState, VersionRow, VersionView } from '../../Components/admin/editor/publish';
+import { BarPanels, blocksOf, diff, Flash, Panel, PublishControls, PublishState, VersionRow, VersionView } from '../../Components/admin/editor/publish';
+import { watTime } from '../../Components/admin/editor/chapters';
 import PlanPanel, { CardBody } from '../../Components/admin/editor/PlanPanel';
 import { fromStored, schema, toStored } from '../../Components/admin/editor/schema';
 import { hitsInView, markNames, SweepName, termsOf, wordRx } from '../../Components/admin/editor/sweep';
 import SweepPanel from '../../Components/admin/editor/SweepPanel';
 import { CommentsPanel, locate, MarkCard, marksPlugin, Note, NoteReply, setMarks } from '../../Components/admin/editor/marks';
 import type { Plan } from '../../Components/admin/PlanTab';
-import { Alert, BackSmall, Close, Plus, Saved as Tick } from '../../Components/admin/Icons';
+import { Alert, BackSmall, Close, CloudOff, Laptop, Phone, Plus, Ring, Saved as Tick } from '../../Components/admin/Icons';
 import { heading } from '../../lib/headings';
 import { json } from '../../lib/http';
 import { prefersReducedMotion } from '../../lib/motion';
+import { deviceKind, localDraft, noConnection, sendWaitingDrafts, useOnline, writingItem } from '../../lib/offline';
 import { tone } from '../../lib/tone';
 
 type Work = {
@@ -49,8 +66,21 @@ type Item = {
     soundtrack: Soundtrack;
     quote: Quote;
 };
-type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string>; publish: PublishState; chapters: ChapterRow[]; plan: Plan | null; sweep: { names: SweepName[]; mark: boolean }; notes: Note[] };
-type SaveState = 'saving' | 'saved' | 'bad';
+type Draft = { revision: number; device: string | null; savedAt: string | null };
+type Other = { body: Record<string, unknown>; words: number; savedAt: string | null; device: string | null };
+type Props = {
+    work: Work;
+    item: Item;
+    draft: Draft;
+    characters: { id: number; name: string }[];
+    images: Record<number, string>;
+    publish: PublishState;
+    chapters: ChapterRow[];
+    plan: Plan | null;
+    sweep: { names: SweepName[]; mark: boolean };
+    notes: Note[];
+};
+type SaveState = 'saving' | 'saved' | 'bad' | 'off';
 
 /** The reader's marks between scenes, as the prototype names them. */
 const BREAK_LOOK: Record<string, string> = { line_dot: 'dot', asterisks: 'ast', asterism: 'asterism', short_line: 'rule', space: 'space' };
@@ -81,10 +111,20 @@ function wordsIn(view: EditorView | null): number {
  * POV, soundtrack and heading quote), saving as she types. A selection bar formats on a computer, a button row
  * above the keyboard on a phone; Full screen hides everything but the page.
  */
-export default function Write({ work, item, characters: chars0, images, publish, chapters, plan: plan0, sweep, notes: notes0 }: Props) {
+export default function Write({ work, item: fromServer, draft, characters: chars0, images, publish, chapters, plan: plan0, sweep, notes: notes0 }: Props) {
+    /* changes this device kept while the server couldn't have them come back first */
+    const [waiting] = useState(() => localDraft.get(fromServer.id));
+    const [item] = useState<Item>(() => (waiting ? { ...fromServer, ...(waiting.fields as Partial<Item>), ...(waiting.body ? { body: waiting.body } : {}) } : fromServer));
+    const online = useOnline();
+    const onlineRef = useRef(online);
+    onlineRef.current = online;
+    const [clash, setClash] = useState<{ other: Other; revision: number; at: number } | null>(null);
+    const [pick, setPick] = useState(0);
+    const clashRef = useRef(false);
+    clashRef.current = !!clash;
     const part = item.type === 'part';
     const kind = work.kind;
-    const [save, setSave] = useState<SaveState>('saved');
+    const [save, setSave] = useState<SaveState>(() => (navigator.onLine ? 'saved' : 'off'));
     const [words, setWords] = useState(0);
     const [focus, setFocus] = useState(false);
     const [toast, setToast] = useState('');
@@ -120,8 +160,15 @@ export default function Write({ work, item, characters: chars0, images, publish,
     const titleEl = useRef<HTMLHeadingElement>(null);
 
     /* ---------- saving: changes gather for a moment, then one request; a failed save tries again ---------- */
-    const pending = useRef<Record<string, unknown>>({});
-    const bodyDirty = useRef(false);
+    const pending = useRef<Record<string, unknown>>(waiting ? { ...waiting.fields } : {});
+    const bodyDirty = useRef(!!waiting?.body);
+    /* the server's draft these changes grew from: a different one there means it was changed on another device */
+    const base = useRef(waiting ? waiting.base : draft.revision);
+    /* everything not yet confirmed by the server, kept on this device too */
+    const unsent = useRef<{ fields: Record<string, unknown>; body: boolean }>({ fields: waiting ? { ...waiting.fields } : {}, body: !!waiting?.body });
+    const keepTimer = useRef(0);
+    /* when this device's draft last changed (Two drafts shows it) */
+    const editedAt = useRef(waiting ? waiting.at : Date.now());
     const timer = useRef(0);
     const flying = useRef(false);
     const url = `/works/${work.slug}/write/${item.id}`;
@@ -137,21 +184,40 @@ export default function Write({ work, item, characters: chars0, images, publish,
         return body;
     }, []);
 
-    const flush = useCallback(async () => {
+    /** Write what the server hasn't confirmed to this device, so nothing is lost if the page goes or the line drops. */
+    const keepHere = useCallback(() => {
+        window.clearTimeout(keepTimer.current);
+        const u = unsent.current;
+        if (!u.body && !Object.keys(u.fields).length) {
+            localDraft.drop(fromServer.id);
+
+            return;
+        }
+        localDraft.put(fromServer.id, { url, fields: u.fields, body: u.body && view.current ? toStored(view.current.state.doc) : undefined, base: base.current, at: editedAt.current });
+    }, [fromServer.id, url]);
+
+    /** Resolves false when the server didn't take it (no connection, or two drafts to choose between). */
+    const flush = useCallback(async (): Promise<boolean> => {
         window.clearTimeout(timer.current);
         if (flying.current) {
             timer.current = window.setTimeout(flush, 300);
 
-            return;
+            return true;
+        }
+        if (!onlineRef.current) {
+            keepHere();
+            setSave('off');
+
+            return false;
         }
         const body = take();
         if (!Object.keys(body).length) {
             setSave('saved');
 
-            return;
+            return true;
         }
         flying.current = true;
-        const { status } = await json<{ soundtrack: Soundtrack }>('PATCH', url, body);
+        const { status, data } = await json<{ soundtrack: Soundtrack; revision: number; other: Other }>('PATCH', url, { ...body, base: base.current });
         flying.current = false;
         if (status !== 200) {
             pending.current = { ...body, ...pending.current };
@@ -159,25 +225,56 @@ export default function Write({ work, item, characters: chars0, images, publish,
                 delete pending.current.body;
                 bodyDirty.current = true;
             }
-            setSave('bad');
-            timer.current = window.setTimeout(flush, 4000);
+            keepHere();
+            if (status === 409 && data.other) {
+                setClash({ other: data.other, revision: data.revision ?? 0, at: editedAt.current });
+                setPick(0);
+                setPanel('clash');
+                setSave('saved');
+            } else if (status === 0) {
+                noConnection();
+                setSave('off');
+            } else {
+                setSave('bad');
+                timer.current = window.setTimeout(flush, 4000);
+            }
 
-            return;
+            return false;
+        }
+        if (typeof data.revision === 'number') {
+            base.current = data.revision ?? base.current;
         }
         if (Object.keys(pending.current).length || bodyDirty.current) {
+            keepHere();
             timer.current = window.setTimeout(flush, 300);
         } else {
-            window.setTimeout(() => !flying.current && !bodyDirty.current && !Object.keys(pending.current).length && setSave('saved'), prefersReducedMotion() ? 100 : 450);
+            unsent.current = { fields: {}, body: false };
+            localDraft.drop(fromServer.id);
+            window.setTimeout(() => !flying.current && !bodyDirty.current && !Object.keys(pending.current).length && setSave(onlineRef.current ? 'saved' : 'off'), prefersReducedMotion() ? 100 : 450);
         }
-    }, [take, url]);
+
+        return true;
+    }, [take, url, keepHere, fromServer.id]);
 
     const queue = useCallback(
         (patch: Record<string, unknown> | null, delay = 600) => {
             if (patch) {
                 Object.assign(pending.current, patch);
+                Object.assign(unsent.current.fields, patch);
+            }
+            if (bodyDirty.current) {
+                unsent.current.body = true;
+            }
+            editedAt.current = Date.now();
+            window.clearTimeout(keepTimer.current);
+            keepTimer.current = window.setTimeout(keepHere, 400);
+            window.clearTimeout(timer.current);
+            if (!onlineRef.current || clashRef.current) {
+                setSave(onlineRef.current ? 'saved' : 'off');
+
+                return;
             }
             setSave('saving');
-            window.clearTimeout(timer.current);
             timer.current = window.setTimeout(flush, delay);
         },
         [flush],
@@ -188,8 +285,31 @@ export default function Write({ work, item, characters: chars0, images, publish,
         while (flying.current) {
             await new Promise((r) => window.setTimeout(r, 80));
         }
-        await flush();
+
+        return flush();
     }, [flush]);
+
+    /* this page sends its own draft; back online, what waited here goes (Saving… → Saved) */
+    useEffect(() => {
+        writingItem(fromServer.id);
+
+        return () => writingItem(null);
+    }, [fromServer.id]);
+    useEffect(() => {
+        if (!online) {
+            setSave('off');
+
+            return;
+        }
+        if (bodyDirty.current || Object.keys(pending.current).length) {
+            setSave('saving');
+            window.clearTimeout(timer.current);
+            timer.current = window.setTimeout(flush, prefersReducedMotion() ? 0 : 400);
+        } else {
+            setSave((s) => (s === 'off' ? 'saved' : s));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [online]);
 
     const flashTimer = useRef(0);
     const flash = (f: Flash) => {
@@ -197,6 +317,53 @@ export default function Write({ work, item, characters: chars0, images, publish,
         window.clearTimeout(flashTimer.current);
         flashTimer.current = window.setTimeout(() => setFlashed(null), 1800);
     };
+
+    /* two drafts: the one not kept goes into Versions */
+    const twoShown = !!clash && panel === 'clash';
+    async function keepOne() {
+        if (!clash || !view.current) {
+            return;
+        }
+        const mine = toStored(view.current.state.doc);
+        const { status, data } = await json<{ revision: number; body: Record<string, unknown>; publish: PublishState; other: Other }>('POST', `${url}/two-drafts`, {
+            keep: pick === 0 ? 'this' : 'other',
+            body: mine,
+            revision: clash.revision,
+        });
+        if (status === 409 && data.other) {
+            setClash({ other: data.other, revision: data.revision ?? clash.revision, at: clash.at });
+
+            return;
+        }
+        if (status !== 200 || !data.body) {
+            say(status === 0 ? 'No connection. Try again.' : 'That didn’t work. Try again.');
+
+            return;
+        }
+        base.current = data.revision ?? base.current;
+        bodyDirty.current = false;
+        delete pending.current.body;
+        unsent.current.body = false;
+        if (pick === 1) {
+            let doc = fromStored(data.body as never, images);
+            if (kind === 'poem') {
+                doc = asPoem(doc);
+            }
+            const v = view.current;
+            v.updateState(EditorState.create({ doc, plugins: v.state.plugins }));
+            setWords(wordsIn(v));
+        }
+        if (data.publish) {
+            setPub(data.publish);
+        }
+        setClash(null);
+        setPanel('');
+        keepHere();
+        say('Kept. The other is in Versions.');
+        if (Object.keys(pending.current).length) {
+            queue(null, 0);
+        }
+    }
 
     /* a version opens in place of the page */
     async function openVersion(v: VersionRow) {
@@ -234,15 +401,21 @@ export default function Write({ work, item, characters: chars0, images, publish,
     /* leaving the page saves what's left, even as the page goes */
     useEffect(() => {
         const leave = () => {
+            keepHere();
+            if (!onlineRef.current || clashRef.current) {
+                return;
+            }
             const body = take();
             if (Object.keys(body).length) {
+                body.base = base.current;
+                window.setTimeout(() => sendWaitingDrafts(), 4000);
                 fetch(url, {
                     method: 'PATCH',
                     keepalive: true,
                     credentials: 'same-origin',
                     headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrf() },
                     body: JSON.stringify(body),
-                });
+                }).catch(() => undefined);
             }
         };
         window.addEventListener('pagehide', leave);
@@ -253,7 +426,7 @@ export default function Write({ work, item, characters: chars0, images, publish,
             off();
             leave();
         };
-    }, [take, url]);
+    }, [take, url, keepHere]);
 
     /* ---------- the page's look: its own body class, the scene-break mark, settling in ---------- */
     useEffect(() => {
@@ -304,7 +477,11 @@ export default function Write({ work, item, characters: chars0, images, publish,
                                 return true;
                             },
                         }),
-                        marksPlugin(notes0, () => noteHost.current!, (id) => toggleNote.current(id)),
+                        marksPlugin(
+                            notes0,
+                            () => noteHost.current!,
+                            (id) => toggleNote.current(id),
+                        ),
                     ],
                 }),
                 attributes: {
@@ -551,7 +728,10 @@ export default function Write({ work, item, characters: chars0, images, publish,
             if (!mark || getSelection()?.toString()) {
                 return;
             }
-            const doc = document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null; caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null };
+            const doc = document as Document & {
+                caretRangeFromPoint?: (x: number, y: number) => Range | null;
+                caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+            };
             let node: Node | null = null;
             let off = 0;
             if (doc.caretPositionFromPoint) {
@@ -614,15 +794,16 @@ export default function Write({ work, item, characters: chars0, images, publish,
                         pub={pub}
                         setPub={setPub}
                         flush={saveNow}
+                        online={online}
                         flash={flash}
                         unswept={unswept}
                         openSweep={() => setPanel('sweep')}
                         say={say}
-                        label={work.multi ? `${work.collection ? ({ poem: 'poem', essay: 'essay' } as Record<string, string>)[kind] ?? 'story' : 'chapter'} ${item.number}` : work.title}
+                        label={work.multi ? `${work.collection ? (({ poem: 'poem', essay: 'essay' } as Record<string, string>)[kind] ?? 'story') : 'chapter'} ${item.number}` : work.title}
                     />
                 </header>
                 <div className="wa-body">
-                    <div className={`w-page k-${part ? 'part' : kind}${open ? ' vmode' : ''}`} id="pg" ref={page}>
+                    <div className={`w-page k-${part ? 'part' : kind}${open || twoShown ? ' vmode' : ''}`} id="pg" ref={page}>
                         {part ? (
                             <PartOpener work={work} item={item} kick={kick} quote={quote} setQuote={setQuote} queue={queue} titleEl={titleEl} />
                         ) : (
@@ -635,10 +816,25 @@ export default function Write({ work, item, characters: chars0, images, publish,
                                                 <span className="k-fl" id="tiL">
                                                     Private title
                                                 </span>
-                                                <EditableTitle el={titleEl} initial={item.title} placeholder="Only you see this" className="w-tt w-ce w-pvt" labelledBy="tiL" onText={(t) => queue({ title: t })} onEnter={() => view.current?.focus()} />
+                                                <EditableTitle
+                                                    el={titleEl}
+                                                    initial={item.title}
+                                                    placeholder="Only you see this"
+                                                    className="w-tt w-ce w-pvt"
+                                                    labelledBy="tiL"
+                                                    onText={(t) => queue({ title: t })}
+                                                    onEnter={() => view.current?.focus()}
+                                                />
                                             </div>
                                         ) : (
-                                            <EditableTitle el={titleEl} initial={item.title} placeholder="Title" className="w-tt w-ce" onText={(t) => queue({ title: t })} onEnter={() => view.current?.focus()} />
+                                            <EditableTitle
+                                                el={titleEl}
+                                                initial={item.title}
+                                                placeholder="Title"
+                                                className="w-tt w-ce"
+                                                onText={(t) => queue({ title: t })}
+                                                onEnter={() => view.current?.focus()}
+                                            />
                                         )
                                     ) : (
                                         <h1 className="w-tt" id="ti">
@@ -653,7 +849,11 @@ export default function Write({ work, item, characters: chars0, images, publish,
                                             listClassName="w-lb2"
                                             label="POV"
                                             value={pov ? String(pov) : ''}
-                                            options={[...characters.map((c) => ({ value: String(c.id), label: c.name })), { value: '', label: 'No POV' }, ...(plan ? [{ value: '__add', label: 'Add a name', add: true }] : [])]}
+                                            options={[
+                                                ...characters.map((c) => ({ value: String(c.id), label: c.name })),
+                                                { value: '', label: 'No POV' },
+                                                ...(plan ? [{ value: '__add', label: 'Add a name', add: true }] : []),
+                                            ]}
                                             display={<span className={`v${pov ? '' : ' w-phx'}`}>{characters.find((c) => c.id === pov)?.name ?? 'POV'}</span>}
                                             onPick={(val) => {
                                                 if (val === '__add') {
@@ -691,9 +891,20 @@ export default function Write({ work, item, characters: chars0, images, publish,
                                         </button>
                                     )}
                                 </div>
-                                {quote && <QuoteBlock quote={quote} onChange={(q) => queue({ quote: q })} onRemove={() => (setQuote(null), queue({ quote: null }, 0))} onDone={() => view.current?.focus()} />}
-                                <div ref={mount} hidden={!!open} />
-                                {open && <VersionView version={open.version} body={open.body as never} current={view.current ? toStored(view.current.state.doc) : null} onBack={() => setOpen(null)} onRestore={restore} />}
+                                {quote && (
+                                    <QuoteBlock quote={quote} onChange={(q) => queue({ quote: q })} onRemove={() => (setQuote(null), queue({ quote: null }, 0))} onDone={() => view.current?.focus()} />
+                                )}
+                                <div ref={mount} hidden={!!open || twoShown} />
+                                {twoShown && clash && <TwoDraftsText key={pick} mine={view.current ? toStored(view.current.state.doc) : null} other={clash.other.body} pick={pick} />}
+                                {open && (
+                                    <VersionView
+                                        version={open.version}
+                                        body={open.body as never}
+                                        current={view.current ? toStored(view.current.state.doc) : null}
+                                        onBack={() => setOpen(null)}
+                                        onRestore={restore}
+                                    />
+                                )}
                                 <PlusMenu view={v} kind={kind} onImage={() => file.current?.click()} run={run} />
                             </>
                         )}
@@ -710,6 +921,7 @@ export default function Write({ work, item, characters: chars0, images, publish,
                 current={() => (view.current ? toStored(view.current.state.doc) : null)}
                 onOpenVersion={openVersion}
                 panel={panel}
+                clashNode={clash ? <TwoDrafts mine={{ words, at: clash.at }} other={clash.other} pick={pick} setPick={setPick} onKeep={keepOne} /> : null}
                 setPanel={(p) => {
                     setSweepNames(false);
                     setPanel(p);
@@ -762,7 +974,9 @@ export default function Write({ work, item, characters: chars0, images, publish,
                     ) : null
                 }
                 commentsCount={notes.length}
-                countLabel={part ? 'Part page · 2 pages' : `${fmt(words)} ${words === 1 ? 'word' : 'words'}${words ? ` · ≈ ${Math.ceil(words / 280)} ${Math.ceil(words / 280) === 1 ? 'page' : 'pages'}` : ''}`}
+                countLabel={
+                    part ? 'Part page · 2 pages' : `${fmt(words)} ${words === 1 ? 'word' : 'words'}${words ? ` · ≈ ${Math.ceil(words / 280)} ${Math.ceil(words / 280) === 1 ? 'page' : 'pages'}` : ''}`
+                }
             />
             {openNote !== null &&
                 noteHost.current &&
@@ -772,8 +986,18 @@ export default function Write({ work, item, characters: chars0, images, publish,
                         note={notes.find((n) => n.id === openNote)!}
                         me={{ name: me?.name ?? '', photo: null }}
                         onClose={() => void closeNote()}
-                        onReply={(t) => noteReply(notes.find((n) => n.id === openNote)!, t)}
-                        onDone={(to) => noteDone(notes.find((n) => n.id === openNote)!, to)}
+                        onReply={(t) =>
+                            noteReply(
+                                notes.find((n) => n.id === openNote)!,
+                                t,
+                            )
+                        }
+                        onDone={(to) =>
+                            noteDone(
+                                notes.find((n) => n.id === openNote)!,
+                                to,
+                            )
+                        }
                     />,
                     noteHost.current,
                 )}
@@ -844,7 +1068,11 @@ export default function Write({ work, item, characters: chars0, images, publish,
                     className="pl-card fl"
                     role="dialog"
                     aria-label={plan.chars.find((c) => c.id === card.id)!.name}
-                    style={{ width: Math.min(320, window.innerWidth - 32), left: Math.max(16, Math.min(card.rect.left + window.scrollX - 30, window.innerWidth - Math.min(320, window.innerWidth - 32) - 16)), top: card.rect.bottom + window.scrollY + 10 }}
+                    style={{
+                        width: Math.min(320, window.innerWidth - 32),
+                        left: Math.max(16, Math.min(card.rect.left + window.scrollX - 30, window.innerWidth - Math.min(320, window.innerWidth - 32) - 16)),
+                        top: card.rect.bottom + window.scrollY + 10,
+                    }}
                 >
                     <div className="hd">
                         <b>{plan.chars.find((c) => c.id === card.id)!.name}</b>
@@ -869,10 +1097,12 @@ const FLASH = { pub: 'Published', upd: 'Updated', sch: 'Scheduled', unpub: 'Unpu
 function SaveNote({ state, flash, id }: { state: SaveState; flash: Flash; id: string }) {
     const shown = flash && state !== 'bad' ? FLASH[flash] : null;
 
+    const off = !shown && state === 'off';
+
     return (
-        <span className="k-saved" id={id} aria-live="polite" data-s={shown ? 'saved' : state}>
-            <span className="i">{shown ? <Tick /> : state === 'saving' ? <span className="w-rg" /> : state === 'bad' ? <Alert /> : <Tick />}</span>
-            <span className="t">{shown ?? (state === 'saving' ? 'Saving…' : state === 'bad' ? 'Not saved' : 'Saved')}</span>
+        <span className={`k-saved${off ? ' off' : ''}`} id={id} aria-live="polite" data-s={shown || off ? 'saved' : state}>
+            <span className="i">{shown ? <Tick /> : off ? <CloudOff size={15} /> : state === 'saving' ? <span className="w-rg" /> : state === 'bad' ? <Alert /> : <Tick />}</span>
+            <span className="t">{shown ?? (off ? 'On this device' : state === 'saving' ? 'Saving…' : state === 'bad' ? 'Not saved' : 'Saved')}</span>
         </span>
     );
 }
@@ -1010,7 +1240,13 @@ function QuoteBlock({ quote, onChange, onRemove, onDone }: { quote: { q: string;
             q.current?.focus();
         }
         if (!prefersReducedMotion()) {
-            box.current?.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.22,1,.36,1)' });
+            box.current?.animate(
+                [
+                    { opacity: 0, transform: 'translateY(-6px)' },
+                    { opacity: 1, transform: 'none' },
+                ],
+                { duration: 320, easing: 'cubic-bezier(.22,1,.36,1)' },
+            );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -1371,41 +1607,109 @@ function NewPov({ show, onCreate, onCancel }: { show: boolean; onCreate: (name: 
 
     return (
         <div className="wc-sndw">
-        <div className={`w-sndp w-povp${show ? ' open' : ''}`} role="dialog" aria-label="Add a name">
-            <div className="k-f">
-                <label className="k-fl" htmlFor="povN">
-                    Name
-                </label>
-                <span className="k-in">
-                    <input
-                        ref={input}
-                        id="povN"
-                        placeholder="e.g. Xu2 Wei1"
-                        autoComplete="off"
-                        spellCheck={false}
-                        value={name}
-                        onChange={(e) => setName(/[A-Za-zÜüVv][1-5]/.test(e.target.value) ? tone(e.target.value) : e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && name.trim()) {
-                                e.preventDefault();
-                                onCreate(name.trim());
-                            }
-                            if (e.key === 'Escape') {
-                                onCancel();
-                            }
-                        }}
-                    />
-                </span>
+            <div className={`w-sndp w-povp${show ? ' open' : ''}`} role="dialog" aria-label="Add a name">
+                <div className="k-f">
+                    <label className="k-fl" htmlFor="povN">
+                        Name
+                    </label>
+                    <span className="k-in">
+                        <input
+                            ref={input}
+                            id="povN"
+                            placeholder="e.g. Xu2 Wei1"
+                            autoComplete="off"
+                            spellCheck={false}
+                            value={name}
+                            onChange={(e) => setName(/[A-Za-zÜüVv][1-5]/.test(e.target.value) ? tone(e.target.value) : e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && name.trim()) {
+                                    e.preventDefault();
+                                    onCreate(name.trim());
+                                }
+                                if (e.key === 'Escape') {
+                                    onCancel();
+                                }
+                            }}
+                        />
+                    </span>
+                </div>
+                <div className="acts">
+                    <button className="w-act" type="button" onClick={onCancel}>
+                        Cancel
+                    </button>
+                    <button className="k-btn line sm" type="button" disabled={!name.trim()} onClick={() => onCreate(name.trim())}>
+                        <span>Add</span>
+                    </button>
+                </div>
             </div>
-            <div className="acts">
-                <button className="w-act" type="button" onClick={onCancel}>
-                    Cancel
-                </button>
-                <button className="k-btn line sm" type="button" disabled={!name.trim()} onClick={() => onCreate(name.trim())}>
-                    <span>Add</span>
-                </button>
-            </div>
-        </div>
         </div>
     );
+}
+
+/* ---------------------------------------------------------------- two drafts of one chapter */
+const DEVICE_NAME: Record<string, string> = { phone: 'Phone', tablet: 'Tablet', laptop: 'Laptop' };
+
+/** "Today, 9:40 pm", "Yesterday, 8:15 pm" or "9 Oct, 8:15 pm" (WAT). */
+function when(iso: string): string {
+    const day = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(Date.now() - 86400000);
+    const name = day(d) === day(today) ? 'Today' : day(d) === day(yesterday) ? 'Yesterday' : d.toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short' });
+
+    return `${name}, ${watTime(iso)}`;
+}
+
+/** Changed on two devices: pick one (its changes are marked on the page); the other goes into Versions. */
+function TwoDrafts({ mine, other, pick, setPick, onKeep }: { mine: { words: number; at: number }; other: Other; pick: number; setPick: (n: number) => void; onKeep: () => Promise<void> }) {
+    const [busy, setBusy] = useState(false);
+    const here = deviceKind();
+    const icon = (k: string | null) => (k === 'phone' ? <Phone /> : <Laptop />);
+    const rows: [JSX.Element, string, string, number][] = [
+        [icon(here), `This ${here}`, when(new Date(mine.at).toISOString()), mine.words],
+        [icon(other.device), other.device ? (DEVICE_NAME[other.device] ?? 'Another device') : 'Another device', other.savedAt ? when(other.savedAt) : '', other.words],
+    ];
+
+    return (
+        <>
+            <div className="w-ph">
+                <h2>Two drafts</h2>
+            </div>
+            <div className="w-two">
+                {rows.map(([ic, name, at, n], i) => (
+                    <button key={i} type="button" className={`w-dv${i === pick ? ' on' : ''}`} aria-pressed={i === pick} onClick={() => setPick(i)}>
+                        <span className="h">
+                            {ic}
+                            {name}
+                        </span>
+                        <span>{at}</span>
+                        <span>{n.toLocaleString('en-GB')} words</span>
+                    </button>
+                ))}
+            </div>
+            <div className="w-pf">
+                <span className="w-note">The other goes into Versions.</span>
+                <button
+                    className={`k-btn sm${busy ? ' busy' : ''}`}
+                    type="button"
+                    aria-busy={busy}
+                    onClick={async () => {
+                        setBusy(true);
+                        await onKeep();
+                        setBusy(false);
+                    }}
+                >
+                    <span>Keep this one</span>
+                    <Ring />
+                </button>
+            </div>
+        </>
+    );
+}
+
+/** The picked draft on the page, what it has that the other doesn't marked. */
+function TwoDraftsText({ mine, other, pick }: { mine: Record<string, unknown> | null; other: Record<string, unknown>; pick: number }) {
+    const r = pick === 0 ? diff(blocksOf(other as never), blocksOf(mine as never)) : diff(blocksOf(mine as never), blocksOf(other as never));
+
+    return <div className="w-vtx settle" id="two" dangerouslySetInnerHTML={{ __html: r.h }} />;
 }
