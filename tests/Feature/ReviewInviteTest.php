@@ -45,7 +45,7 @@ class ReviewInviteTest extends TestCase
 
     public function test_a_reader_who_opens_the_link_signed_in_becomes_a_reviewer_of_the_works(): void
     {
-        $reader = User::factory()->reader()->create();
+        $reader = User::factory()->reader()->create(['email' => 'Chioma@example.com']);
         $salt = Work::factory()->novel()->create(['visibility' => Visibility::Reviewers]);
         [$invite, $token] = $this->invite([], $this->ember, $salt);
 
@@ -60,13 +60,27 @@ class ReviewInviteTest extends TestCase
         $this->assertSame($reader->id, $invite->fresh()->accepted_user_id);
     }
 
+    public function test_someone_signed_in_with_another_address_is_signed_out_and_asked_for_the_invited_one(): void
+    {
+        $other = User::factory()->reader()->create(['email' => 'tolu@example.com']);
+        [$invite, $token] = $this->invite([], $this->ember);
+
+        $this->actingAs($other)->get('/review/'.$token)
+            ->assertRedirect(route('home'))
+            ->assertSessionHas('signin.why', 'This invite is for ch•••@example.com. Sign in with that email.');
+
+        $this->assertGuest();
+        $this->assertSame(UserRole::Reader, $other->fresh()->role);
+        $this->assertNull($invite->fresh()->accepted_at);
+    }
+
     public function test_the_link_opens_on_the_first_work_the_invite_was_given(): void
     {
         $salt = Work::factory()->novel()->create(['title' => 'Salt Season']);
         [$invite, $token] = $this->invite([], $this->ember, $salt);
         $invite->works()->updateExistingPivot($salt->id, ['created_at' => now()->subDay()]);
 
-        $this->actingAs(User::factory()->reader()->create())->get('/review/'.$token)
+        $this->actingAs(User::factory()->reader()->create(['email' => 'chioma@example.com']))->get('/review/'.$token)
             ->assertRedirect('/library/'.$salt->slug);
     }
 
@@ -160,7 +174,7 @@ class ReviewInviteTest extends TestCase
 
     public function test_an_accepted_invite_opens_only_for_the_person_who_accepted_it(): void
     {
-        $reader = User::factory()->reader()->create();
+        $reader = User::factory()->reader()->create(['email' => 'chioma@example.com']);
         [, $token] = $this->invite([], $this->ember);
         $this->actingAs($reader)->get('/review/'.$token)->assertRedirect('/library/'.$this->ember->slug);
 

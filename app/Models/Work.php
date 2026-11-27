@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'series_id', 'series_position', 'collection_id', 'cover_media_id', 'cover_color',
     'heading_style', 'show_chapter_titles', 'show_pov', 'part_word', 'part_style', 'show_part_numbers',
     'scene_break', 'opening_quote', 'opening_quote_by', 'content_notes', 'free_chapters', 'plan_notes', 'mark_names',
-    'share_line', 'share_media_id', 'share_uses_own', 'first_published_at', 'last_published_at',
+    'first_published_at', 'last_published_at',
 ])]
 #[Hidden(['search'])]
 class Work extends Model
@@ -53,7 +53,6 @@ class Work extends Model
             'show_pov' => 'boolean',
             'show_part_numbers' => 'boolean',
             'mark_names' => 'boolean',
-            'share_uses_own' => 'boolean',
             'free_chapters' => 'integer',
             'plan_notes' => 'array',
             'first_published_at' => 'datetime',
@@ -106,12 +105,6 @@ class Work extends Model
     public function cover(): BelongsTo
     {
         return $this->belongsTo(Media::class, 'cover_media_id');
-    }
-
-    /** @return BelongsTo<Media, $this> */
-    public function shareImage(): BelongsTo
-    {
-        return $this->belongsTo(Media::class, 'share_media_id');
     }
 
     /** @return BelongsToMany<Genre, $this> */

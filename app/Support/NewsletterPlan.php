@@ -161,6 +161,8 @@ class NewsletterPlan
         $items = WorkItem::query()
             ->whereIn('type', [WorkItemType::Chapter, WorkItemType::Piece])
             ->whereHas('work', fn (Builder $query) => $query->listed())
+            /* a collection's piece goes out only while the piece itself is public */
+            ->where(fn (Builder $query) => $query->whereNull('piece_work_id')->orWhereHas('pieceWork', fn (Builder $query) => $query->listed()))
             ->where(fn (Builder $query) => $query
                 ->where(fn (Builder $query) => self::inWindow($query->where('status', PublishStatus::Published), 'published_at', $since, $until))
                 ->orWhere(fn (Builder $query) => self::inWindow($query->where('status', PublishStatus::Scheduled), 'scheduled_at', $since, $until)))

@@ -144,6 +144,8 @@ class AdminSignInTest extends TestCase
 
     public function test_the_fifth_wrong_try_pauses_sign_in_for_fifteen_minutes_and_emails_her(): void
     {
+        $this->freezeTime();
+
         foreach (range(1, 4) as $try) {
             $this->wrongPassword();
         }

@@ -57,7 +57,7 @@ class WorkCoverController extends Controller
             return;
         }
 
-        if (Work::query()->where('cover_media_id', $id)->orWhere('share_media_id', $id)->exists()) {
+        if (Work::query()->where('cover_media_id', $id)->exists()) {
             return;
         }
 

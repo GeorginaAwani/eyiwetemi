@@ -16,6 +16,7 @@ use App\Models\Work;
 use App\Models\WorkItem;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * One reading page (R2 Book page): a chapter of a novel, a piece of a collection, or a single story,
@@ -66,7 +67,7 @@ class ReaderPage
             ? $item->piece_work_id
             : WorkItem::query()->whereKey($item->id)->value('piece_work_id');
 
-        return $pieceWork === null || WorkItem::query()->where('work_id', $pieceWork)->released()->exists();
+        return $pieceWork === null || self::pieceText((int) $pieceWork) !== null;
     }
 
     /**
@@ -149,8 +150,22 @@ class ReaderPage
             return $item;
         }
 
-        /* the piece's own text is read only while it is out on its own: taking the piece down takes it out of the collection too */
-        return WorkItem::query()->where('work_id', $item->piece_work_id)->released()->orderBy('position')->first();
+        return self::pieceText((int) $item->piece_work_id);
+    }
+
+    /**
+     * A piece's own text, only while it is out on its own and its own setting lets this reader see it: taking a piece
+     * down, or making it Private, takes it out of its collection too.
+     */
+    private static function pieceText(int $pieceWorkId): ?WorkItem
+    {
+        $piece = Work::query()->find($pieceWorkId);
+
+        if ($piece === null || ! Gate::allows('view', $piece)) {
+            return null;
+        }
+
+        return WorkItem::query()->where('work_id', $pieceWorkId)->released()->orderBy('position')->first();
     }
 
     /**

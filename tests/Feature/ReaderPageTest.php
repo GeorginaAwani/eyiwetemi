@@ -173,6 +173,11 @@ class ReaderPageTest extends TestCase
         $own->forceFill(['status' => PublishStatus::Unpublished])->save();
 
         $this->get('/library/'.$collection->slug.'/1')->assertDontSee('TAKEN-DOWN line', false);
+
+        $own->forceFill(['status' => PublishStatus::Published])->save();
+        $poem->forceFill(['visibility' => Visibility::Private])->save();
+
+        $this->get('/library/'.$collection->slug.'/1')->assertDontSee('TAKEN-DOWN line', false);
     }
 
     public function test_an_old_address_of_a_work_you_cannot_see_is_not_found(): void
