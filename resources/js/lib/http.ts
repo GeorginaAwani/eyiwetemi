@@ -30,3 +30,14 @@ export const fieldErrors = (data: unknown): Record<string, string> => {
 
     return Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, v[0]]));
 };
+
+/** A POST that still goes out while the page is closing (what she has seen, sent as she leaves). */
+export function beacon(url: string, body: Record<string, unknown>): void {
+    void fetch(url, {
+        method: 'POST',
+        keepalive: true,
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrf() },
+        body: JSON.stringify(body),
+    }).catch(() => undefined);
+}

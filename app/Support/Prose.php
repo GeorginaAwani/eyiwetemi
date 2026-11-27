@@ -128,6 +128,27 @@ class Prose
     }
 
     /**
+     * A node's text alone: its text nodes one after another, with nothing between them. Reviewers' marks count their
+     * anchors in these characters.
+     *
+     * @param  array<string, mixed>  $node
+     */
+    public static function plain(array $node): string
+    {
+        if (($node['type'] ?? null) === 'text') {
+            return (string) ($node['text'] ?? '');
+        }
+
+        $text = '';
+
+        foreach ($node['content'] ?? [] as $child) {
+            $text .= self::plain($child);
+        }
+
+        return $text;
+    }
+
+    /**
      * Words, footnotes included (they are printed too).
      *
      * @param  array<string, mixed>|null  $doc

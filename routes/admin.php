@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\ChapterController;
+use App\Http\Controllers\Admin\CommentController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PublishController;
+use App\Http\Controllers\Admin\ReviewerController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SeriesController;
 use App\Http\Controllers\Admin\SignInController;
@@ -40,8 +42,30 @@ Route::middleware('throttle:20,1')->group(function () {
 
 Route::middleware(EnsureAdmin::class)->group(function () {
     Route::get('/', [SectionController::class, 'desk'])->name('desk');
+
+    Route::get('/comments', [CommentController::class, 'index'])->name('comments.index');
+    Route::get('/comments/readers', [CommentController::class, 'readers'])->name('comments.readers');
+    Route::get('/comments/readers/{item}', [CommentController::class, 'readerItem'])->whereNumber('item')->name('comments.readers.item');
+    Route::get('/comments/reviewers', [CommentController::class, 'reviewers'])->name('comments.reviewers');
+    Route::post('/comments/seen', [CommentController::class, 'seen'])->name('comments.seen');
+    Route::patch('/comments/mail', [CommentController::class, 'mail'])->name('comments.mail');
+    Route::post('/comments/{comment}/reply', [CommentController::class, 'reply'])->whereNumber('comment')->name('comments.reply');
+    Route::put('/comments/{comment}/like', [CommentController::class, 'like'])->whereNumber('comment')->name('comments.like');
+    Route::delete('/comments/{comment}/like', [CommentController::class, 'unlike'])->whereNumber('comment')->name('comments.unlike');
+    Route::patch('/comments/{comment}/hide', [CommentController::class, 'hide'])->whereNumber('comment')->name('comments.hide');
+    Route::patch('/comments/{comment}/status', [CommentController::class, 'status'])->whereNumber('comment')->name('comments.status');
+
+    Route::get('/reviewers', [ReviewerController::class, 'index'])->name('reviewers.index');
+    Route::get('/reviewers/works', [ReviewerController::class, 'works'])->name('reviewers.works');
+    Route::post('/reviewers/invites', [ReviewerController::class, 'store'])->name('reviewers.invites.store');
+    Route::post('/reviewers/invites/{invite}/resend', [ReviewerController::class, 'resend'])->whereNumber('invite')->name('reviewers.invites.resend');
+    Route::delete('/reviewers/invites/{invite}', [ReviewerController::class, 'cancel'])->whereNumber('invite')->name('reviewers.invites.cancel');
+    Route::patch('/reviewers/invites/{invite}/works', [ReviewerController::class, 'inviteWorks'])->whereNumber('invite')->name('reviewers.invites.works');
+    Route::patch('/reviewers/{user}/works', [ReviewerController::class, 'userWorks'])->whereNumber('user')->name('reviewers.works.user');
+    Route::delete('/reviewers/{user}', [ReviewerController::class, 'remove'])->whereNumber('user')->name('reviewers.remove');
+
     Route::get('/{section}', [SectionController::class, 'show'])
-        ->whereIn('section', ['notes', 'comments', 'reviewers', 'stats', 'newsletter', 'site'])
+        ->whereIn('section', ['notes', 'stats', 'newsletter', 'site'])
         ->name('section');
 
     Route::get('/works', [WorkController::class, 'index'])->name('works.index');

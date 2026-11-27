@@ -6,6 +6,7 @@ import { BackSmall, Book15, BoxTick, Chevron, Close, FACT_ICONS, Globe, Plus, Ri
 import NameField from '../../Components/admin/NameField';
 import { COLLECTION_KINDS, CollectionChoice, KINDS, KKind, SeriesChoice } from '../../Components/admin/NewWork';
 import { bloomStyle } from '../../Components/site/Bloom';
+import { INVITED, openInvite, Person as Invited, PI } from '../../Components/admin/People';
 import ChaptersTab, { Contents } from '../../Components/admin/ChaptersTab';
 import PlanTab, { Plan } from '../../Components/admin/PlanTab';
 import AdminLayout from '../../Layouts/AdminLayout';
@@ -867,7 +868,23 @@ function ReviewersField({
 
     const have = new Set(reviewers.filter((r) => r.kind === 'user').map((r) => r.id));
     const q = query.trim().toLowerCase();
-    const options = people.filter((p) => !have.has(p.id) && (!q || `${p.name} ${p.email}`.toLowerCase().includes(q))).slice(0, 6);
+    const found = people.filter((p) => !have.has(p.id) && (!q || `${p.name} ${p.email}`.toLowerCase().includes(q))).slice(0, 6);
+    /* a new email offers an invite (the Invite a reviewer dialog, with this work ticked) */
+    const invite = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(query.trim()) && !people.some((p) => p.email.toLowerCase() === q) ? query.trim() : '';
+    const options: (Person | { invite: string })[] = invite ? [...found, { invite }] : found;
+
+    /* someone invited from here shows as Invited */
+    useEffect(() => {
+        const added = (e: Event) => {
+            const p = (e as CustomEvent<Invited>).detail;
+            if (p.works.includes(slug.current)) {
+                setReviewers([...reviewers, { kind: p.kind, id: p.id, name: p.name, seed: p.seed, state: p.state }]);
+            }
+        };
+        window.addEventListener(INVITED, added);
+
+        return () => window.removeEventListener(INVITED, added);
+    }, [reviewers]);
 
     useEffect(() => {
         if (adding) {
@@ -887,8 +904,15 @@ function ReviewersField({
         setSave('saved');
     }
 
-    async function pick(p: Person | undefined) {
+    async function pick(p: Person | { invite: string } | undefined) {
         if (!p) {
+            return;
+        }
+        if ('invite' in p) {
+            setAdding(false);
+            setQuery('');
+            openInvite({ email: p.invite, works: [slug.current] });
+
             return;
         }
         setAdding(false);
@@ -978,9 +1002,9 @@ function ReviewersField({
                             </span>
                             <div className="k-lb" role="listbox" id="rvLB" onMouseDown={(e) => e.preventDefault()}>
                                 {options.map((p, i) => (
-                                    <div key={p.id} role="option" id={`rvO${i}`} className={`rv-o${i === act ? ' act' : ''}`} aria-selected={false} onMouseMove={() => setAct(i)} onClick={() => pick(p)}>
-                                        <span className="cv" style={{ ...bloomStyle(p.seed, 24) }} aria-hidden="true" />
-                                        <span>{p.name}</span>
+                                    <div key={'invite' in p ? 'inv' : p.id} role="option" id={`rvO${i}`} className={`rv-o${i === act ? ' act' : ''}`} aria-selected={false} onMouseMove={() => setAct(i)} onClick={() => pick(p)}>
+                                        {'invite' in p ? PI.mail : <span className="cv" style={{ ...bloomStyle(p.seed, 24) }} aria-hidden="true" />}
+                                        <span>{'invite' in p ? `Invite ${p.invite}` : p.name}</span>
                                     </div>
                                 ))}
                             </div>
