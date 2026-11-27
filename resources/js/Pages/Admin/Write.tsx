@@ -1,4 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { createPortal } from 'react-dom';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -12,6 +13,7 @@ import PlanPanel, { CardBody } from '../../Components/admin/editor/PlanPanel';
 import { fromStored, schema, toStored } from '../../Components/admin/editor/schema';
 import { hitsInView, markNames, SweepName, termsOf, wordRx } from '../../Components/admin/editor/sweep';
 import SweepPanel from '../../Components/admin/editor/SweepPanel';
+import { CommentsPanel, locate, MarkCard, marksPlugin, Note, NoteReply, setMarks } from '../../Components/admin/editor/marks';
 import type { Plan } from '../../Components/admin/PlanTab';
 import { Alert, BackSmall, Close, Plus, Saved as Tick } from '../../Components/admin/Icons';
 import { heading } from '../../lib/headings';
@@ -47,7 +49,7 @@ type Item = {
     soundtrack: Soundtrack;
     quote: Quote;
 };
-type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string>; publish: PublishState; chapters: ChapterRow[]; plan: Plan | null; sweep: { names: SweepName[]; mark: boolean } };
+type Props = { work: Work; item: Item; characters: { id: number; name: string }[]; images: Record<number, string>; publish: PublishState; chapters: ChapterRow[]; plan: Plan | null; sweep: { names: SweepName[]; mark: boolean }; notes: Note[] };
 type SaveState = 'saving' | 'saved' | 'bad';
 
 /** The reader's marks between scenes, as the prototype names them. */
@@ -79,7 +81,7 @@ function wordsIn(view: EditorView | null): number {
  * POV, soundtrack and heading quote), saving as she types. A selection bar formats on a computer, a button row
  * above the keyboard on a phone; Full screen hides everything but the page.
  */
-export default function Write({ work, item, characters: chars0, images, publish, chapters, plan: plan0, sweep }: Props) {
+export default function Write({ work, item, characters: chars0, images, publish, chapters, plan: plan0, sweep, notes: notes0 }: Props) {
     const part = item.type === 'part';
     const kind = work.kind;
     const [save, setSave] = useState<SaveState>('saved');
@@ -97,6 +99,18 @@ export default function Write({ work, item, characters: chars0, images, publish,
     const [sweepNames, setSweepNames] = useState(false);
     const [addingName, setAddingName] = useState(false);
     const [card, setCard] = useState<{ id: number; rect: DOMRect } | null>(null);
+    /* reviewers' open notes: marked in the text, one card open under its paragraph */
+    const [notes, setNotes] = useState<Note[]>(notes0);
+    const [openNote, setOpenNote] = useState<number | null>(null);
+    const [hideMarks, setHideMarks] = useState(() => localStorage.getItem('eyiAdmHideMarks') === '1');
+    const noteHost = useRef<HTMLDivElement | null>(null);
+    if (!noteHost.current && typeof document !== 'undefined') {
+        noteHost.current = document.createElement('div');
+        noteHost.current.className = 'w-rc';
+        noteHost.current.contentEditable = 'false';
+    }
+    const toggleNote = useRef<(id: number) => void>(() => undefined);
+    const me = (usePage().props as unknown as { auth: { user: { name: string } | null } }).auth.user;
     const characters = plan ? plan.chars.map((c) => ({ id: c.id, name: c.name })) : chars0;
     const [quote, setQuote] = useState<Quote>(item.quote);
     const [tick, setTick] = useState(0);
@@ -280,15 +294,18 @@ export default function Write({ work, item, characters: chars0, images, publish,
             {
                 state: EditorState.create({
                     doc,
-                    plugins: editorPlugins(kind, {
-                        link: () => {
-                            if (view.current && !view.current.state.selection.empty) {
-                                setLinking(true);
-                            }
+                    plugins: [
+                        ...editorPlugins(kind, {
+                            link: () => {
+                                if (view.current && !view.current.state.selection.empty) {
+                                    setLinking(true);
+                                }
 
-                            return true;
-                        },
-                    }),
+                                return true;
+                            },
+                        }),
+                        marksPlugin(notes0, () => noteHost.current!, (id) => toggleNote.current(id)),
+                    ],
                 }),
                 attributes: {
                     id: 'ed',
@@ -460,6 +477,69 @@ export default function Write({ work, item, characters: chars0, images, publish,
 
     /* plain names faintly marked while writing */
     useEffect(() => markNames(view.current, names, mark));
+
+    /* a reviewer's card opens under its paragraph (and counts as seen), and folds away again */
+    const closeNote = async () => {
+        noteHost.current?.classList.remove('open');
+        await new Promise((r) => window.setTimeout(r, prefersReducedMotion() ? 0 : 300));
+        setOpenNote(null);
+    };
+    toggleNote.current = (id: number) => {
+        if (openNote === id) {
+            void closeNote();
+
+            return;
+        }
+        setOpenNote(id);
+        const n = notes.find((x) => x.id === id);
+        if (n?.new) {
+            setNotes((ns) => ns.map((x) => (x.id === id ? { ...x, new: false } : x)));
+            json('POST', '/comments/seen', { ids: [id] });
+        }
+    };
+    useEffect(() => {
+        setMarks(view.current, { open: openNote });
+        if (openNote === null) {
+            return;
+        }
+        const f = requestAnimationFrame(() => requestAnimationFrame(() => noteHost.current?.classList.add('open')));
+
+        return () => cancelAnimationFrame(f);
+    }, [openNote]);
+    useEffect(() => {
+        setMarks(view.current, { notes });
+    }, [notes]);
+    useEffect(() => {
+        setMarks(view.current, { hide: hideMarks });
+    }, [hideMarks]);
+
+    async function noteReply(n: Note, text: string): Promise<boolean> {
+        const { status, data } = await json<{ reply: NoteReply }>('POST', `/comments/${n.id}/reply`, { body: text });
+        if (status !== 201 || !data.reply) {
+            return false;
+        }
+        setNotes((ns) => ns.map((x) => (x.id === n.id ? { ...x, replies: [...x.replies, data.reply!] } : x)));
+
+        return true;
+    }
+
+    /* Accept puts the suggestion in the draft here (it saves like any edit); the note is then done */
+    async function noteDone(n: Note, to: 'accepted' | 'rejected' | 'resolved') {
+        const v = view.current;
+        if (to === 'accepted' && v) {
+            const at = locate(v.state.doc, n);
+            if (!at) {
+                return;
+            }
+            v.dispatch(n.ins ? v.state.tr.insertText(n.ins, at.from, at.to) : v.state.tr.delete(at.from, at.to));
+        }
+        const { status } = await json('PATCH', `/comments/${n.id}/status`, { status: to, apply: false });
+        if (status !== 200) {
+            return;
+        }
+        await closeNote();
+        setNotes((ns) => ns.filter((x) => x.id !== n.id));
+    }
 
     /* tap a marked name: their card */
     useEffect(() => {
@@ -662,8 +742,41 @@ export default function Write({ work, item, characters: chars0, images, publish,
                     )
                 }
                 sweepCount={unswept}
+                commentsNode={
+                    notes.length ? (
+                        <CommentsPanel
+                            notes={notes}
+                            slug={work.slug}
+                            hide={hideMarks}
+                            setHide={setHideMarks}
+                            onOpen={(n) => {
+                                setPanel('');
+                                if (n.block) {
+                                    view.current?.dom.querySelector(`[data-c="${n.id}"]`)?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+                                    if (openNote !== n.id) {
+                                        toggleNote.current(n.id);
+                                    }
+                                }
+                            }}
+                        />
+                    ) : null
+                }
+                commentsCount={notes.length}
                 countLabel={part ? 'Part page · 2 pages' : `${fmt(words)} ${words === 1 ? 'word' : 'words'}${words ? ` · ≈ ${Math.ceil(words / 280)} ${Math.ceil(words / 280) === 1 ? 'page' : 'pages'}` : ''}`}
             />
+            {openNote !== null &&
+                noteHost.current &&
+                notes.some((n) => n.id === openNote) &&
+                createPortal(
+                    <MarkCard
+                        note={notes.find((n) => n.id === openNote)!}
+                        me={{ name: me?.name ?? '', photo: null }}
+                        onClose={() => void closeNote()}
+                        onReply={(t) => noteReply(notes.find((n) => n.id === openNote)!, t)}
+                        onDone={(to) => noteDone(notes.find((n) => n.id === openNote)!, to)}
+                    />,
+                    noteHost.current,
+                )}
             {!part && <SelectionBar view={v} kind={kind} linking={linking} setLinking={setLinking} run={run} />}
             {!part && (
                 <div className="w-kbrow" id="kbrow" role="toolbar" aria-label="Format" ref={kbrow} onMouseDown={(e) => e.preventDefault()}>

@@ -594,6 +594,43 @@ class AdminCommentsTest extends TestCase
         $this->assertSame(0, Comment::query()->where('parent_id', $top->id)->whereNull('seen_at')->count());
     }
 
+    public function test_the_writing_screen_carries_the_chapters_open_notes_with_where_they_start(): void
+    {
+        $work = $this->emberGate();
+        $lamps = $this->chapter($work, 1, 'The Lamps', ['b1' => 'She stood from the door and waited.']);
+        $this->note($lamps, 'Doorway.', [
+            'kind' => CommentKind::Edit,
+            'anchor' => ['block_id' => 'b1', 'start' => 10, 'end' => 23, 'quote' => 'from the door'],
+            'suggestion' => ['deleted' => 'from the door', 'inserted' => 'from the doorway'],
+        ]);
+        $this->note($lamps, 'Done already.', ['status' => CommentStatus::Resolved, 'resolved_at' => now()]);
+
+        $this->asAdmin()->get($this->url('/works/the-ember-gate/write/'.$lamps->id))
+            ->assertInertia(fn ($page) => $page->component('Admin/Write')
+                ->has('notes', 1)
+                ->where('notes.0.block', 'b1')
+                ->where('notes.0.start', 10)
+                ->where('notes.0.ins', 'from the doorway'));
+    }
+
+    public function test_an_edit_the_writing_screen_already_made_is_accepted_without_touching_the_draft(): void
+    {
+        $work = $this->emberGate();
+        $lamps = $this->chapter($work, 1, 'The Lamps', ['b1' => 'She stood from the doorway and waited.']);
+        $edit = $this->note($lamps, 'Doorway.', [
+            'kind' => CommentKind::Edit,
+            'anchor' => ['block_id' => 'b1', 'start' => 10, 'end' => 23, 'quote' => 'from the door'],
+            'suggestion' => ['deleted' => 'from the door', 'inserted' => 'from the doorway'],
+        ]);
+        $before = $lamps->draft_body;
+
+        $this->asAdmin()->patchJson($this->url('/comments/'.$edit->id.'/status'), ['status' => 'accepted', 'apply' => false])
+            ->assertOk()
+            ->assertJsonPath('note.status', 'accepted');
+
+        $this->assertEquals($before, $lamps->fresh()->draft_body);
+    }
+
     public function test_the_mail_switches_are_stored_and_default_on(): void
     {
         $this->asAdmin()->patchJson($this->url('/comments/mail'), ['key' => 'r', 'on' => false])

@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { PI } from '../People';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { inertWhen } from '../../../lib/dom';
 import { heading } from '../../../lib/headings';
@@ -12,7 +13,7 @@ import { ChaptersIcon, Clock15, Clock18, PlanIcon, SweepIcon, VersionsIcon } fro
 export type VersionRow = { id: number; label: string; at: string; words: number; added: number; cut: number };
 export type PublishState = { state: 'draft' | 'sch' | 'pub' | 'chg' | 'unpub'; scheduledAt: string | null; liveAt: string | null; audience: string; versions: VersionRow[] };
 export type Flash = 'pub' | 'upd' | 'sch' | 'unpub' | null;
-export type Panel = '' | 'chap' | 'plan' | 'sweep' | 'ver';
+export type Panel = '' | 'chap' | 'plan' | 'com' | 'sweep' | 'ver';
 type Json = { type: string; attrs?: Record<string, unknown>; content?: Json[]; text?: string };
 
 /* ---------------------------------------------------------------- changes between two pages, word by word (as the prototype) */
@@ -442,6 +443,8 @@ export function BarPanels({
     planNode,
     sweepNode,
     sweepCount,
+    commentsNode = null,
+    commentsCount = 0,
 }: {
     work: Look;
     itemId: number;
@@ -457,6 +460,8 @@ export function BarPanels({
     planNode: ReactNode | null;
     sweepNode: ReactNode | null;
     sweepCount: number;
+    commentsNode?: ReactNode | null;
+    commentsCount?: number;
 }) {
     const [draftDiff, setDraftDiff] = useState<{ add: number; del: number } | null>(null);
     const pan = useRef<HTMLDivElement>(null);
@@ -499,6 +504,7 @@ export function BarPanels({
     const buttons: [Panel, JSX.Element, string, number][] = [
         ...(work.multi ? [['chap', <ChaptersIcon />, Units, 0] as [Panel, JSX.Element, string, number]] : []),
         ...(planNode ? [['plan', <PlanIcon />, 'Plan', 0] as [Panel, JSX.Element, string, number]] : []),
+        ...(commentsNode ? [['com', PI.chat(19), 'Comments', commentsCount] as [Panel, JSX.Element, string, number]] : []),
         ...(sweepNode ? [['sweep', <SweepIcon size={19} />, 'Sweep', sweepCount] as [Panel, JSX.Element, string, number]] : []),
         ...(part ? [] : [['ver', <VersionsIcon />, 'Versions', 0] as [Panel, JSX.Element, string, number]]),
     ];
@@ -563,6 +569,7 @@ export function BarPanels({
                     </>
                 )}
                 {panel === 'plan' && planNode}
+                {panel === 'com' && commentsNode}
                 {panel === 'sweep' && sweepNode}
                 {panel === 'ver' && (
                     <>
