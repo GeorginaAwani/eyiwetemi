@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Gate;
  */
 class ReadCounter
 {
+    /** Sites a day can list as where readers came from before new ones count as "Other". */
+    private const SOURCES_PER_DAY = 100;
+
     /** Crawlers, link previews, scripts and headless browsers. A WhatsApp link preview is its fetcher, which starts with the name. */
     private const BOT_AGENT = '/bot|crawl|spider|slurp|facebookexternalhit|preview|headless|curl|wget|python|http-client|^WhatsApp\//i';
 
@@ -278,6 +281,8 @@ class ReadCounter
      */
     private function addToBreakdowns(string $day, array $labels): void
     {
+        $labels = array_map(fn (array $label): array => $this->boundedSource($day, $label), $labels);
+
         DailyBreakdown::query()->upsert(
             array_map(fn (array $label): array => [
                 'day' => $day,
@@ -288,6 +293,28 @@ class ReadCounter
             ['day', 'dimension', 'value'],
             $this->addUp('daily_breakdowns', ['reads']),
         );
+    }
+
+    /**
+     * Where readers came from is whatever site sent them, so a day keeps at most SOURCES_PER_DAY of them;
+     * after that a new one counts as "Other" (the counting endpoint is open to anyone, and each site is a row).
+     *
+     * @param  array{dimension: StatDimension, value: string}  $label
+     * @return array{dimension: StatDimension, value: string}
+     */
+    private function boundedSource(string $day, array $label): array
+    {
+        if ($label['dimension'] !== StatDimension::Source) {
+            return $label;
+        }
+
+        $known = DailyBreakdown::query()->where('day', $day)->where('dimension', StatDimension::Source->value);
+
+        if ((clone $known)->where('value', $label['value'])->exists() || $known->count() < self::SOURCES_PER_DAY) {
+            return $label;
+        }
+
+        return ['dimension' => StatDimension::Source, 'value' => 'Other'];
     }
 
     /**

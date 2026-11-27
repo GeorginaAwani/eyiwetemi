@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PublishStatus;
 use App\Enums\SendStatus;
 use App\Mail\Newsletter;
 use App\Mail\NewsletterWelcome;
@@ -75,6 +76,24 @@ class NewsletterSendTest extends TestCase
 
         $next = NewsletterSend::query()->where('status', SendStatus::Planned)->sole();
         $this->assertSame('2026-12-06 08:00:00', $next->scheduled_for->utc()->toDateTimeString());
+    }
+
+    public function test_a_chapter_still_waiting_to_come_out_is_not_mailed_to_readers(): void
+    {
+        Mail::fake();
+        $novel = $this->novel();
+        $this->chapter($novel);
+        WorkItem::factory()->chapter()->for($novel)->create([
+            'status' => PublishStatus::Scheduled,
+            'scheduled_at' => now()->subMinutes(5),
+            'draft_body' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'attrs' => ['id' => 'p1'], 'content' => [['type' => 'text', 'text' => 'NOT-OUT-YET words']]]]],
+        ]);
+        Subscriber::factory()->confirmed()->create(['kinds' => ['novels']]);
+        $this->dueSend();
+
+        $this->artisan('eyiwetemi:newsletter-send')->assertSuccessful();
+
+        Mail::assertQueued(Newsletter::class, fn (Newsletter $mail): bool => ! str_contains(json_encode($mail->email), 'NOT-OUT-YET'));
     }
 
     public function test_a_send_with_everything_left_out_is_skipped_and_mails_nobody(): void

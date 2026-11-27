@@ -11,6 +11,7 @@ use App\Notifications\Admin\SignInLink;
 use App\Notifications\Admin\SignInPaused;
 use App\Support\AdminSignIn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -155,6 +156,33 @@ class AdminSignInTest extends TestCase
 
         $this->travel(16)->minutes();
         $this->postJson(route('admin.signin.password'), ['email' => 'me@eyiwetemi.com', 'password' => 'right-password'])->assertExactJson(['next' => 'code']);
+    }
+
+    public function test_a_right_password_between_wrong_codes_does_not_reset_the_count(): void
+    {
+        foreach (range(1, 2) as $round) {
+            $this->passwordStep();
+            $this->postJson(route('admin.signin.code'), ['code' => $this->wrongCode()])->assertStatus(422);
+            $this->postJson(route('admin.signin.code'), ['code' => $this->wrongCode()])->assertStatus(422);
+        }
+
+        $this->passwordStep();
+        $this->postJson(route('admin.signin.code'), ['code' => $this->wrongCode()])->assertStatus(423);
+        Notification::assertSentTo($this->author, SignInPaused::class);
+    }
+
+    public function test_a_new_password_ends_her_other_sessions_and_remembered_devices(): void
+    {
+        config(['session.driver' => 'database']);
+        TrustedDevice::query()->create(['user_id' => $this->author->id, 'token_hash' => hash('sha256', 'old-device'), 'label' => 'Laptop', 'user_agent' => 'x', 'last_used_at' => now(), 'expires_at' => now()->addDays(30)]);
+        DB::table('sessions')->insert(['id' => 'stolen-session', 'user_id' => $this->author->id, 'payload' => '', 'last_activity' => now()->getTimestamp()]);
+        $token = Password::broker()->createToken($this->author);
+
+        $this->get(route('admin.password.open', ['token' => $token, 'email' => 'me@eyiwetemi.com']));
+        $this->postJson(route('admin.signin.reset'), ['password' => 'a-brand-new-one'])->assertOk();
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'stolen-session']);
+        $this->assertSame(0, $this->author->trustedDevices()->count());
     }
 
     public function test_an_email_that_is_not_hers_gets_the_same_answer_and_never_signs_in(): void

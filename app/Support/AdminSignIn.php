@@ -56,7 +56,9 @@ class AdminSignIn
     public function failed(string $email): int
     {
         $key = $this->triesKey($email);
-        $tries = (int) Cache::get($key, 0) + 1;
+        /* counted atomically, so wrong tries sent at the same moment all count */
+        Cache::add($key, 0, self::PAUSE_SECONDS);
+        $tries = (int) Cache::increment($key);
 
         if ($tries >= self::MAX_TRIES) {
             Cache::forget($key);
@@ -65,8 +67,6 @@ class AdminSignIn
 
             return 0;
         }
-
-        Cache::put($key, $tries, self::PAUSE_SECONDS);
 
         return self::MAX_TRIES - $tries;
     }
@@ -83,8 +83,7 @@ class AdminSignIn
      */
     public function firstStepPassed(Request $request, User $user, string $via): string
     {
-        $this->clearTries($user->email);
-
+        /* wrong tries are cleared only once she is fully in: a right password must not wipe wrong codes */
         if ($this->trustedDevice($request, $user)) {
             $this->complete($request, $user, newDevice: false);
 
@@ -135,6 +134,7 @@ class AdminSignIn
     public function complete(Request $request, User $user, bool $newDevice, bool $remember = false): void
     {
         $request->session()->forget('admin.pending');
+        $this->clearTries($user->email);
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put('admin.verified', true);
@@ -180,7 +180,7 @@ class AdminSignIn
             'expires_at' => now()->addDays($days),
         ]);
 
-        Cookie::queue(Cookie::make(self::DEVICE_COOKIE, $token, $days * 24 * 60, '/', null, $request->isSecure(), true, false, 'lax'));
+        Cookie::queue(Cookie::make(self::DEVICE_COOKIE, $token, $days * 24 * 60, '/', null, config('session.secure') ?? $request->isSecure(), true, false, 'lax'));
     }
 
     /** Forget this device: the next sign-in here asks for the code again. */

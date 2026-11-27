@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Follow;
 use App\Models\Series;
 use App\Models\Work;
+use App\Support\SeriesPage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,7 @@ class FollowController extends Controller
     {
         $exists = match ($type) {
             'work' => Work::query()->listed()->whereKey($id)->exists(),
-            'series' => Series::query()->whereKey($id)->exists(),
+            'series' => ($series = Series::query()->find($id)) !== null && (new SeriesPage($series))->isVisible(),
             default => false,
         };
 

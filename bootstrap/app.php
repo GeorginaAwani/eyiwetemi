@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        /* only the site's own host and its subdomains (the admin) are answered, so links in emails can't be pointed elsewhere by a forged Host */
+        $middleware->trustHosts();
+
         $middleware->web(append: [
             KeepHostsApart::class,
             HandleInertiaRequests::class,

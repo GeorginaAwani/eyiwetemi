@@ -84,7 +84,8 @@ class WorkController extends Controller
         }
 
         $moved = SlugHistory::query()->where('sluggable_type', 'work')->where('slug', $slug)->latest('id')->first()?->sluggable;
-        abort_if($moved === null, 404);
+        /* an old address of a work you can't see is not found either, so its new address stays private */
+        abort_if($moved === null || ! Gate::allows('view', $moved), 404);
 
         return redirect()->to(WorkPresenter::href($moved), 301);
     }

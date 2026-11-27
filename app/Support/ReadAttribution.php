@@ -44,7 +44,7 @@ class ReadAttribution
             return 'Google';
         }
 
-        return self::SOURCES[$host] ?? substr($host, 0, 255);
+        return self::SOURCES[$host] ?? mb_strcut($host, 0, 255, 'UTF-8');
     }
 
     /**

@@ -58,7 +58,15 @@ class ReaderPage
 
     public function isOut(WorkItem $item): bool
     {
-        return $item->status === PublishStatus::Published && $item->published_at !== null && $item->published_at->lte(now());
+        if ($item->status !== PublishStatus::Published || $item->published_at === null || $item->published_at->gt(now())) {
+            return false;
+        }
+
+        $pieceWork = array_key_exists('piece_work_id', $item->getAttributes())
+            ? $item->piece_work_id
+            : WorkItem::query()->whereKey($item->id)->value('piece_work_id');
+
+        return $pieceWork === null || WorkItem::query()->where('work_id', $pieceWork)->released()->exists();
     }
 
     /**
@@ -141,7 +149,8 @@ class ReaderPage
             return $item;
         }
 
-        return WorkItem::query()->where('work_id', $item->piece_work_id)->orderBy('position')->first();
+        /* the piece's own text is read only while it is out on its own: taking the piece down takes it out of the collection too */
+        return WorkItem::query()->where('work_id', $item->piece_work_id)->released()->orderBy('position')->first();
     }
 
     /**

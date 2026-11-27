@@ -2,9 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CollectionKind;
+use App\Enums\PublishStatus;
+use App\Enums\Visibility;
 use App\Models\Comment;
 use App\Models\Follow;
 use App\Models\Like;
+use App\Models\SlugHistory;
 use App\Models\User;
 use App\Models\Work;
 use App\Models\WorkItem;
@@ -152,6 +156,31 @@ class ReaderPageTest extends TestCase
             ->where('comments.list.0.liked', false)
             ->where('comments.list.0.replies.0.liked', true)
         );
+    }
+
+    public function test_a_collection_does_not_show_a_piece_that_was_taken_down_on_its_own(): void
+    {
+        $collection = Work::factory()->collection(CollectionKind::Poem)->public()->published()->create();
+        $poem = Work::factory()->poem()->public()->published()->create(['collection_id' => $collection->id]);
+        $own = WorkItem::factory()->published()->for($poem)->create([
+            'type' => 'piece', 'position' => 1, 'published_at' => now()->subDay(),
+            'live_body' => ['type' => 'doc', 'content' => [['type' => 'poemLine', 'attrs' => ['indent' => 0], 'content' => [['type' => 'text', 'text' => 'TAKEN-DOWN line']]]]],
+        ]);
+        WorkItem::factory()->published()->for($collection)->create(['type' => 'piece', 'piece_work_id' => $poem->id, 'position' => 1, 'published_at' => now()->subDay()]);
+
+        $this->get('/library/'.$collection->slug.'/1')->assertOk()->assertSee('TAKEN-DOWN line', false);
+
+        $own->forceFill(['status' => PublishStatus::Unpublished])->save();
+
+        $this->get('/library/'.$collection->slug.'/1')->assertDontSee('TAKEN-DOWN line', false);
+    }
+
+    public function test_an_old_address_of_a_work_you_cannot_see_is_not_found(): void
+    {
+        $work = Work::factory()->novel()->published()->create(['slug' => 'the-new-name', 'visibility' => Visibility::Private]);
+        SlugHistory::query()->create(['sluggable_type' => 'work', 'sluggable_id' => $work->id, 'slug' => 'the-old-name']);
+
+        $this->get('/library/the-old-name')->assertNotFound();
     }
 
     public function test_a_single_poem_opens_straight_into_the_reader_with_its_stanzas(): void

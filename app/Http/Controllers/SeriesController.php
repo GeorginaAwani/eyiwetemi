@@ -20,7 +20,7 @@ class SeriesController extends Controller
 
         if ($series === null) {
             $moved = SlugHistory::query()->where('sluggable_type', 'series')->where('slug', $slug)->latest('id')->first()?->sluggable;
-            abort_if($moved === null, 404);
+            abort_if($moved === null || ! (new SeriesPage($moved))->isVisible(), 404);
 
             return redirect()->to('/series/'.$moved->slug, 301);
         }

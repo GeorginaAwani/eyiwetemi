@@ -76,6 +76,9 @@ class ReviewMarkController extends Controller
             $comment->audience === CommentAudience::Review && $comment->parent_id === null && (int) $comment->user_id === $user->id,
             404,
         );
+        /* a reviewer taken off the work (or a work they can no longer see) takes no more replies */
+        $work = $comment->work;
+        abort_unless($work !== null && Gate::allows('view', $work) && $work->reviewers()->whereKey($user->id)->exists(), 403);
 
         $reply = Comment::query()->create([
             'user_id' => $user->id,

@@ -13,29 +13,72 @@ use RuntimeException;
 class SafeFetch
 {
     /**
-     * Only public web addresses: http or https, and every address the host resolves to is public.
+     * Only public web addresses: http or https, and every address the host resolves to (IPv4 and IPv6) is public.
      */
     public static function isPublic(string $url): bool
+    {
+        return self::publicAddress($url) !== null;
+    }
+
+    /**
+     * The address to connect to when every address the host has is public, else null.
+     */
+    private static function publicAddress(string $url): ?string
     {
         $parts = parse_url($url);
 
         if (! in_array(strtolower((string) ($parts['scheme'] ?? '')), ['http', 'https'], true) || empty($parts['host'])) {
-            return false;
+            return null;
         }
 
-        $ips = gethostbynamel(trim((string) $parts['host'], '[]')) ?: [];
+        $ips = self::addresses(trim((string) $parts['host'], '[]'));
 
         foreach ($ips as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-                return false;
+            if (! self::publicIp($ip)) {
+                return null;
             }
         }
 
-        return $ips !== [];
+        return $ips[0] ?? null;
+    }
+
+    /**
+     * Every address a host name points to, IPv4 first; an address typed as the host is itself.
+     *
+     * @return list<string>
+     */
+    private static function addresses(string $host): array
+    {
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return [$host];
+        }
+
+        $v4 = gethostbynamel($host) ?: [];
+        $v6 = array_column(@dns_get_record($host, DNS_AAAA) ?: [], 'ipv6');
+
+        return array_values(array_unique([...$v4, ...$v6]));
+    }
+
+    private static function publicIp(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        /* an IPv4 address written as IPv6 is judged as the IPv4 address */
+        if (preg_match('/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i', $ip, $mapped) === 1) {
+            return self::publicIp($mapped[1]);
+        }
+
+        /* shared carrier space (100.64.0.0/10), which the flags above let through */
+        $long = ip2long($ip);
+
+        return $long === false || ($long & 0xFFC00000) !== 0x64400000;
     }
 
     /**
      * A GET of a public address. A redirect is followed up to $redirects times, each new address checked to be public.
+     * The connection goes to the very address that was checked, so the name can't be pointed elsewhere in between.
      *
      * @throws RuntimeException when an address is not public
      */
@@ -44,11 +87,24 @@ class SafeFetch
         $hops = 0;
 
         while (true) {
-            if (! self::isPublic($url)) {
+            $ip = self::publicAddress($url);
+
+            if ($ip === null) {
                 throw new RuntimeException('Not a public address.');
             }
 
-            $response = Http::timeout($timeoutSeconds)->withoutRedirecting()->get($url);
+            $parts = parse_url($url);
+            $port = (int) ($parts['port'] ?? (strtolower((string) $parts['scheme']) === 'https' ? 443 : 80));
+            $host = trim((string) $parts['host'], '[]');
+            $pin = str_contains($ip, ':') ? '['.$ip.']' : $ip;
+
+            $response = Http::timeout($timeoutSeconds)
+                ->withoutRedirecting()
+                ->withOptions(['curl' => [
+                    CURLOPT_RESOLVE => [$host.':'.$port.':'.$pin],
+                    CURLOPT_MAXFILESIZE => 5 * 1024 * 1024,
+                ]])
+                ->get($url);
             $location = (string) $response->header('Location');
 
             if (! $response->redirect() || $location === '' || $hops >= $redirects) {

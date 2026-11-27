@@ -349,6 +349,15 @@ class ReviewMarksTest extends TestCase
         ]);
     }
 
+    public function test_a_reviewer_taken_off_the_work_cannot_reply_any_more(): void
+    {
+        $mark = $this->mark($this->reviewer);
+        $this->chapter->work->reviewers()->detach($this->reviewer->id);
+
+        $this->actingAs($this->reviewer)->postJson('/review/marks/'.$mark->id.'/reply', ['body' => 'Still here.'])->assertForbidden();
+        $this->assertDatabaseMissing('comments', ['parent_id' => $mark->id]);
+    }
+
     public function test_a_reviewer_cannot_reply_to_someone_elses_mark_or_to_a_reply(): void
     {
         $other = User::factory()->reviewer()->create();

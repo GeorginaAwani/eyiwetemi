@@ -42,7 +42,7 @@ class PlanController extends Controller
     private const MAX_HTML = 20000;
 
     /** Uploaded research files live under this folder; only those are deleted with their item. */
-    private const RESEARCH_FOLDER = 'research';
+    public const RESEARCH_FOLDER = 'research';
 
     /** Pictures in research are made no bigger than this on their longest side. */
     private const RESEARCH_IMAGE_SIDE = 2000;

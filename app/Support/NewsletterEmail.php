@@ -30,6 +30,8 @@ class NewsletterEmail
             ->map(fn (NewsletterSendItem $row): array => $described[$row->id])
             ->filter(fn (array $item): bool => ($kind === null || $item['kind'] === $kind)
                 && ($to === null || in_array($item['kind'], $to->kinds, true)))
+            /* a reader's email never carries words that aren't out yet (previews and her test may show the draft) */
+            ->filter(fn (array $item): bool => $to === null || ! $item['scheduled'])
             ->values();
 
         if ($items->isEmpty()) {

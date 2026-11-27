@@ -172,6 +172,21 @@ class CountTest extends TestCase
         $this->assertSame(1, $this->breakdown(StatDimension::Source, $source));
     }
 
+    public function test_a_day_lists_at_most_a_hundred_referring_sites_and_the_rest_count_as_other(): void
+    {
+        $chapter = $this->novel()->items->first();
+        foreach (range(1, 100) as $site) {
+            DailyBreakdown::query()->create(['day' => self::TODAY, 'dimension' => StatDimension::Source, 'value' => 'site'.$site.'.example', 'reads' => 1]);
+        }
+
+        $this->hit(['t' => 'item', 'e' => 'read', 'id' => $chapter->id, 'ref' => 'https://one-more.example/']);
+        $this->hit(['t' => 'item', 'e' => 'read', 'id' => $chapter->id, 'ref' => 'https://site7.example/'], ip: '203.0.113.11');
+
+        $this->assertNull($this->breakdown(StatDimension::Source, 'one-more.example'));
+        $this->assertSame(1, $this->breakdown(StatDimension::Source, 'Other'));
+        $this->assertSame(2, $this->breakdown(StatDimension::Source, 'site7.example'));
+    }
+
     public function test_a_referrer_from_the_site_or_the_admin_is_counted_as_direct(): void
     {
         $chapter = $this->novel()->items->first();

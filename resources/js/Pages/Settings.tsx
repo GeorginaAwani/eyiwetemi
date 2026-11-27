@@ -321,6 +321,8 @@ function DeleteCard({ open, onClose, username, comments }: { open: boolean; onCl
         const { status, data } = await json<{ redirect: string }>('DELETE', '/settings/account', { username: typed });
         if (status === 200) {
             setState('sent');
+            /* the chapters kept for offline reading go with the account */
+            forgetReading();
             window.setTimeout(() => window.location.assign(data.redirect ?? '/'), 300);
 
             return;

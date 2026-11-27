@@ -577,6 +577,20 @@ class AdminPlanTest extends TestCase
         $this->assertDatabaseMissing('research_items', ['id' => $research->id]);
     }
 
+    public function test_deleting_the_work_deletes_its_research_uploads(): void
+    {
+        Storage::fake(config('eyiwetemi.media_disk'));
+        $work = $this->novel();
+        Storage::disk('public')->put('research/notes.pdf', 'pdf');
+        $media = Media::factory()->create(['disk' => 'public', 'path' => 'research/notes.pdf', 'mime' => 'application/pdf']);
+        ResearchItem::factory()->for($work)->image()->create(['title' => 'Notes', 'media_id' => $media->id]);
+
+        $this->asAdmin()->delete($this->adminUrl('/works/'.$work->slug))->assertRedirect();
+
+        Storage::disk('public')->assertMissing('research/notes.pdf');
+        $this->assertDatabaseMissing('media', ['id' => $media->id]);
+    }
+
     public function test_the_plans_notes_are_saved_cleaned(): void
     {
         $work = $this->novel();
