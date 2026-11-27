@@ -46,7 +46,7 @@ class AdminSignInTest extends TestCase
 
     public function test_admin_pages_send_a_guest_to_the_sign_in(): void
     {
-        $this->get(route('admin.section', 'works'))->assertRedirect(route('admin.signin'));
+        $this->get(route('admin.works.index'))->assertRedirect(route('admin.signin'));
 
         $this->get(route('admin.signin'))->assertOk()->assertInertia(fn ($page) => $page->component('Admin/SignIn')->where('step', 'email'));
     }

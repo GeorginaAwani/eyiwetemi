@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\UsernameController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CountController;
 use App\Http\Controllers\EmailsController;
 use App\Http\Controllers\FeedController;
 use App\Http\Controllers\FollowController;
@@ -51,6 +52,9 @@ Route::get('/search', SearchController::class)->middleware('throttle:60,1')->nam
 Route::post('/notice/{notice}/closed', [NoticeController::class, 'closed'])->whereNumber('notice')->middleware('throttle:30,1')->name('notice.closed');
 Route::get('/share/site.jpg', [ShareCardController::class, 'site'])->name('share.site');
 Route::get('/share/{slug}.jpg', [ShareCardController::class, 'work'])->where('slug', '[a-z0-9-]+')->name('share.work');
+
+/* first-party reading counts: daily totals only, answered with nothing */
+Route::post('/count', CountController::class)->middleware('throttle:120,1')->name('count');
 
 /* yours: private pages, and likes and follows */
 Route::middleware('auth')->group(function () {

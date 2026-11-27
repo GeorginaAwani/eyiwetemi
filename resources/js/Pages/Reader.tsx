@@ -9,6 +9,7 @@ import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEME
 import { act, Action, ask, useAnyDone, useDone, useFollow, useLike } from '@/lib/live';
 import { SignInDetail } from '@/lib/signin';
 import { json } from '@/lib/http';
+import { useReadCount } from '@/lib/count';
 
 type Block =
     | { type: 'p'; id: string | null; runs: Run[] }
@@ -630,6 +631,8 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
     const [back, setBack] = useState(false);
     const txt = useRef<HTMLElement>(null);
     const marks = useReviewMarks(review ?? null, item.id, txt);
+    const endRow = useRef<HTMLDivElement>(null);
+    useReadCount(item.id, endRow);
     const lastY = useRef(0);
     const panelRef = useRef<PanelName>(null);
     panelRef.current = panel;
@@ -874,7 +877,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }:
                     <Body blocks={item.blocks} poem={item.poem} paragraph={marks.on ? marks.paragraph : undefined} />
                 </article>
                 {marks.toolbar}
-                <div className="end">
+                <div className="end" ref={endRow}>
                     <div className="endl">
                         <button className={`lk${like.liked ? ' on' : ''}${like.liked && like.pop ? ' pop' : ''}`} type="button" aria-pressed={like.liked} aria-label="Like" onClick={like.toggle}>
                             {I.heart}

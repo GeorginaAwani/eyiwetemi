@@ -13,19 +13,23 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Ninety days of reading counts, shaped like the prototype's stats: the site total, each public work and its
- * chapters or pieces, the diary notes, the site pages, and the source, country and device breakdowns.
+ * Reading counts from the site's launch to today, shaped like the prototype's stats: the site total, each public work
+ * and its chapters or pieces, the diary notes, the site pages, and the source, country and device breakdowns.
  *
  * Readers are the unique readers a day; finished counts the readers who reached the end, so it never exceeds readers.
  * daily_visitors is never seeded: it is the real per-day visitor hash table.
  */
 class StatsSeeder extends Seeder
 {
-    private const DAYS = 90;
+    /** The day the site went live: the first day of stats. */
+    private const LAUNCH = '2025-03-01';
+
+    /** SeedData::EVENTS counts its days from the start of the last ninety days, so its spikes stay on those dates. */
+    private const EVENT_WINDOW = 90;
 
     private const CHUNK = 500;
 
-    /** Site reads on the first day; the baseline grows to about 180 a day over the window. */
+    /** Site reads on the first day; the baseline grows to about 180 a day by today. */
     private const BASE_READS = 110;
 
     /** Sunday first, as Carbon's dayOfWeek: a mild weekly rhythm. */
@@ -40,12 +44,14 @@ class StatsSeeder extends Seeder
     public function run(): void
     {
         $today = Carbon::now('Africa/Lagos')->startOfDay();
-        $windowStart = $today->copy()->subDays(self::DAYS - 1);
+        $windowStart = Carbon::parse(self::LAUNCH, 'Africa/Lagos')->startOfDay();
+        $days = (int) $windowStart->diffInDays($today) + 1;
 
         $works = Work::query()
             ->where('visibility', Visibility::Public)
             ->whereHas('items', fn ($query) => $query->where('status', PublishStatus::Published))
             ->get();
+        $worksById = $works->keyBy('id');
 
         $profiles = [];
         $chapters = [];
@@ -64,27 +70,29 @@ class StatsSeeder extends Seeder
 
         $stats = [];
         $breakdowns = [];
+        $carry = [];
         $now = now();
 
-        for ($day = 0; $day < self::DAYS; $day++) {
+        for ($day = 0; $day < $days; $day++) {
             $date = $windowStart->copy()->addDays($day);
-            $daysAgo = self::DAYS - 1 - $day;
+            $daysAgo = $days - 1 - $day;
             $siteReads = 0;
             $siteReaders = 0;
             $siteFinished = 0;
 
-            $planned = (self::BASE_READS + 70 * $day / (self::DAYS - 1))
+            $planned = (self::BASE_READS + 70 * $day / ($days - 1))
                 * self::WEEKDAY_FACTOR[$date->dayOfWeek]
                 * (0.9 + 0.2 * $this->hash("site:{$day}"));
 
+            $event = SeedData::EVENTS[$day - ($days - self::EVENT_WINDOW)] ?? null;
             $weights = [];
 
             foreach ($works as $work) {
+                // A work's start is days ago; a start before the launch is the launch itself, which the window already is.
                 if ($daysAgo > $profiles[$work->id]['start']) {
                     continue;
                 }
 
-                $event = SeedData::EVENTS[$day] ?? null;
                 $multiplier = ($event !== null && $event[0] === $work->slug) ? $event[2] : 1.0;
 
                 $weights[$work->id] = $profiles[$work->id]['share']
@@ -95,10 +103,10 @@ class StatsSeeder extends Seeder
             $weightTotal = array_sum($weights);
 
             foreach ($weights as $workId => $weight) {
-                $work = $works->firstWhere('id', $workId);
+                $slug = $worksById[$workId]->slug;
                 $profile = $profiles[$workId];
                 $reads = (int) round($planned * $weight / $weightTotal);
-                $readers = (int) round($reads * $profile['readers'] * (0.92 + 0.16 * $this->hash("r{$work->slug}:{$day}")));
+                $readers = (int) round($reads * $profile['readers'] * (0.92 + 0.16 * $this->hash("r{$slug}:{$day}")));
                 $finished = (int) round($readers * $profile['finished']);
 
                 $siteReads += $reads;
@@ -107,7 +115,7 @@ class StatsSeeder extends Seeder
 
                 $stats[] = $this->stat($date, 'work', $workId, $workId, $reads, $readers, $finished, $now);
 
-                $this->chapterStats($stats, $date, $chapters[$workId], $reads, $day, $now);
+                $this->chapterStats($stats, $date, $chapters[$workId], $reads, $day, $now, $carry);
             }
 
             $stats[] = $this->stat($date, 'site', 0, null, $siteReads, $siteReaders, $siteFinished, $now);
@@ -116,22 +124,41 @@ class StatsSeeder extends Seeder
             $activeNotes = $notes->filter(fn (Note $note): bool => $noteDays[$note->id] <= $day)->values();
 
             foreach ($activeNotes as $note) {
-                $reads = (int) round($siteReads * self::NOTE_SHARE / max(1, $activeNotes->count())
-                    * (0.8 + 0.4 * $this->hash("note{$note->id}:{$day}")));
-                $stats[] = $this->stat($date, 'note', $note->id, null, $reads, (int) round($reads * 0.5), 0, $now);
+                $reads = $this->whole($siteReads * self::NOTE_SHARE / max(1, $activeNotes->count())
+                    * (0.8 + 0.4 * $this->hash("note{$note->id}:{$day}")), $carry, "note{$note->id}:reads");
+
+                if ($reads > 0) {
+                    $stats[] = $this->stat($date, 'note', $note->id, null, $reads, $this->whole($reads * 0.5, $carry, "note{$note->id}:readers"), 0, $now);
+                }
             }
 
             foreach ($this->breakdownsFor($date, $siteReads, $day) as $row) {
                 $breakdowns[] = $row + ['created_at' => $now, 'updated_at' => $now];
             }
+
+            if (count($stats) >= self::CHUNK) {
+                $this->insertChunks(DailyStat::class, $stats);
+                $stats = [];
+            }
+
+            if (count($breakdowns) >= self::CHUNK) {
+                $this->insertChunks(DailyBreakdown::class, $breakdowns);
+                $breakdowns = [];
+            }
         }
 
-        foreach (array_chunk($stats, self::CHUNK) as $chunk) {
-            DailyStat::query()->insert($chunk);
-        }
+        $this->insertChunks(DailyStat::class, $stats);
+        $this->insertChunks(DailyBreakdown::class, $breakdowns);
+    }
 
-        foreach (array_chunk($breakdowns, self::CHUNK) as $chunk) {
-            DailyBreakdown::query()->insert($chunk);
+    /**
+     * @param  class-string  $model
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function insertChunks(string $model, array $rows): void
+    {
+        foreach (array_chunk($rows, self::CHUNK) as $chunk) {
+            $model::query()->insert($chunk);
         }
     }
 
@@ -155,8 +182,8 @@ class StatsSeeder extends Seeder
     }
 
     /**
-     * The published chapters or pieces of a work that have a day index in the window. Single pieces return none:
-     * their work row is their whole reading.
+     * The chapters or pieces of a work that are published, with the day index each went out on. A work with a single
+     * item returns none: its work row is its whole reading.
      *
      * @return list<array{id: int, work_id: int, number: int, slug: string, from: int}>
      */
@@ -175,18 +202,12 @@ class StatsSeeder extends Seeder
                 continue;
             }
 
-            $from = $this->dayIndex($item->published_at, $windowStart);
-
-            if ($from >= self::DAYS) {
-                continue;
-            }
-
             $chapters[] = [
                 'id' => $item->id,
                 'work_id' => $work->id,
                 'number' => $index + 1,
                 'slug' => $work->slug,
-                'from' => $from,
+                'from' => $this->dayIndex($item->published_at, $windowStart),
             ];
         }
 
@@ -194,14 +215,20 @@ class StatsSeeder extends Seeder
     }
 
     /**
+     * Every chapter or piece that is out on the day gets a row, even on a day it drew no reads, so the per-chapter list
+     * and the keep-going curve always have it. Earlier chapters draw more readers than later ones. A later chapter's
+     * share of a quiet work's few reads is a fraction a day, so each chapter carries its fraction to the next day
+     * rather than losing it, and the chapters of a work add up to the work's reads over time.
+     *
      * @param  list<array<string, mixed>>  $stats
      * @param  list<array{id: int, work_id: int, number: int, slug: string, from: int}>  $chapters
+     * @param  array<string, float>  $carry
      */
-    private function chapterStats(array &$stats, Carbon $date, array $chapters, int $workReads, int $day, Carbon $now): void
+    private function chapterStats(array &$stats, Carbon $date, array $chapters, int $workReads, int $day, Carbon $now, array &$carry): void
     {
         $active = array_values(array_filter($chapters, fn (array $chapter): bool => $chapter['from'] <= $day));
 
-        if ($active === [] || $workReads === 0) {
+        if ($active === []) {
             return;
         }
 
@@ -215,17 +242,36 @@ class StatsSeeder extends Seeder
         $weightTotal = array_sum($weights);
 
         foreach ($active as $index => $chapter) {
-            $reads = (int) round($workReads * $weights[$index] / $weightTotal);
+            $key = "chapter{$chapter['id']}";
+            $reads = $this->whole($workReads * $weights[$index] / $weightTotal, $carry, "{$key}:reads");
+            $readers = $this->whole($reads * self::CHAPTER_READERS, $carry, "{$key}:readers");
+            $finished = $this->whole($readers * (0.68 + 0.12 * $this->hash("f{$chapter['slug']}{$chapter['number']}")), $carry, "{$key}:finished");
 
-            if ($reads === 0) {
-                continue;
-            }
-
-            $readers = (int) round($reads * self::CHAPTER_READERS);
-            $finished = (int) round($readers * (0.68 + 0.12 * $this->hash("f{$chapter['slug']}{$chapter['number']}")));
-
-            $stats[] = $this->stat($date, 'chapter', $chapter['id'], $chapter['work_id'], $reads, $readers, $finished, $now);
+            $stats[] = $this->stat(
+                $date,
+                'chapter',
+                $chapter['id'],
+                $chapter['work_id'],
+                $reads,
+                $readers,
+                $finished,
+                $now,
+            );
         }
+    }
+
+    /**
+     * The whole part of an exact count. The fraction left over waits in the carry under its key for the next day.
+     *
+     * @param  array<string, float>  $carry
+     */
+    private function whole(float $exact, array &$carry, string $key): int
+    {
+        $total = $exact + ($carry[$key] ?? 0.0);
+        $whole = (int) floor($total);
+        $carry[$key] = $total - $whole;
+
+        return $whole;
     }
 
     /**
@@ -247,7 +293,8 @@ class StatsSeeder extends Seeder
     }
 
     /**
-     * Source, country and device rows for one day. Each dimension adds up to the site's reads for that day.
+     * Source, country and device rows for one day. Each dimension adds up to the site's reads for that day. Sources are
+     * stored under their labels, as the page shows them ("Direct", "Instagram", "substack.com").
      *
      * @return list<array{day: string, dimension: string, value: string, reads: int}>
      */
@@ -262,7 +309,7 @@ class StatsSeeder extends Seeder
         }
 
         foreach ($this->allocate($siteReads, $sources) as $index => $reads) {
-            $rows[] = $this->breakdown($date, 'source', strtolower(SeedData::SRC[$index][1]), $reads);
+            $rows[] = $this->breakdown($date, 'source', SeedData::SRC[$index][1], $reads);
         }
 
         $countries = [];

@@ -23,6 +23,7 @@ return [
     */
     'stats' => [
         'read_after_seconds' => 10,
+        'country_header' => env('STATS_COUNTRY_HEADER', 'CF-IPCountry'),
     ],
 
     /*

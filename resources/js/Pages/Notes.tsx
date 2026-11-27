@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Runs, { Run } from "@/Components/site/Runs";
 import SiteLayout from "@/Layouts/SiteLayout";
 import { useLike } from "@/lib/live";
+import { useNoteCounts } from "@/lib/count";
 
 type Note = {
     id: number;
@@ -118,6 +119,7 @@ export default function Notes({ months, olderAfter }: Batch) {
     const [busy, setBusy] = useState(false);
     const [fading, setFading] = useState(false);
     const root = useRef<HTMLDivElement>(null);
+    useNoteCounts(root, [older]);
 
     /* each note settles in as it comes into view */
     useEffect(() => {

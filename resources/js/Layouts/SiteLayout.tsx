@@ -5,6 +5,7 @@ import Header from "@/Components/site/Header";
 import NoticeLine from "@/Components/site/NoticeLine";
 import Search from "@/Components/site/Search";
 import SignIn from "@/Components/site/SignIn";
+import { countPage } from "@/lib/count";
 import { watchReveals } from "@/lib/motion";
 import { FooterPage, Section } from "@/types/site";
 
@@ -38,6 +39,8 @@ export default function SiteLayout({
 
     /* each page's lines and pictures settle in as they come into view */
     useEffect(() => watchReveals(), [url]);
+    /* a visit to a site page is counted as it opens */
+    useEffect(() => countPage(url), [url]);
 
     return (
         <>

@@ -8,13 +8,4 @@
 a.nw-dk{color:inherit;display:block;border-radius:8px;transition:opacity var(--d1)}
 a.nw-dk:hover b{color:var(--accent)}a.nw-dk b{transition:color var(--d1)}
 /* 2g site */
-/* 2h stats */
-.st-cv{border-radius:3px;overflow:hidden;display:block}.st-cv img{width:100%;height:100%;object-fit:cover;display:block}
-.st-f em.dn,.st-mini em.dn,.b-fig em.dn,.st-f em.eq{color:var(--muted)}
-/* Desk: most read */
-.b-fig a.st-top{grid-column:1/3;display:grid;grid-template-columns:22px auto minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:0 0 22px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit;flex-direction:row}
-.b-fig a.st-top .l{font-size:14px;color:var(--muted);white-space:nowrap}
-.b-fig a.st-top b{font-family:var(--CD);font-weight:400;font-size:19px;line-height:24px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color var(--d1)}
-.b-fig a.st-top:hover b{color:var(--accent)}
-.b-fig a.st-top .v{font-size:14px;font-weight:600;color:var(--ink)}
-.b-fig .wide{border-bottom:0!important;padding-bottom:18px!important}
+/* 2h stats: in stats.css */
