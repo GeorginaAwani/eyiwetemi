@@ -25,8 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $writing = fn (Request $request): bool => $request->isMethod('PATCH') && $request->is('works/*/write/*', 'notes/*');
         /* a reviewer's quote keeps the spaces at its edges: it must match the paragraph exactly */
         $reviewing = fn (Request $request): bool => $request->is('review/marks*');
-        $middleware->trimStrings(except: [$writing, $reviewing]);
-        $middleware->convertEmptyStringsToNull(except: [$writing]);
+        /* a site page's draft keeps what she typed, empty paragraphs and headings included, as the page's own rules check them */
+        $sitePage = fn (Request $request): bool => $request->isMethod('PATCH') && $request->is('site/pages/*');
+        $middleware->trimStrings(except: [$writing, $reviewing, $sitePage]);
+        $middleware->convertEmptyStringsToNull(except: [$writing, $sitePage]);
 
         /* private pages: Home with the sign-in card; signing in carries on to the page they asked for */
         $middleware->redirectGuestsTo(function (Request $request): string {

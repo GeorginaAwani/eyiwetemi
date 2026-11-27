@@ -64,7 +64,7 @@ export function FieldError({ message, children }: { message: string; children?: 
     );
 }
 
-export type Option = { value: string; label: string; add?: boolean; note?: string };
+export type Option = { value: string; label: string; add?: boolean; note?: string; disabled?: boolean };
 
 /**
  * Our select: a button and a listbox. Arrows, Home and End move; Enter or Space picks; Esc closes; a letter jumps.
@@ -80,6 +80,7 @@ export function KSelect({
     listClassName = '',
     label,
     display,
+    disabled,
 }: {
     value: string;
     options: Option[];
@@ -93,6 +94,7 @@ export function KSelect({
     label?: string;
     /** what the button shows, when not the picked option's name and a chevron */
     display?: ReactNode;
+    disabled?: boolean;
 }) {
     const uid = useId().replace(/:/g, '');
     const base = id ?? 'ks' + uid;
@@ -150,6 +152,9 @@ export function KSelect({
 
     function pick(i: number) {
         const o = options[i];
+        if (o?.disabled) {
+            return;
+        }
         show(false);
         button.current?.focus();
         if (o && o.value !== value) {
@@ -201,6 +206,7 @@ export function KSelect({
                 type="button"
                 className={buttonClassName}
                 id={base}
+                disabled={disabled}
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-controls={base + '-lb'}
@@ -250,6 +256,7 @@ export function KSelect({
                         role="option"
                         id={`${base}-o${i}`}
                         aria-selected={i === current}
+                        aria-disabled={o.disabled || undefined}
                         data-n={o.note}
                         className={`${o.add ? 'add' : ''}${i === act && open ? ' act' : ''}`.trim() || undefined}
                         onMouseMove={() => act !== i && setAct(i)}

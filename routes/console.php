@@ -13,6 +13,9 @@ Schedule::command('eyiwetemi:publish-due')->everyMinute()->withoutOverlapping();
 Schedule::command('eyiwetemi:newsletter-send')->everyMinute()->withoutOverlapping();
 Schedule::command('eyiwetemi:announce')->everyMinute()->withoutOverlapping();
 
+/* the store and pre-order links on In print are checked each morning, so a broken one shows on the desk */
+Schedule::command('eyiwetemi:check-links')->dailyAt('06:00')->timezone(config('eyiwetemi.timezone'));
+
 /* the writer's mail about comments: a daily digest of readers', and reviewers' notes once a visit has ended */
 Schedule::command('eyiwetemi:comments-digest')->dailyAt('20:00')->timezone(config('eyiwetemi.timezone'));
 Schedule::command('eyiwetemi:review-mail')->everyFiveMinutes()->withoutOverlapping();

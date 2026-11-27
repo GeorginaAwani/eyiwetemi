@@ -5,7 +5,11 @@ import { FooterPage } from "@/types/site";
 
 type Section = { id: string; heading: string; html: string };
 
-export type ContentsPageProps = { updated: string | null; sections: Section[] };
+export type ContentsPageProps = {
+    updated: string | null;
+    sections: Section[];
+    change?: { line: string; ids: string[] } | null;
+};
 
 /**
  * Privacy and Terms: contents on the left follow the reading; on phones they fold under "On this page".
@@ -15,9 +19,11 @@ export default function ContentsPage({
     footer,
     updated,
     sections,
+    change,
 }: ContentsPageProps & { title: string; footer: FooterPage }) {
     const [current, setCurrent] = useState(sections[0]?.id);
     const [open, setOpen] = useState(false);
+    const changed = new Set(change?.ids ?? []);
 
     useEffect(() => {
         const spy = () => {
@@ -61,6 +67,7 @@ export default function ContentsPage({
                 onClick={(e) => go(e, s.id)}
             >
                 {s.heading}
+                {changed.has(s.id) && <i className="fpv-dot" aria-label="Changed"></i>}
             </a>
         ));
 
@@ -70,6 +77,12 @@ export default function ContentsPage({
                 <aside className="fpvb-side">
                     <h1>{title}</h1>
                     {updated && <div className="fpv-up">Updated {updated}</div>}
+                    {change && (
+                        <p className="fpv-chg">
+                            <i aria-hidden="true"></i>
+                            <span>{change.line}</span>
+                        </p>
+                    )}
                     <nav className="fpvb-toc" aria-label="On this page">
                         {links(false)}
                     </nav>

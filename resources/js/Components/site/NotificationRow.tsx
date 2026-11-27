@@ -8,7 +8,8 @@ export type NotificationThumb =
     | { type: 'poem'; title: string }
     | { type: 'avatar'; seed: string }
     | { type: 'photo'; src: string | null }
-    | { type: 'note' };
+    | { type: 'note' }
+    | { type: 'mark' };
 
 export type NotificationT = {
     id: string;
@@ -21,13 +22,15 @@ export type NotificationT = {
     group: string;
 };
 
-/** The picture beside a notification: a cover, a poem card, or the person who replied. */
+/** The picture beside a notification: a cover, a poem card, the mark (for her pages), or the person who replied. */
 export function NotificationPicture({ thumb, size }: { thumb: NotificationThumb; size: 'page' | 'menu' }) {
     const [w, h] = size === 'page' ? [40, 60] : [32, 48];
     const round = size === 'page' ? 40 : 32;
     const cls = size === 'page' ? 'th' : '';
 
     switch (thumb.type) {
+        case 'mark':
+            return <img className="fpv-nt" src="/img/mark/icon-192.png" alt="" width={round} height={round} />;
         case 'avatar':
             return size === 'page' ? (
                 <span className="th av">

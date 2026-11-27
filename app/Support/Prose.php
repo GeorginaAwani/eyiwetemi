@@ -251,7 +251,7 @@ class Prose
             if ($type === 'link') {
                 $href = trim((string) ($mark['attrs']['href'] ?? ''));
 
-                if (! preg_match('#^(https?://|mailto:)#i', $href)) {
+                if (! preg_match('#^(https?://|mailto:|/(?![/\\\\]))#i', $href)) {
                     continue;
                 }
 

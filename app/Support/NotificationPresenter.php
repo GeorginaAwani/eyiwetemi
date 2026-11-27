@@ -14,7 +14,8 @@ use App\Models\WorkItem;
  * "A note on Salt Season" · the note's first sentence, "Tolu replied to your comment on Night bus" · the reply.
  *
  * Stored data is only what it's about: {kind: chapter, work_item_id} | {kind: work, work_id}
- * | {kind: note, note_id} | {kind: reply, comment_id}. Wording is worked out when shown, so a renamed work reads right.
+ * | {kind: note, note_id} | {kind: reply, comment_id} | {kind: site_change, page, line} (her Terms or Privacy page).
+ * Wording is worked out when shown, so a renamed work reads right.
  */
 class NotificationPresenter
 {
@@ -29,6 +30,21 @@ class NotificationPresenter
             'work' => self::work((int) ($data['work_id'] ?? 0)),
             'note' => self::note((int) ($data['note_id'] ?? 0)),
             'reply' => self::reply((int) ($data['comment_id'] ?? 0)),
+            'site_change' => self::siteChange((string) ($data['page'] ?? ''), (string) ($data['line'] ?? '')),
+            default => null,
+        };
+    }
+
+    /**
+     * "My Terms have changed" or "My Privacy page has changed", with the line she wrote about it.
+     *
+     * @return array{title: string, small: string, href: string, thumb: array<string, mixed>}|null
+     */
+    private static function siteChange(string $page, string $line): ?array
+    {
+        return match ($page) {
+            'terms' => ['title' => 'My Terms have changed', 'small' => $line, 'href' => '/terms', 'thumb' => ['type' => 'mark']],
+            'privacy' => ['title' => 'My Privacy page has changed', 'small' => $line, 'href' => '/privacy', 'thumb' => ['type' => 'mark']],
             default => null,
         };
     }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ReviewerController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SeriesController;
 use App\Http\Controllers\Admin\SignInController;
+use App\Http\Controllers\Admin\SiteController;
 use App\Http\Controllers\Admin\SweepController;
 use App\Http\Controllers\Admin\WorkController;
 use App\Http\Controllers\Admin\WorkCoverController;
@@ -87,8 +88,17 @@ Route::middleware(EnsureAdmin::class)->group(function () {
     Route::get('/newsletter/preview', [NewsletterController::class, 'preview'])->name('newsletter.preview');
     Route::post('/newsletter/test', [NewsletterController::class, 'test'])->name('newsletter.test');
 
+    Route::get('/site', [SiteController::class, 'index'])->name('site.index');
+    Route::patch('/site/pages/{key}', [SiteController::class, 'update'])->whereIn('key', ['about', 'in_print', 'privacy', 'terms'])->name('site.pages.update');
+    Route::post('/site/pages/{key}/publish', [SiteController::class, 'publish'])->whereIn('key', ['about', 'in_print', 'privacy', 'terms'])->name('site.pages.publish');
+    Route::post('/site/pages/{key}/undo', [SiteController::class, 'undo'])->whereIn('key', ['about', 'in_print', 'privacy', 'terms'])->name('site.pages.undo');
+    Route::post('/site/pages/{key}/versions/{version}/restore', [SiteController::class, 'restore'])
+        ->whereIn('key', ['about', 'in_print', 'privacy', 'terms'])->whereNumber('version')->name('site.pages.restore');
+    Route::post('/site/portrait', [SiteController::class, 'portrait'])->name('site.portrait');
+    Route::post('/site/link-check', [SiteController::class, 'linkCheck'])->middleware('throttle:30,1')->name('site.link-check');
+
     Route::get('/{section}', [SectionController::class, 'show'])
-        ->whereIn('section', ['stats', 'site'])
+        ->whereIn('section', ['stats'])
         ->name('section');
 
     Route::get('/works', [WorkController::class, 'index'])->name('works.index');
