@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SubscribeRequest;
+use App\Models\NewsletterStop;
 use App\Models\Subscriber;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,6 +60,7 @@ class EmailsController extends Controller
     {
         $subscriber = $this->subscriber($token);
         $email = $subscriber->email;
+        NewsletterStop::record();
         $subscriber->delete();
 
         return redirect()->route('emails.off')->with('off', $email);
