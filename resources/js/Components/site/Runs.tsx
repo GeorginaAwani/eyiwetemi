@@ -15,7 +15,7 @@ export type Run = {
  * A footnote: its number in the text. On wide screens the note sits in the margin beside the line;
  * on narrower ones a tap unfolds it under the line.
  */
-function Footnote({ n, note }: { n: number; note: string }) {
+export function Footnote({ n, note }: { n: number; note: string }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -31,6 +31,31 @@ function Footnote({ n, note }: { n: number; note: string }) {
     );
 }
 
+/** One run's text in its italics, bold and link (line breaks kept). */
+export function styled(r: Run, text: string = r.text): ReactNode {
+    let node: ReactNode = text.split("\n").map((part, k) => (
+        <Fragment key={k}>
+            {k > 0 && <br />}
+            {part}
+        </Fragment>
+    ));
+    if (r.em) node = <em>{node}</em>;
+    if (r.strong) node = <strong>{node}</strong>;
+    if (r.href) {
+        node = r.href.startsWith("/") ? (
+            <Link className="link" href={r.href}>
+                {node}
+            </Link>
+        ) : (
+            <a className="link" href={r.href} target="_blank" rel="noopener">
+                {node}
+            </a>
+        );
+    }
+
+    return node;
+}
+
 /** Text runs with italics, bold and links. */
 export default function Runs({ runs }: { runs: Run[] }) {
     return (
@@ -39,31 +64,8 @@ export default function Runs({ runs }: { runs: Run[] }) {
                 if (r.fn !== undefined) {
                     return r.fn > 0 ? <Footnote key={i} n={r.fn} note={r.note ?? ""} /> : null;
                 }
-                let node: ReactNode = r.text.split("\n").map((part, k) => (
-                    <Fragment key={k}>
-                        {k > 0 && <br />}
-                        {part}
-                    </Fragment>
-                ));
-                if (r.em) node = <em>{node}</em>;
-                if (r.strong) node = <strong>{node}</strong>;
-                if (r.href) {
-                    node = r.href.startsWith("/") ? (
-                        <Link className="link" href={r.href}>
-                            {node}
-                        </Link>
-                    ) : (
-                        <a
-                            className="link"
-                            href={r.href}
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            {node}
-                        </a>
-                    );
-                }
-                return <Fragment key={i}>{node}</Fragment>;
+
+                return <Fragment key={i}>{styled(r)}</Fragment>;
             })}
         </>
     );

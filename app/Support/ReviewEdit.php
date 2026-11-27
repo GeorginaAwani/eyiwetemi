@@ -98,6 +98,13 @@ class ReviewEdit
                 continue;
             }
 
+            if (($node['type'] ?? null) === 'hardBreak') {
+                $offset++;
+                $out[] = $node;
+
+                continue;
+            }
+
             if (is_array($node['content'] ?? null)) {
                 $node['content'] = self::rewrite($node['content'], $offset, $from, $to, $inserted);
 

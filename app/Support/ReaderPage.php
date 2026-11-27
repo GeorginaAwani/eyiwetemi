@@ -19,7 +19,7 @@ use Illuminate\Support\Collection;
 
 /**
  * One reading page (R2 Book page): a chapter of a novel, a piece of a collection, or a single story,
- * poem or essay. Live text only; reader comments (public audience) under it.
+ * poem or essay. Live text only; reader comments (public audience) under it, and a reviewer's own marks on it.
  */
 class ReaderPage
 {
@@ -82,10 +82,7 @@ class ReaderPage
         $items = collect(WorkPresenter::allItems($work));
         $total = $items->count();
 
-        /* a poem in a collection reads from its own single work */
-        $source = $item->piece_work_id !== null
-            ? WorkItem::query()->where('work_id', $item->piece_work_id)->orderBy('position')->first()
-            : $item;
+        $source = self::textItem($item);
         $body = $source?->live_body;
         $minutes = Reading::minutes((int) ($source->live_words ?? $item->live_words));
 
@@ -131,7 +128,20 @@ class ReaderPage
             'chapters' => $isPiece ? [] : $items->reject(fn (array $c): bool => $c['unavailable'])
                 ->reject(fn (array $c): bool => $this->isInPrintOnly($c['number']))->values()->all(),
             'comments' => $this->comments($item),
+            'review' => ReviewMarks::forReader($work, $item, $body),
         ];
+    }
+
+    /**
+     * The item whose live text a chapter or piece reads: a poem in a collection reads from its own single work.
+     */
+    public static function textItem(WorkItem $item): ?WorkItem
+    {
+        if ($item->piece_work_id === null) {
+            return $item;
+        }
+
+        return WorkItem::query()->where('work_id', $item->piece_work_id)->orderBy('position')->first();
     }
 
     /**

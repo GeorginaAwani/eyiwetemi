@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { CSSProperties, FormEvent, Fragment, ReactNode, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Bloom from '@/Components/site/Bloom';
 import Runs, { Run } from '@/Components/site/Runs';
+import { Review, useReviewMarks } from '@/Components/site/ReviewMarks';
 import SendButton, { SendState } from '@/Components/site/SendButton';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { currentTheme, prefersReducedMotion, setThemeFrom, subscribeTheme, THEMES } from '@/lib/motion';
@@ -56,6 +57,8 @@ type Props = {
     nav: { prev: string | null; next: string | null; end: string | null; follow: boolean } | null;
     chapters: Chapter[];
     comments: Thread;
+    /** a reviewer of this work: their own marks in the text */
+    review?: Review | null;
 };
 
 /** What the sign-in card shows under its why-line: the chapter and work you're reading, with its cover. */
@@ -127,7 +130,7 @@ const I = {
 };
 
 /** The text itself: paragraphs (first after a break unindented), headings, lists, pictures, stanzas. */
-function Body({ blocks, poem }: { blocks: Block[]; poem: boolean }) {
+function Body({ blocks, poem, paragraph }: { blocks: Block[]; poem: boolean; paragraph?: (id: string | null, runs: Run[], className: string, key: number) => ReactNode }) {
     const out: ReactNode[] = [];
     let first = true;
     const stanzas: ReactNode[] = [];
@@ -161,9 +164,13 @@ function Body({ blocks, poem }: { blocks: Block[]; poem: boolean }) {
         switch (b.type) {
             case 'p':
                 out.push(
-                    <p className={`pp${first ? ' first' : ''}`} key={i} data-id={b.id ?? undefined}>
-                        <Runs runs={b.runs} />
-                    </p>,
+                    paragraph ? (
+                        paragraph(b.id, b.runs, `pp${first ? ' first' : ''}`, i)
+                    ) : (
+                        <p className={`pp${first ? ' first' : ''}`} key={i} data-id={b.id ?? undefined}>
+                            <Runs runs={b.runs} />
+                        </p>
+                    ),
                 );
                 first = false;
                 break;
@@ -609,7 +616,7 @@ export default function Reader(props: Props) {
     return <ReaderPage {...props} />;
 }
 
-function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) {
+function ReaderPage({ work, item, sceneBreak, nav, chapters, comments, review }: Props) {
     reading = { label: item.isPiece ? undefined : item.label, title: work.title, thumb: work.thumb };
     const { url } = usePage();
     const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => 'white' as const);
@@ -622,6 +629,7 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
     const [listening, setListening] = useState(false);
     const [back, setBack] = useState(false);
     const txt = useRef<HTMLElement>(null);
+    const marks = useReviewMarks(review ?? null, item.id, txt);
     const lastY = useRef(0);
     const panelRef = useRef<PanelName>(null);
     panelRef.current = panel;
@@ -862,9 +870,10 @@ function ReaderPage({ work, item, sceneBreak, nav, chapters, comments }: Props) 
                         {item.epigraph.by && <span className="by">{item.epigraph.by}</span>}
                     </div>
                 )}
-                <article className="txt2" id="txt" ref={txt}>
-                    <Body blocks={item.blocks} poem={item.poem} />
+                <article className="txt2" id="txt" ref={txt} data-rev={marks.on ? '' : undefined}>
+                    <Body blocks={item.blocks} poem={item.poem} paragraph={marks.on ? marks.paragraph : undefined} />
                 </article>
+                {marks.toolbar}
                 <div className="end">
                     <div className="endl">
                         <button className={`lk${like.liked ? ' on' : ''}${like.liked && like.pop ? ' pop' : ''}`} type="button" aria-pressed={like.liked} aria-label="Like" onClick={like.toggle}>

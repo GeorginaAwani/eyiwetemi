@@ -23,7 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /* the writing screen's saves keep every space she typed (a space beside italics is part of the text) */
         $writing = fn (Request $request): bool => $request->isMethod('PATCH') && $request->is('works/*/write/*');
-        $middleware->trimStrings(except: [$writing]);
+        /* a reviewer's quote keeps the spaces at its edges: it must match the paragraph exactly */
+        $reviewing = fn (Request $request): bool => $request->is('review/marks*');
+        $middleware->trimStrings(except: [$writing, $reviewing]);
         $middleware->convertEmptyStringsToNull(except: [$writing]);
 
         /* private pages: Home with the sign-in card; signing in carries on to the page they asked for */

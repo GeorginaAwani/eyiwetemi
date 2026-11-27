@@ -79,4 +79,21 @@ class ReviewEditTest extends TestCase
 
         $this->assertNull(ReviewEdit::apply($doc, ['block_id' => 'b9', 'start' => 0, 'end' => 3, 'quote' => 'She'], 'She', 'He'));
     }
+
+    public function test_a_line_break_counts_as_one_character_before_the_edit(): void
+    {
+        $doc = $this->doc([
+            ['type' => 'text', 'text' => 'door'],
+            ['type' => 'hardBreak'],
+            ['type' => 'text', 'text' => 'the door'],
+        ]);
+
+        $edited = ReviewEdit::apply($doc, ['block_id' => 'b1', 'start' => 9, 'end' => 13, 'quote' => 'door'], 'door', 'gate');
+
+        $this->assertSame([
+            ['type' => 'text', 'text' => 'door'],
+            ['type' => 'hardBreak'],
+            ['type' => 'text', 'text' => 'the gate'],
+        ], $edited['content'][0]['content']);
+    }
 }

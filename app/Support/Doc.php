@@ -74,6 +74,33 @@ class Doc
     }
 
     /**
+     * How many UTF-16 code units a string takes: the length and offsets a browser counts in text.
+     */
+    public static function utf16Length(string $text): int
+    {
+        return intdiv(strlen(mb_convert_encoding($text, 'UTF-16LE', 'UTF-8')), 2);
+    }
+
+    /**
+     * The character (code point) index a UTF-16 offset lands on, or null when the offset falls inside a
+     * surrogate pair or past the end of the text.
+     */
+    public static function codePointIndex(string $text, int $utf16Offset): ?int
+    {
+        $units = 0;
+
+        foreach (mb_str_split($text) as $index => $character) {
+            if ($units >= $utf16Offset) {
+                return $units === $utf16Offset ? $index : null;
+            }
+
+            $units += self::utf16Length($character);
+        }
+
+        return $units === $utf16Offset ? mb_strlen($text) : null;
+    }
+
+    /**
      * Number a page's footnotes in reading order (1, 2, 3…); empty notes are left out.
      *
      * @param  list<array<string, mixed>>  $blocks
